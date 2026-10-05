@@ -2,9 +2,9 @@
 
 **Solution blueprint · Demo phase · BTP trial variant**
 
-This is the variant of `blueprint.md` for a **SAP BTP trial account**. The process, agents, apps, business rules and demo data are the same. What changes:
+This is the variant of `blueprint-with-aicore.md` for a **SAP BTP trial account**. The process, agents, apps, business rules and demo data are the same. What changes:
 
-| Topic | `blueprint.md` | This variant |
+| Topic | `blueprint-with-aicore.md` | This variant |
 |---|---|---|
 | BTP account | Enterprise / pay-as-you-go | **BTP trial** (Cloud Foundry) |
 | LLM access | SAP AI Core + Generative AI Hub (SAP Cloud SDK for AI) | **Anthropic Claude API called directly from the CAP app** (`@anthropic-ai/sdk`) |
@@ -294,7 +294,7 @@ On trial there is no orchestration service, so the CAP app has one small **LLM c
 
 ### 5.3 Order Assistant instead of Joule
 
-| | `blueprint.md` | This variant |
+| | `blueprint-with-aicore.md` | This variant |
 |---|---|---|
 | Chat front end | Joule (needs Joule / SAP Build licensing, not on trial) | **Order Assistant**: SAPUI5 chat app in Work Zone (§6.2) |
 | Chat back end | Joule agent with skills calling the CAP tools | CAP service `OrderAssistantService` → Claude with tool use over **read-only** CAP tools |
@@ -306,7 +306,7 @@ The tool layer is still built once as CAP functions, so a Joule front end can be
 
 ## 6. Fiori apps for the demo (custom, on BTP)
 
-The demo has the **three case apps** from `blueprint.md` plus the **Order Assistant** chat app. No analytical apps, dashboards or KPI cockpit.
+The demo has the **three case apps** from `blueprint-with-aicore.md` plus the **Order Assistant** chat app. No analytical apps, dashboards or KPI cockpit.
 
 ### 6.1 Case apps
 
