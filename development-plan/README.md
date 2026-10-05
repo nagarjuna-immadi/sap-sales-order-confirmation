@@ -1,63 +1,72 @@
-# Development plan
+# Development Plan: Sales-to-Planning Order Confirmation Agents
 
-Detailed build plan for the Sales-to-Planning Order Confirmation Agents, derived from [`blueprints/blueprint-without-aicore.md`](../blueprints/blueprint-without-aicore.md) (the BTP trial variant). The blueprint is the source of truth. If this plan and the blueprint disagree, the blueprint wins and this plan gets fixed.
+This is the step-by-step build plan for `sap-sales-order-confirmation`. The **what** and **why** are in [`blueprints/blueprint-without-aicore.md`](../blueprints/blueprint-without-aicore.md) (the BTP trial variant). This plan is the **how** and **in which order**. Section references (§n) point to that blueprint. If the plan and the blueprint disagree, the blueprint wins and the plan gets fixed.
 
-Section references like "§7 A3" point to the blueprint.
+The plan follows the same build order as `sap-cap-tm-dispatch-cockpit`: first a deterministic CAP app that runs fully on mocks, then the Fiori apps one by one, then BTP deployment, and only then the LLM (agent texts and the Order Assistant). It does **not** follow the blueprint's §9 roadmap phases.
 
 ## Phases
 
-| # | Phase | Blueprint roadmap phase | Est. duration | Output |
-|---|---|---|---|---|
-| 0 | [Prerequisites and environment](phase-00-prerequisites.md) | 0 · Prerequisites | 1 wk | Trial account, keys, BAS, repo ready |
-| 1 | [Project foundation and domain model](phase-01-foundation-domain-model.md) | 1 · Demo | 3–4 days | CAP project, CDS model, §8 seed data, test harness |
-| 2 | [A1 Case Orchestrator](phase-02-a1-case-orchestrator.md) | 1 · Demo | 4–5 days | State machine, rules, audit log, timeline, authorization |
-| 3 | [Adapters and tool layer](phase-03-adapters-tool-layer.md) | 1 · Demo | 5–6 days | `mock` + `sandbox` adapters, all deterministic tools |
-| 4 | [LLM client layer](phase-04-llm-client.md) | 1 · Demo | 3–4 days | One LLM module: `anthropic` + `mock`, masking, checks, logging |
-| 5 | [A2 Order Intake and A3 Supply & Inventory](phase-05-agents-a2-a3.md) | 1 · Demo | 4–5 days | Intake, lanes, penalty extraction, supply decision ladder |
-| 6 | [A4 Capacity and A5 Communication](phase-06-agents-a4-a5.md) | 1 · Demo | 4–5 days | Options, simulate/score, frozen horizon, notifications, drafts |
-| 7 | [Case apps (Fiori elements)](phase-07-case-apps.md) | 1 · Demo | 6–8 days | Three case apps with actions, timeline, capacity chart |
-| 8 | [Order Assistant](phase-08-order-assistant.md) | 1 · Demo | 4–5 days | `OrderAssistantService` + SAPUI5 chat app |
-| 9 | [Deployment and Work Zone](phase-09-deployment-work-zone.md) | 1 · Demo | 3–4 days | MTA on CF trial, XSUAA, Work Zone site |
-| 10 | [Demo hardening and rehearsal](phase-10-demo-hardening.md) | 1 · Demo | 3–4 days | Scenarios 1–6 scripted and tested, model choice measured |
-| 11 | [Pilot](phase-11-pilot.md) | 2 · Pilot | 6–8 wks | Real S/4 read-only, one plant, HIGH lane |
-| 12 | [Rollout](phase-12-rollout.md) | 3 · Rollout | open | All lanes and plants, controlled write-back |
+| Phase | Document | Goal |
+| --- | --- | --- |
+| 0 | [Setup and API verification](phase-0-setup.md) | A CAP project that starts with mocked S/4 services and returns the §8 demo orders. Also holds the **real S/4 names** table. |
+| 1 | [Core model and A1 Case Orchestrator](phase-1-core-model.md) | The local case model, the case rules enforced on every action, the audit log and timeline, and the three case services. |
+| 2 | [Tools and deterministic agent logic](phase-2-tools-agent-logic.md) | A2–A5 run end to end **without an LLM**: lanes, supply ladder, capacity options and scores, template texts, simulated S/4 events. |
+| 3 | [Fiori app 1, Supply Planning Workbench](phase-3-supply-workbench.md) | The supply planner works the HIGH/MEDIUM worklist and decides in the UI. |
+| 4 | [Fiori app 2, Production Capacity Workbench](phase-4-production-workbench.md) | A production check requested by the supply planner shows up for the production planner and can be decided. |
+| 5 | [Fiori app 3, Sales Order Feasibility](phase-5-sales-feasibility.md) | Sales sees its orders and confirms to the customer; scenarios 1–5 work across all three apps locally. |
+| 6 | [Hybrid mode and BTP deployment](phase-6-deployment.md) | The apps run on BTP trial in Work Zone, against the real sandbox for every S/4 API that has one. |
+| 7 | [LLM client and agent reasoning](phase-7-llm-agents.md) | A2–A5 get their Claude steps (summaries, explanations, drafts) through one LLM client module, with the template texts as fallback. |
+| 8 | [Order Assistant](phase-8-order-assistant.md) | The read-only chat app in Work Zone answers questions about cases with data cards and deep links (scenario 6). |
+| 9 | [Demo readiness](phase-9-demo-readiness.md) | All six §8.3 scenarios run in the cloud, with a demo reset and a runbook. |
+| 10 | [Extras (optional, real S/4)](phase-10-extras.md) | `s4` adapters, real events, write-back proposals, HANA, MCP server for local development. |
 
-Phases 1–10 together are the blueprint's **Demo** phase (4–6 weeks). The day estimates assume one or two developers and add up to roughly 6 weeks for one developer. With two, run the parallel tracks below.
+## Ground rules
 
-## Dependencies and parallel tracks
+- **Work on `main`.** A phase counts as done when its exit criteria pass and `npm test` is green. Tick off each checkbox in the phase file as it is done.
+- **Tests stay light (to speed up development).** Write jest tests only for the pure logic where a wrong number breaks the demo: the case state machine and rules (`srv/lib/case-rules.js`), the tool calculations with the §8 golden values (`srv/lib/tools/`) and the LLM guards (masking, number check). Verify everything else manually with `cds watch` and `test/http/*.http` files. Add a test only for tricky logic or when asked.
+- **The mock profile always works.** `cds watch` with no credentials and no Anthropic key must keep serving the full app after every phase. From phase 7 on, the LLM `mock` mode returns the template texts.
+- **S/4 stays read-only.** Agents recommend, people decide in Fiori, and nothing writes to S/4HANA. Write-back is a phase 10 extra and never targets the sandbox.
+- **A1 is the only writer of case status.** Every action writes an audit row in the same transaction. Reject and frozen-horizon override need a reason.
+- **Numbers come from tools.** Quantities, dates, loads and scores come from deterministic functions, never from LLM text.
+- **Field names:** the blueprint uses API names but not property names. After `cds import`, use the real EDMX names everywhere (see the table in [phase 0](phase-0-setup.md#real-s4-names)).
+- **Dates** are relative to the demo day (D+n, §8). One `demo-clock` helper resolves them; never call `new Date()` in rules or tools. Timestamps are stored in UTC.
+- **Four apps only:** three case apps plus the Order Assistant. No analytical apps, dashboards or KPI cockpit. Never use the word "copilot".
+- **Claude runs development and test commands; the user runs BTP, build and deploy commands** (`mbt build`, `cf …`, `cds bind`, cockpit actions). Claude prepares the config and gives the exact commands.
+- **Never commit keys** (Hub API key, Anthropic API key). They live in a BTP destination, a user-provided service or a git-ignored `.env`.
 
-```
-P0 ─▶ P1 ─▶ P2 ──────────────┐
-         └▶ P3 ─┐            ├─▶ P5 ─▶ P6 ─▶ P7 ─▶ P9 ─▶ P10
-         └▶ P4 ─┴────────────┘            └▶ P8 ─┘
-```
+## Test strategy summary
 
-- P2 (A1), P3 (tools) and P4 (LLM client) depend only on P1 and can be built in parallel.
-- Agents (P5, P6) need A1, tools and the LLM client.
-- Fiori work (P7) can start on the CDS model from P1 with mock services, but needs P2 actions and P5/P6 recommendations to finish.
-- The Order Assistant (P8) needs A1 read access (P2) and the tool results (P3, P5, P6).
-- Deploy a first skeleton to CF early (end of P2) so trial quota and approuter issues surface early, not in P9.
+| Layer | Tool | Location | Covers |
+| --- | --- | --- | --- |
+| Case rules | jest | `test/case-rules.test.js` | Every allowed and forbidden transition, wrong role, missing reason, with an injected `now` |
+| Tools | jest | `test/tools.test.js` | §8.3 golden values: BOM, supply ladder, O-ALT / O-MOVE loads and scores, earliest date D+7 |
+| LLM guards | jest | `test/llm-guards.test.js` | Masking round trip, number check, fallback to template text |
+| Services | jest + `cds.test` | `test/*-service.test.js` | Optional: only for tricky behaviour, or when asked |
+| Manual | REST Client | `test/http/*.http` | Main check for service work and the scenario flows |
+| UI | Manual, per phase exit | – | The flows listed in each exit criterion |
 
-## Rules every phase must respect
+Run all tests with `npm test`. Run a single test with `npm test -- test/<file>.test.js -t "<name>"`.
 
-These come from the blueprint and `CLAUDE.md`. Each phase has a checklist that repeats the ones relevant to it.
+## Comparison with `sap-cap-tm-dispatch-cockpit`
 
-1. Five agents only: A1 Case Orchestrator (deterministic, no LLM, the only writer of case status, owns audit log and timeline), A2, A3, A4, A5.
-2. Exactly four Fiori apps: Sales Order Feasibility, Supply Planning Workbench, Production Capacity Workbench, Order Assistant. No analytical apps, dashboards or KPI cockpit.
-3. The Order Assistant is read-only, not a sixth agent, makes no recommendations, and answers action requests with a deep link.
-4. Never use the word "copilot" in UI, texts or code.
-5. Agents recommend; humans confirm or reject in Fiori. Agents never change status, never send to customers, never write to S/4HANA.
-6. Numbers, dates and quantities come from deterministic tool functions, never from LLM text.
-7. Every action writes an audit row in the same transaction as the status change. Reject and frozen-horizon override require a reason.
-8. All data access goes through adapters (`mock` | `sandbox` | `s4`).
-9. The §8 demo data stays consistent across all mock files.
-10. Agents never import `@anthropic-ai/sdk`; only the LLM client module does.
-11. API keys (Anthropic, Business Accelerator Hub) are never committed.
+| Topic | TM Dispatch Cockpit | This project |
+| --- | --- | --- |
+| S/4 edition and APIs | Public Cloud, OData V4 `CE_FREIGHT*_0001` | Private Cloud, mostly OData V2 `API_*_SRV` (§4.2); check each one's version at import |
+| Link between S/4 and the app | Freight order ID | Sales order + item → case `FC-nnnn` |
+| Local rules | `award-rules.js` | `case-rules.js` (A1 state machine) + pure tool functions (A3/A4) |
+| Apps | 2 Fiori elements apps + 1 analytics extra | 3 Fiori elements case apps, no analytics (§6) |
+| Chat | TM Assistant over `@cap-js/agents` (A2A, HITL actions) | Order Assistant, **read-only**, `OrderAssistantService` + Claude tool use (§6.2) |
+| LLM access | `@cap-js/agents` with `kind: anthropic` | One LLM client module on `@anthropic-ai/sdk` (§4.4, §5.2); see open decision 1 |
+| Persistence on trial | HANA Cloud | SQLite reseeded at start by default (§4.1); see open decision 2 |
+| Agent writes | Actions with human approval in chat | None. All actions only in the Fiori apps |
 
-## Definition of done (every phase)
+## Open decisions
 
-- Code merged to `main` through a reviewed pull request.
-- Unit tests for new logic pass in CI with `LLM mode = mock` and `adapter mode = mock` (no network, no key needed).
-- No new lint errors.
-- `CLAUDE.md` updated when build, test or run commands change.
-- The phase's exit criteria (listed in each file) are demonstrated.
+| # | Decision | Decide in |
+| --- | --- | --- |
+| 1 | LLM integration: the blueprint's own LLM client module on `@anthropic-ai/sdk` (default in this plan), or `@cap-js/agents` with `kind: anthropic` as in the TM project. The plugin fits a chat agent with approvals; here the agents make single structured calls and the Order Assistant has no actions, so the plain SDK is the simpler fit. Changing this needs a blueprint update first | Phase 7.0 |
+| 2 | Persistence on trial: SQLite reseeded at every start (blueprint default, a restart resets the demo) or HANA Cloud trial as in the TM project (survives restarts, stops every night) | Phase 6 |
+| 3 | Behaviour if a §4.2 API has no usable sandbox data or no sandbox at all (stays mock-only on BTP) | Phase 0.1 |
+| 4 | Delivery priority keys for HIGH / MEDIUM / NORMAL (§10.2). Default `01` / `02` / `03`+blank | Phase 1 |
+| 5 | Frozen horizon length and who may override it (§10.4). Default 3 days, Production Planner | Phase 2 |
+| 6 | Models and effort per agent (§10.7). Default `claude-opus-5-5`; cheaper options measured in phase 9 | Phase 7, 9 |
