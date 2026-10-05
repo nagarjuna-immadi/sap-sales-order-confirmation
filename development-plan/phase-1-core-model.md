@@ -33,7 +33,6 @@ Each function takes plain objects and returns `{ ok: true, next }` or `{ ok: fal
   - a CR needs a parent case (rule 5)
 - [ ] `mapLane(deliveryPriority, mappingRows)`: blank → NORMAL.
 - [ ] `isFinal(status)`, `nextCaseId(lastId)`, `nextCrId(lastId)`.
-- [ ] `test/case-rules.test.js`: one `describe` block per function. The transition test is generated from the table: every allowed transition with the right role, every forbidden one, wrong role, missing reason, and confirm to customer in every non-allowed status (scenario 5).
 
 ## 1.3 Orchestrator: `srv/lib/orchestrator.js`
 
@@ -61,6 +60,6 @@ One service per app, all delegating to `orchestrator.executeAction()`. Keep them
 - [ ] `CaseTimeline` view over `AuditLog` per case **including its child CRs**, with a step label (*Intake → Supply check → Production check → Supply decision → Customer confirmation*) and the time since the previous step. Read-only in all three services.
 - [ ] `srv/lib/case-access.js` with `canRead(user, caseRow)`, used by the services' `@restrict` handlers and later by the Order Assistant tools (rule 8).
 - [ ] Generate `xs-security.json` (`cds add xsuaa`) with the scopes and role templates `Sales`, `SupplyPlanner` and `ProductionPlanner`, and the role collections `OrderConf_Sales`, `OrderConf_SupplyPlanner` and `OrderConf_ProductionPlanner`.
-- [ ] `test/http/case-flow.http` (REST Client): open a case by hand (until phase 2), walk the scenario 1 status path as `nag` and `satish`, and confirm to customer as `srini`. Also try the forbidden steps: wrong user (403), reject without a reason (400), confirm to customer in `WITH_PRODUCTION` (refused, visible in the timeline).
+- [ ] Check by hand through the CAP index page (`http://localhost:4004`): open a case by hand (until phase 2), walk the scenario 1 status path as `nag` and `satish`, and confirm to customer as `srini`. Also try the forbidden steps: wrong user (403), reject without a reason (400), confirm to customer in `WITH_PRODUCTION` and `WITH_SUPPLY_PLANNING` (refused, visible in the timeline; scenario 5).
 
-**Exit criteria:** under `cds watch`, the scenario 1 status path works through the `.http` file with the three users, every forbidden step is refused with an audit row, the timeline shows the path with durations, and `npm test` is green.
+**Exit criteria:** under `cds watch`, the scenario 1 status path works through the CAP index page with the three users, every forbidden step is refused with an audit row, and the timeline shows the path with durations.

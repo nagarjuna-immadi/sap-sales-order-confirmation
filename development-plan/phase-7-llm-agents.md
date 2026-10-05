@@ -18,7 +18,6 @@
 - [ ] Modes `anthropic` and `mock`. In `package.json` → `cds.requires.llm`:
   - `[development]`: `{ "mode": "mock" }`, so `cds watch` needs no key and returns the template texts.
   - `[hybrid]`: `{ "mode": "anthropic" }`, key from `ANTHROPIC_API_KEY` in the git-ignored `.env`.
-  - `[test]`: `{ "mode": "mock" }`, so `npm test` never calls the API.
   - `[production]`: `{ "mode": "anthropic", "vcap": { "name": "sap-sales-order-confirmation-llm" } }`. The `apiKey` comes from a user-provided service (7.4), never from the repo or the MTA.
   - Per agent: `agents.A2 = { model, effort, maxTokens }` (A2 and A5 at `low` effort, A3 and A4 at `medium`).
 - [ ] Request details (checked against the current Claude API):
@@ -35,7 +34,6 @@
 - [ ] LLM failure after retries → template text with `llmUsed = false` and the flag "LLM unavailable". The case flow never waits on the LLM.
 - [ ] `LlmCallLog` per call: agent, case ID, model ID, prompt version, input / output / cache-read tokens, latency, stop reason, fallback used. Never the key or unmasked customer data.
 - [ ] Prompt templates in `srv/lib/llm/prompts/<agent>-<name>.v1.js` with `{ id, version, system, buildUser, schema, fallbackTemplate }`. Bump the version on every text change; the version is stored with each recommendation (§5.1).
-- [ ] `test/llm-guards.test.js`: masking round trip (no customer name or price in the outgoing request), number check catches an invented date and quantity, `refusal` / `max_tokens` / timeout / schema failure → template text, `effort` left out for Haiku.
 
 ## 7.2 Agent LLM steps
 
@@ -49,9 +47,10 @@ Swap the phase 2 template call for `llm.generate()`; the template stays as the f
 
 ## 7.3 Local verification
 
-- [ ] `cds watch` (mock mode) still serves everything with template texts, and `npm test` is green.
+- [ ] `cds watch` (mock mode) still serves everything with template texts.
 - [ ] `cds watch --profile hybrid` with the key: scenario 1 produces the A2 summary, the A3 explanation, the A4 comparison and the A5 draft; `LlmCallLog` shows tokens and cache reads.
 - [ ] Force failures (wrong key, tiny `maxTokens`) and check that the case flow still completes with template texts.
+- [ ] Check the guards by hand in hybrid mode: no customer name or price in the outgoing request (masking), a prompt tweaked to invent a date falls back with `NUMBER_CHECK`, and a Haiku call is sent without `effort`.
 
 ## 7.4 Deployment (commands run by the user)
 
@@ -61,4 +60,4 @@ Swap the phase 2 template call for `llm.generate()`; the template stays as the f
   2. `mbt build`
   3. `cf deploy mta_archives/sap-sales-order-confirmation_<version>.mtar`
 
-**Exit criteria:** scenario 1 runs in the Work Zone site with Claude texts on all four agents, the number check and masking work (checked in `LlmCallLog` and the outgoing request in hybrid mode), the app still completes every scenario with the key removed, and `npm test` is green.
+**Exit criteria:** scenario 1 runs in the Work Zone site with Claude texts on all four agents, the number check and masking work (checked in `LlmCallLog` and the outgoing request in hybrid mode), and the app still completes every scenario with the key removed.

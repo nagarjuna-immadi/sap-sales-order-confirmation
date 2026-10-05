@@ -220,7 +220,7 @@ Every tool reads through an adapter with three modes. The mode is set per data s
 
 | Mode | Source | When |
 |---|---|---|
-| `mock` | Local CSV/JSON with the demo data in §8 | Scripted demo scenarios. Unit tests. |
+| `mock` | Local CSV/JSON with the demo data in §8 | Scripted demo scenarios. Offline demo. |
 | `sandbox` | `sandbox.api.sap.com`, using the base URL from each API's *Try out* page; API key sent in the `APIKey` header | Showing that real S/4HANA APIs and payloads work end to end |
 | `s4` | Your S/4HANA Private Cloud through a BTP destination + Cloud Connector (principal propagation or technical user) | Pilot and rollout (not on trial) |
 
@@ -279,7 +279,7 @@ On trial there is no orchestration service, so the CAP app has one small **LLM c
 
 | Concern | How it is handled |
 |---|---|
-| **Modes** | `anthropic` (real calls) and `mock` (deterministic template text, no network). Unit tests and an offline demo use `mock`. Same switch pattern as the data adapters. |
+| **Modes** | `anthropic` (real calls) and `mock` (deterministic template text, no network). The offline demo uses `mock`. Same switch pattern as the data adapters. |
 | **Model and effort per agent** | Config, e.g. `cds.requires.llm.agents.A3 = { model, effort, maxTokens }`. Short drafts (A2 summary, A5 messages) run at low effort; A3/A4 explanations and the chat at medium. |
 | **Structured output** | Each agent defines a JSON schema for its output and sends it as `output_config.format`. CAP validates the parsed result again before storing it. Invalid → template text. |
 | **Masking** | Before the call: customer names, customer IDs and prices are replaced by tokens (`<CUSTOMER_1>`, `<PRICE_1>`). After the call: tokens are replaced back. Material, plant and order IDs stay (needed for the reasoning, not personal data). The masking map never leaves CAP. |
@@ -431,7 +431,7 @@ OrderFeasibilityCase  FC-nnnn
 
 **Case timeline.** A read-only view of the audit log per case, across all its child CRs: *Intake → Supply check → Production check → Supply decision → Customer confirmation*, with the time each step took. It is shown as a section on the object page of all three case apps, and is available to the Order Assistant through `getCaseTimeline`.
 
-**Tests.** Every allowed and forbidden transition; wrong role per action; reject without reason; confirm to customer in every non-allowed status; CR without parent; concurrent update; exactly one audit row per status change; Order Assistant read tools return only cases the role may see.
+**Checks (manual, no unit tests in the demo).** Every allowed and forbidden transition; wrong role per action; reject without reason; confirm to customer in every non-allowed status; CR without parent; concurrent update; exactly one audit row per status change; Order Assistant read tools return only cases the role may see.
 
 ---
 

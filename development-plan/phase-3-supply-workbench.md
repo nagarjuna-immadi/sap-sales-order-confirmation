@@ -22,6 +22,6 @@
 - [ ] Header button **Ask about this case**: placeholder until phase 8 (opens the Order Assistant with the case ID).
 - [ ] A small **data source** badge (`mock` / `sandbox`) from the tool results' `source`.
 - [ ] Root `server.js` that strips the `/<app-id>` prefix for local `cds watch` (as in the TM project), relative `dataSources` URIs (`odata/v4/...`), and a `watch-supply-workbench` npm script.
-- [ ] Until phases 4 and 5 exist, run the production and sales steps through `test/http/scenarios.http`.
+- [ ] Until phases 4 and 5 exist, run the production and sales steps through the CAP index page (`http://localhost:4004`).
 
 **Exit criteria:** locally, as `nag`, simulate SO-5005 and SO-5006, see FC-0001 (HIGH) above the MEDIUM case, request the production check on FC-0001 (CR-0001 appears), approve the stock transfer on SO-5006's case, and see status, recommendation and timeline update.

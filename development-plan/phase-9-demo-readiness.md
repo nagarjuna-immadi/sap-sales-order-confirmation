@@ -43,4 +43,4 @@
 - [ ] Two full dry runs with the presenter; note the time per scenario.
 - [ ] List the open business decisions from §10 that are still open, with owners.
 
-**Exit criteria:** all six scenarios run in the Work Zone site with Claude texts and again with the key removed, the model choice is recorded, the runbook is done, and `npm test` is green.
+**Exit criteria:** all six scenarios run in the Work Zone site with Claude texts and again with the key removed, the model choice is recorded, and the runbook is done.

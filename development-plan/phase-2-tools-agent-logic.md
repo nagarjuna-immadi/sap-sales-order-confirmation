@@ -21,7 +21,7 @@ The blueprint's adapters (§4.3) map onto CAP profiles, as in the TM project: th
 - [ ] A3: `explodeBom`, `getStock(material, plants[])`, `getOpenReceipts`, `getSlowMovers` (days since last movement, months of supply), `simulateLeftover(material, need, lotSizePolicy)`, `findReallocationCandidates(material, needDate)`, `buildSupplyPicture(case)`.
 - [ ] A3 decision ladder `rankSupplyOptions(picture, case)`: the first option that meets the date is recommended, and all feasible options are returned (rank 1 local stock / receipt, 2 stock transfer preferring excess, 3 reallocation, 4 produce with leftover, 5 reject with the earliest possible date). Add the excess-inventory warning for rank 4 (§7 A3).
 - [ ] A4: `getWorkCenters` (with alternatives), `getLoad`, `getScheduledOrders`, `generateOptions(cr)` (O-ALT, O-MOVE, O-SPLIT only if partial delivery is allowed, O-OVERTIME), `simulate(option)`, `score(option)` with the §7 A4 formula and `ScoringWeights`. Infeasible if the HIGH date is missed or a moved order becomes late; `needsOverride` if an order inside the frozen horizon moves.
-- [ ] `test/tools.test.js` with the §8.3 golden values:
+- [ ] §8.3 golden values, checked by hand through the CAP index page (`http://localhost:4004`):
   - Scenario 1: BOM → SFG-200 100, RAW-1 105, RAW-2 5; FG 0/100, SFG 0/100, RAW-1 150/105, RAW-2 20/5; nothing in plant 1100; no reallocation candidate → **production check**; leftover 0.
   - O-ALT: WC-MACH-01 D+1 +100 (40% → 90%), WC-ASSY-02 D+2 +56 (30% → 100%) and D+3 +44 (25% → 80%), no order moved, finished D+3. O-MOVE: SO-5004 D+2 → D+4, `needsOverride`, WC-ASSY-01 D+4 at 160%, worse score. O-ALT is recommended.
   - Scenario 2: stock transfer of 30 from plant 1100 (excess, 8 months of supply).
@@ -43,6 +43,6 @@ Each agent: trigger → tools → template text → `orchestrator.attachRecommen
 - [ ] `Changed` event with a new delivery priority: A2 re-evaluates the lane, A1 updates it with an audit row. An upgrade to HIGH moves the case to the top of the worklists.
 - [ ] `setScenario('default' | 'sc4-assy02-down')`: switches the mock override for scenario 4 (WC-ASSY-02 capacity 0).
 - [ ] `resetDemo()`: reseeds the database and resets the IDs to FC-0001 / CR-0001.
-- [ ] `test/http/scenarios.http`: scenarios 1–5 as request sequences with the three users.
+- [ ] Walk scenarios 1–5 by hand through the CAP index page with the three users.
 
-**Exit criteria:** under `cds watch`, simulating SO-5005, SO-5006 and SO-5007 gives exactly the §8.3 outcomes through the `.http` files, notifications appear for the right roles, scenario 4 ends with D+7 and a delay draft, and `npm test` (with the golden values) is green.
+**Exit criteria:** under `cds watch`, simulating SO-5005, SO-5006 and SO-5007 gives exactly the §8.3 outcomes through the CAP index page, the golden values in 2.2 match, notifications appear for the right roles, and scenario 4 ends with D+7 and a delay draft.

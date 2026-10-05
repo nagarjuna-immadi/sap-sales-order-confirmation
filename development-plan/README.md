@@ -22,8 +22,8 @@ The plan follows the same build order as `sap-cap-tm-dispatch-cockpit`: first a 
 
 ## Ground rules
 
-- **Work on `main`.** A phase counts as done when its exit criteria pass and `npm test` is green. Tick off each checkbox in the phase file as it is done.
-- **Tests stay light (to speed up development).** Write jest tests only for the pure logic where a wrong number breaks the demo: the case state machine and rules (`srv/lib/case-rules.js`), the tool calculations with the §8 golden values (`srv/lib/tools/`) and the LLM guards (masking, number check). Verify everything else manually with `cds watch` and `test/http/*.http` files. Add a test only for tricky logic or when asked.
+- **Work on `main`.** A phase counts as done when its exit criteria pass. Tick off each checkbox in the phase file as it is done.
+- **No unit tests (this is a demo).** No jest, no `cds.test`, no `*.test.js` and no `.http` files. Everything is verified by hand under `cds watch`, through the CAP server index page (`http://localhost:4004`, with its Fiori preview) and, from phase 3 on, the apps.
 - **The mock profile always works.** `cds watch` with no credentials and no Anthropic key must keep serving the full app after every phase. From phase 7 on, the LLM `mock` mode returns the template texts.
 - **S/4 stays read-only.** Agents recommend, people decide in Fiori, and nothing writes to S/4HANA. Write-back is a phase 10 extra and never targets the sandbox.
 - **A1 is the only writer of case status.** Every action writes an audit row in the same transaction. Reject and frozen-horizon override need a reason.
@@ -31,21 +31,20 @@ The plan follows the same build order as `sap-cap-tm-dispatch-cockpit`: first a 
 - **Field names:** the blueprint uses API names but not property names. After `cds import`, use the real EDMX names everywhere (see the table in [phase 0](phase-0-setup.md#real-s4-names)).
 - **Dates** are relative to the demo day (D+n, §8). One `demo-clock` helper resolves them; never call `new Date()` in rules or tools. Timestamps are stored in UTC.
 - **Four apps only:** three case apps plus the Order Assistant. No analytical apps, dashboards or KPI cockpit. Never use the word "copilot".
-- **Claude runs development and test commands; the user runs BTP, build and deploy commands** (`mbt build`, `cf …`, `cds bind`, cockpit actions). Claude prepares the config and gives the exact commands.
+- **Claude runs development commands; the user runs BTP, build and deploy commands** (`mbt build`, `cf …`, `cds bind`, cockpit actions). Claude prepares the config and gives the exact commands.
 - **Never commit keys** (Hub API key, Anthropic API key). They live in a BTP destination, a user-provided service or a git-ignored `.env`.
 
-## Test strategy summary
+## Verification summary
+
+All checks are manual. There are no unit tests.
 
 | Layer | Tool | Location | Covers |
 | --- | --- | --- | --- |
-| Case rules | jest | `test/case-rules.test.js` | Every allowed and forbidden transition, wrong role, missing reason, with an injected `now` |
-| Tools | jest | `test/tools.test.js` | §8.3 golden values: BOM, supply ladder, O-ALT / O-MOVE loads and scores, earliest date D+7 |
-| LLM guards | jest | `test/llm-guards.test.js` | Masking round trip, number check, fallback to template text |
-| Services | jest + `cds.test` | `test/*-service.test.js` | Optional: only for tricky behaviour, or when asked |
-| Manual | REST Client | `test/http/*.http` | Main check for service work and the scenario flows |
+| Case rules | CAP index page | `http://localhost:4004` | Scenario 1 status path, forbidden steps: wrong user, missing reason, confirm to customer in a non-allowed status |
+| Tools and agents | CAP index page | `http://localhost:4004` | Scenarios 1–5 with the §8.3 golden values: BOM, supply ladder, O-ALT / O-MOVE loads, earliest date D+7 |
+| LLM guards | `cds watch --profile hybrid` + `LlmCallLog` | – | Masking, number check, fallback to template text (forced failures) |
+| Order Assistant | Order Assistant app | Work Zone site | Scenario 6 questions, a case the user may not see, an action request |
 | UI | Manual, per phase exit | – | The flows listed in each exit criterion |
-
-Run all tests with `npm test`. Run a single test with `npm test -- test/<file>.test.js -t "<name>"`.
 
 ## Comparison with `sap-cap-tm-dispatch-cockpit`
 

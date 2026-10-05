@@ -27,7 +27,7 @@ Difference to TM Assistant in the TM project: no `@cap-js/agents`, no A2A, no ap
   - LLM unavailable → no text, only the cards for the case ID found in the question
   - action request ("Confirm FC-0001 to the customer") → explains it can't act, gives the current status from `getCase`, links to the case app; no status change and no audit row
 - [ ] Store each turn in `ChatMessage` (question, answer, tool calls, model ID, tokens). Cleared on app restart (demo retention).
-- [ ] `test/http/assistant.http`: the three scenario 6 questions as `srini` and `satish`, a question about a case the user may not see, and an action request.
+- [ ] Check by hand in the Order Assistant app: the three scenario 6 questions as `srini` and `satish`, a question about a case the user may not see, and an action request.
 
 ## 8.2 Chat UI: Order Assistant (`app/order-assistant/`)
 
@@ -48,4 +48,4 @@ Difference to TM Assistant in the TM project: no `@cap-js/agents`, no A2A, no ap
 - [ ] Commands for the user: `mbt build`, then `cf deploy …`.
 - [ ] Work Zone: refresh the HTML5 Apps provider, add **Order Assistant** to all three groups and the Everyone role, then check it in the site.
 
-**Exit criteria:** scenario 6 works in the Work Zone site: *"What's blocking FC-0001?"* as Sales (waiting for Production on CR-0001, two options, O-ALT recommended, case card, link), *"Compare the options for CR-0001"* as Production (table card, O-MOVE "needs override", link), and *"Confirm FC-0001 to the customer"* changes nothing (status and audit log unchanged). The assistant also works in mock mode without a key, and `npm test` is green.
+**Exit criteria:** scenario 6 works in the Work Zone site: *"What's blocking FC-0001?"* as Sales (waiting for Production on CR-0001, two options, O-ALT recommended, case card, link), *"Compare the options for CR-0001"* as Production (table card, O-MOVE "needs override", link), and *"Confirm FC-0001 to the customer"* changes nothing (status and audit log unchanged). The assistant also works in mock mode without a key.
