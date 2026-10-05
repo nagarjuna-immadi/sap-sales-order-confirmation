@@ -31,7 +31,7 @@ The plan follows the same build order as `sap-cap-tm-dispatch-cockpit`: first a 
 - **Field names:** the blueprint uses API names but not property names. After `cds import`, use the real EDMX names everywhere (see the table in [phase 0](phase-0-setup.md#real-s4-names)).
 - **Dates** are relative to the demo day (D+n, §8). One `demo-clock` helper resolves them; never call `new Date()` in rules or tools. Timestamps are stored in UTC.
 - **Four apps only:** three case apps plus the Order Assistant. No analytical apps, dashboards or KPI cockpit. Never use the word "copilot".
-- **Claude runs development commands; the user runs BTP, build and deploy commands** (`mbt build`, `cf …`, `cds bind`, cockpit actions). Claude prepares the config and gives the exact commands.
+- **Claude runs development commands; the user runs BTP, build and deploy commands** (`mbt build`, every `cf …` command, including read-only ones like `cf apps`, `cds bind`, cockpit actions). Claude prepares the config and gives the exact commands, one step at a time, each with what it does, why it is needed, and what to look for in the output. The user is learning BTP and Cloud Foundry.
 - **Never commit keys** (Hub API key, Anthropic API key). They live in a BTP destination, a user-provided service or a git-ignored `.env`.
 
 ## Verification summary

@@ -18,6 +18,7 @@ Planned stack (see blueprint §4–§5): SAP BTP trial, CAP (Node.js) on Cloud F
 
 ## Rules that must hold in code
 
+- Never run `cf`, `mbt` or `cds bind` commands, not even read-only ones, and never do BTP cockpit steps. Give the user the exact command, one step at a time, with what it does, why it is needed and what to look for in the output: the user runs it to learn BTP and Cloud Foundry.
 - No unit tests: this is a demo. Don't add jest, `cds.test`, `*.test.js` or `.http` files. The user verifies by hand under `cds watch`, through the CAP server index page (`http://localhost:4004`, with its Fiori preview) and the apps.
 - Five agents: A1 Case Orchestrator (deterministic, no LLM, the only writer of case status; also owns the append-only audit log and the case timeline), A2 Order Intake & Prioritization, A3 Supply & Inventory, A4 Capacity & Load Balancing, A5 Communication.
 - Demo has exactly four Fiori apps: three case apps (Sales Order Feasibility, Supply Planning Workbench, Production Capacity Workbench) and the **Order Assistant** chat app (SAPUI5 freestyle, blueprint §6.2). No analytical apps, dashboards or KPI cockpit.

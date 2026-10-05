@@ -9,7 +9,7 @@
 - [ ] **Open decision 1:** confirm the blueprint's own LLM client on `@anthropic-ai/sdk` (this plan) against `@cap-js/agents` with `kind: anthropic` (TM project). If the plugin is chosen, update the blueprint §5.2 and §6.2 first.
 - [ ] **LLM account:** API key from the project's Anthropic Console workspace, with a monthly spend limit (phase 0.7).
 - [ ] **Models:** `claude-opus-5-5` by default (§4.4). For cheap local development, `claude-haiku-4-5` is a configuration change. The final choice per agent is measured in phase 9.
-- [ ] **Trial quota:** check `cf org-quota` and `cf apps`, and raise the `-srv` memory if the SDK needs it.
+- [ ] **Trial quota:** the user runs `cf org-quota` and `cf apps`, and raise the `-srv` memory if the SDK needs it.
 
 ## 7.1 LLM client: `srv/lib/llm/`
 
