@@ -1,550 +1,558 @@
-# Agent Blueprints: High-Priority Sales Order Communication
+# Sales-to-Planning Order Confirmation Agents on SAP BTP
 
-Source of truth: `High_Priority_Sales_Order_Communication_Agent_Design.pdf` (cited below as §n).
-This document breaks the spec's single "Orchestration Agent" into six cooperating agents and gives each one a build-ready blueprint.
+**Solution blueprint · Demo phase**
 
----
+## 0. Confirmed landscape
 
-## 0. Design principle: humans decide, code controls, LLMs only assist
-
-The spec's hard rule (§1, §3) is that the agent **never makes a business decision**. Confirming SO-005 and rescheduling SO-004 are always explicit Confirm/Reject clicks by a human. So the agents are split into three layers:
-
-| Layer | Who | May change workflow state? |
-|---|---|---|
-| **Decision** | Humans: Sales, Planning, Production Scheduler | Yes, but only through Orchestrator commands |
-| **Control** | A1 Orchestrator, A6 Audit (deterministic code, **no LLM**) | A1 is the **only** writer of request status |
-| **Assist** | A2–A4 role copilots, A5 Notification | No. They read data, compute analysis and draft text. |
-
-Consequences:
-- The state machine and its guards contain no LLM calls, so they are fully testable and can't be talked out of a rule.
-- Every copilot has a deterministic "facts" part (numbers, tree, simulation) and an optional LLM "narrative" part (summary, drafted comment). With all LLMs switched off the demo still passes every acceptance criterion in §11, just with plainer text.
-- Copilots output **recommendations and drafts**, which are always labelled as such and always need a human click to take effect.
-
----
-
-## 1. Agent roster
-
-| ID | Agent | Kind | Serves | Spec basis |
-|---|---|---|---|---|
-| A1 | **Workflow Orchestrator** | Deterministic engine | All roles | §5, §6, §10 |
-| A2 | **Sales Copilot** | Facts + optional LLM | Sales / Customer Service | §4 steps 1 & 6, §9 Sales Worklist |
-| A3 | **Planning Copilot** | Facts + optional LLM | Planning | §4 steps 2 & 5, §7.2, §9 Planning Inbox |
-| A4 | **Scheduler Copilot** | Facts + optional LLM | Production Scheduler | §4 step 4, §7.3, §9 Scheduler Inbox |
-| A5 | **Notification Agent** | Templates + optional LLM wording | All roles | §8, §9 Notification Center |
-| A6 | **Audit & Timeline Agent** | Deterministic | All roles | §6 audit rule, §9 Request Timeline, §11 |
-
-### 1.1 Architecture
-
-```
-  ┌────────────── Human screens (§9) ───────────────────────────────────────────┐
-  │ Sales Worklist │ Planning Inbox │ Scheduler Inbox │ Timeline │ Notif. Center│
-  └───────┬───────────────┬────────────────┬──────────────▲──────────────▲──────┘
-          │ commands: Submit / Request check / Confirm / Reject          │
-          ▼                                                │              │
-  ┌─────────────────── A1 Workflow Orchestrator ─────────────────┐       │
-  │ authorize role → guard transition → write state + audit (1 tx)│       │
-  │ → publish domain event                                        │       │
-  └────────┬───────────────────────────────┬──────────────────────┘       │
-           │ same transaction               │ domain events (after commit) │
-           ▼                                ▼                              │
-     A6 Audit & Timeline             A5 Notification Agent ────────────────┘
-           ▲
-           │ read-only queries
-  A2 Sales Copilot   A3 Planning Copilot   A4 Scheduler Copilot
-           │                 │                     │
-           ▼                 ▼                     ▼
-  ┌──────────────── Data Service Layer (mock JSON / in-memory) ────────────────┐
-  │ Customers │ SalesOrders │ Materials+Stock │ BOM │ Resources+Schedule │ Repos│
-  └────────────────────────────────────────────────────────────────────────────┘
-```
-
-All data access goes through the service layer (§1, §12), so real SAP APIs can replace the mock services later without touching A1.
-
----
-
-## 2. Shared foundation (used by every agent)
-
-### 2.1 Roles and demo users
-
-| Role code | Demo user | Screens |
-|---|---|---|
-| `SALES` | `sales.demo` | Sales Worklist, Timeline, Notifications |
-| `PLANNING` | `planning.demo` | Planning Inbox, Timeline, Notifications |
-| `PRODUCTION_SCHEDULER` | `scheduler.demo` | Scheduler Inbox, Timeline, Notifications |
-| `AGENT` | `system` | Used as the actor on system-generated audit rows |
-
-Demo login can be a role picker. Every command carries `{actorRole, actorUser}`.
-
-### 2.2 Mock master and transactional data
-
-From §2. Values marked *(demo)* are not in the spec and were chosen here to make the scheduler panel work. Change them in one place.
-
-```jsonc
-// customers.json
-[{ "customerId": "CUST-1001", "name": "ABC Automotive", "status": "Active" }]
-
-// salesOrders.json
-[
-  { "salesOrder": "SO-005", "customerId": "CUST-1001", "material": "FG-100", "quantity": 100,
-    "priority": "HIGH",   "requestedDeliveryDate": "2026-10-15" /*(demo)*/, "status": "AWAITING_FEASIBILITY" },
-  { "salesOrder": "SO-004", "customerId": "CUST-1001" /*(demo)*/, "material": "FG-100", "quantity": 100,
-    "priority": "NORMAL", "requestedDeliveryDate": "2026-10-22" /*(demo)*/, "status": "PLANNED" }
-]
-
-// materials.json  (stock per §2)
-[
-  { "material": "FG-100",  "type": "FG",  "description": "Finished Product",      "stock": 0   },
-  { "material": "SFG-200", "type": "SFG", "description": "Semi-Finished Product", "stock": 0   },
-  { "material": "RAW-1",   "type": "RAW", "description": "Primary Raw Material",  "stock": 150 },
-  { "material": "RAW-2",   "type": "RAW", "description": "Secondary Raw Material","stock": 20  }
-]
-
-// bom.json  (per 1 unit of parent; gives the §7.2 needs of 105 and 5 for qty 100)
-[
-  { "parent": "FG-100",  "component": "SFG-200", "qtyPer": 1.00 },
-  { "parent": "SFG-200", "component": "RAW-1",   "qtyPer": 1.05 },
-  { "parent": "SFG-200", "component": "RAW-2",   "qtyPer": 0.05 }
-]
-
-// resources.json + schedule.json  (all (demo))
-[{ "resourceId": "LINE-01", "description": "FG-100 assembly line", "capacityPerDay": 100 }]
-[
-  { "slotDate": "2026-10-12", "resourceId": "LINE-01", "salesOrder": "SO-004", "quantity": 100 },
-  { "slotDate": "2026-10-13", "resourceId": "LINE-01", "salesOrder": null,     "quantity": 0   },
-  { "slotDate": "2026-10-14", "resourceId": "LINE-01", "salesOrder": null,     "quantity": 0   }
-]
-```
-
-The demo dependency chain must stay consistent: `CUST-1001 → SO-005 → FG-100 → SFG-200 → RAW-1 + RAW-2`, with `SO-004` as the candidate to move.
-
-### 2.3 Data service interfaces
-
-All reads used by copilots. Swappable for real APIs.
-
-| Service | Methods |
+| Topic | Decision |
 |---|---|
-| `CustomerService` | `get(customerId)` |
-| `SalesOrderService` | `get(so)`, `list(filter)`, `markConfirmed(so)` *(A1 only)* |
-| `MaterialService` | `get(material)`, `getStock(material)`, `explodeBom(material, qty)` |
-| `ResourceService` | `getResource(id)`, `getSchedule(resourceId, from, to)`, `findOrdersOn(resourceId, material)` |
-| `RequestRepository` | `create`, `get`, `update(req, expectedVersion)`, `list(filter)` |
-| `ScheduleRequestRepository` | `create`, `get`, `listByParent(requestId)`, `update` |
-| `AuditRepository` | `append(entry)` *(same tx as status change)*, `listByRequest(requestId)` |
-| `NotificationRepository` | `create`, `listForRole(role, unreadOnly)`, `markRead(id)` |
+| ERP | **SAP S/4HANA Private Cloud** |
+| APIs and events for the demo | Available on the **SAP Business Accelerator Hub sandbox** (api.sap.com) |
+| Advanced ATP (Backorder Processing, Product Allocation) | **Not active.** Basic ATP only. |
+| Embedded PP/DS | **Not active.** Classic PP capacity planning only. |
+| Priority source | Sales order **delivery priority** (see §7 A2 for the mapping) |
 
-### 2.4 Entities
+---
 
-Field names follow §7.
+## 1. Problem today
 
-**FeasibilityRequest** (parent, owned by Sales)
-```jsonc
-{
-  "requestId": "REQ-001",
-  "customerId": "CUST-1001",
-  "salesOrder": "SO-005",
-  "fg": "FG-100",
-  "quantity": 100,
-  "priority": "HIGH",
-  "requestedDeliveryDate": "2026-10-15",
-  "requestReason": "Key customer needs SO-005 ahead of plan",
-  "status": "WAITING_FOR_PLANNING",
-  "requestedByRole": "SALES",
-  "requestedByUser": "sales.demo",
-  "stockResult": null,                 // §7.2 snapshot, set at Planning stock check
-  "schedulerCheckRequested": false,    // true once any SCH has been created
-  "activeScheduleRequestId": null,     // latest SCH-xxx
-  "planningDecision": null,            // §7.4
-  "salesOrderConfirmed": false,
-  "version": 1,
-  "createdAt": "...", "updatedAt": "..."
-}
+### 1.1 Current process
+
+```
+Customer ──order──▶ Sales ──phone / email / chat──▶ Supply Chain Planning ──phone / email / meetings──▶ Production Planning
+                      ▲                                   │                                               │
+                      └──────────── answer (hours to days, often incomplete) ◀─────────────────────────────┘
 ```
 
-**ScheduleRequest** (child, must reference parent)
-```jsonc
-{
-  "scheduleRequestId": "SCH-001",
-  "parentRequestId": "REQ-001",        // REQUIRED, validated on create
-  "highPrioritySalesOrder": "SO-005",
-  "orderToReschedule": "SO-004",
-  "question": "Can SO-004 be rescheduled so SO-005 can be produced first?",
-  "status": "WAITING_FOR_PRODUCTION",  // → CONFIRMED | REJECTED
-  "decision": null,                    // "CONFIRM" | "REJECT"
-  "proposedProductionDate": null,
-  "comment": null,
-  "decidedByUser": null, "decidedAt": null,
-  "createdAt": "..."
-}
-```
+- Sales asks Supply Chain Planning about stock availability by phone, email or internal chat.
+- Supply Chain Planning asks the Production Planner about resource capacity by phone, email or in meetings.
+- Each team works in its own SAP GUI transactions (sales orders, stock/requirements list, MRP, capacity planning). Nobody sees the whole picture.
+- There is no shared record of the question, the answer, who decided what, or how long it took.
 
-**AuditEntry** (append-only, see A6) and **Notification** (see A5).
+### 1.2 Pain points and root causes
 
-### 2.5 Status state machine
-
-Parent request (§6), with the "resubmit scheduler request" path written out:
-
-| From | Waiting for | Allowed to | Command | Actor |
-|---|---|---|---|---|
-| `DRAFT` | Sales | `WAITING_FOR_PLANNING` | `submitFeasibility` | SALES |
-| `WAITING_FOR_PLANNING` | Planning | `WAITING_FOR_PRODUCTION` | `requestProductionCheck` | PLANNING |
-| `WAITING_FOR_PLANNING` | Planning | `REJECTED_BY_PLANNING` | `planningDecision(REJECT)` | PLANNING |
-| `WAITING_FOR_PRODUCTION` | Scheduler | `PRODUCTION_CONFIRMED` | `schedulerDecision(CONFIRM)` | PRODUCTION_SCHEDULER |
-| `WAITING_FOR_PRODUCTION` | Scheduler | `REJECTED_BY_PRODUCTION` | `schedulerDecision(REJECT)` | PRODUCTION_SCHEDULER |
-| `PRODUCTION_CONFIRMED` | Planning | `PLANNING_CONFIRMED` | `planningDecision(CONFIRM)` | PLANNING |
-| `PRODUCTION_CONFIRMED` | Planning | `REJECTED_BY_PLANNING` | `planningDecision(REJECT)` | PLANNING |
-| `REJECTED_BY_PRODUCTION` | Planning | `REJECTED_BY_PLANNING` | `planningDecision(REJECT)` | PLANNING |
-| `REJECTED_BY_PRODUCTION` | Planning | `WAITING_FOR_PRODUCTION` (new SCH) | `resubmitProductionCheck` | PLANNING |
-| `PLANNING_CONFIRMED` | Sales | `COMPLETED` | `confirmSalesOrder` | SALES |
-| `REJECTED_BY_PLANNING` | Sales | *(closed)* | `closeRequest` / start new REQ | SALES |
-| `COMPLETED` | none | *(final)* | none | none |
-
-Child `SCH-xxx`: `WAITING_FOR_PRODUCTION → CONFIRMED | REJECTED`. A rejected SCH is never reopened; resubmitting creates `SCH-002` with the same `parentRequestId`.
-
-### 2.6 Commands (API surface of A1)
-
-| Command | HTTP sketch | Spec handler |
+| # | Pain point | Root cause |
 |---|---|---|
-| `submitFeasibility` | `POST /requests` | `onSalesSubmit` |
-| `requestProductionCheck` | `POST /requests/{id}/production-check` | `onPlanningStockCheck` (non-reject branch) |
-| `planningDecision` | `POST /requests/{id}/planning-decision` | `onPlanningStockCheck` (reject branch) / `onPlanningDecision` |
-| `schedulerDecision` | `POST /schedule-requests/{id}/decision` | `onSchedulerDecision` |
-| `resubmitProductionCheck` | `POST /requests/{id}/production-check` (from REJECTED_BY_PRODUCTION) | §6 "resubmit" |
-| `confirmSalesOrder` | `POST /requests/{id}/sales-confirm` | `onSalesConfirm` |
-| `closeRequest` | `POST /requests/{id}/close` | §6 "closed" |
-
-Every command body: `{ actorRole, actorUser, expectedVersion, idempotencyKey, comment?, reason?, ...payload }`.
-
-### 2.7 Domain events (published by A1 after commit)
-
-`RequestSubmitted`, `ProductionCheckRequested`, `SchedulerDecisionRecorded`, `PlanningDecisionRecorded`, `SalesOrderConfirmed`, `RequestClosed`, `TransitionRefused`.
-Every event carries `{eventId, requestId, scheduleRequestId?, previousStatus, newStatus, actorRole, actorUser, comment, reason, occurredAt, payload}`.
+| P1 | Communication gap between Sales, Supply Chain Planning and Production | Requests are unstructured and live in inboxes and phone calls. There is no shared case. |
+| P2 | Sales order confirmations to customers are delayed | Every request waits in a queue. Each team assembles the same data again by hand. |
+| P3 | Too much inventory in the warehouse | Shortages are solved by producing more instead of first using stock in other plants, open receipts or slow-moving stock. Lot sizes overshoot the real need. |
+| P4 | Production resources are badly load-balanced | Urgent orders are squeezed onto the usual machine. Alternative work centers with free capacity are not considered. |
+| P5 | Near-term production plans keep being disrupted | Orders already fixed for the next few days are moved ad hoc to make room for urgent orders. |
+| P6 | Late confirmations lead to customer penalties | High-priority orders get no faster path than normal ones. Nobody sees the penalty risk while the order is being decided. |
 
 ---
 
-## 3. Agent blueprints
+## 2. Target process
 
-Each blueprint uses the same template: Mission · Autonomy · Triggers · Inputs · Tools (allowed / denied) · Behaviour · Outputs · Guardrails · Edge cases · Tests.
+### 2.1 Principles
+
+1. **One digital case per order question.** Phone and email are replaced by an **Order Feasibility Case** that all three teams see, with the same ID, data and timeline.
+2. **Priority lanes.** HIGH, MEDIUM and NORMAL orders follow different paths. HIGH cases always come first in every team's worklist.
+3. **Agents prepare, people decide.** AI agents collect the data, run the checks, simulate options and draft answers. Confirming to the customer, approving a stock transfer and changing the production plan are always explicit human actions.
+4. **Use what exists before producing more.** Every production request first passes an inventory check (avoids P3).
+5. **Balance load and protect the frozen horizon.** Capacity options are scored for load balance, and changes to orders inside the near-term frozen window need explicit approval from the Production Planner (avoids P4 and P5).
+6. **Measure everything.** Every step is time-stamped, so lead time per step and penalties avoided are visible.
+
+### 2.2 Priority lanes
+
+| Lane | Trigger | Path |
+|---|---|---|
+| **HIGH (fast lane)** | Delivery priority mapped to HIGH, or the customer has a penalty clause | A case is created automatically and sent to Supply Chain Planning at once, at the top of their worklist. If needed, the Production Planner is asked with ready-made options. Sales confirms to the customer. |
+| **MEDIUM (standard lane)** | Delivery priority mapped to MEDIUM | A case is created. Supply Chain Planning reviews it in its worklist after HIGH cases. Production is asked only if there is no stock or supply. |
+| **NORMAL (auto lane)** | Delivery priority mapped to NORMAL (or blank) | The standard availability check confirms the order. A case is created **only** if the check fails (exception). Normal orders may be moved to make room for HIGH orders, but only if their own delivery date still holds. No human step when there is no exception. |
+
+Worklists in every app are sorted by lane (HIGH → MEDIUM → NORMAL), then by the customer's requested delivery date.
+
+### 2.3 Target flow (HIGH lane)
+
+```
+ Sales order (High) created in S/4HANA
+        │ business event
+        ▼
+ [A2 Order Intake Agent]  classify priority, check penalty risk, open case FC-0001
+        ▼
+ [A3 Supply & Inventory Agent]  ATP + BOM explosion + multi-plant stock + excess-stock check
+        │  recommendation: (a) confirm from stock   (b) stock transfer   (c) needs production   (d) reject
+        ▼
+ Supply Chain Planner ── decides in the Supply Planning Workbench ──┐
+        │ (c) Request production check                              │ (a)(b) Confirm / (d) Reject
+        ▼                                                            │
+ [A4 Capacity & Load Balancing Agent]  simulate options per work      │
+        center, score load balance, check the frozen horizon         │
+        ▼                                                            │
+ Production Planner ── chooses option / rejects in Production       │
+        Capacity Workbench                                           │
+        ▼                                                            │
+ Supply Chain Planner ── confirms date to Sales ◀────────────────────┘
+        ▼
+ Sales ── reviews and sends the confirmation to the customer (draft written by A5)
+        ▼
+ Case CONFIRMED_TO_CUSTOMER · audit trail recorded by A1
+```
+
+[A1 Case Orchestrator] runs underneath every step. It enforces statuses and business rules, routes tasks and is the only component allowed to change the case status.
 
 ---
 
-### A1. Workflow Orchestrator
+## 3. What exists in SAP standard (and the gap)
 
-**Mission.** Be the single gatekeeper of the business case. Accept human commands, enforce the state machine and business rules, persist state and audit atomically, and emit events so others can notify and display.
+### 3.1 Standard Fiori apps relevant to this flow
 
-**Autonomy.** None over business outcomes. It decides only *whether a human's command is allowed*, never *what the decision is*. No LLM.
+These are SAP S/4HANA apps. Availability and app IDs depend on your release and whether you run Cloud or on-premise. **Check each one in the SAP Fiori Apps Reference Library for your exact release.**
 
-**Triggers.** The commands in §2.6.
+| Team | Standard app | What it gives you |
+|---|---|---|
+| Sales | **Manage Sales Orders** (incl. Version 2) | Create, change and list sales orders, including the availability check result |
+| Sales | **Track Sales Orders** | Status of an order through the process |
+| Sales | **Sales Order Fulfillment – Analyze and Resolve Issues** | Orders blocked or incomplete, with fixes |
+| Sales | **My Sales Overview** | Overview page for sales reps |
+| Supply Chain Planning | **Monitor Material Coverage**, **Manage Material Coverage** | Shortages and coverage per material, with solution proposals |
+| Supply Chain Planning | **Stock/Requirements List** (MD04, also as a GUI-for-HTML tile) | Element-by-element supply and demand |
+| Supply Chain Planning | **Schedule MRP Runs** | MRP Live runs |
+| Supply Chain Planning / Inventory | **Stock – Multiple Materials**, **Stock – Single Material**, **Slow or Non-Moving Materials** | Stock per plant/location and slow movers (input for avoiding excess stock) |
+| Production | **Manage Production Orders**, **Manage Planned Orders** | Order lists and changes |
+| Production | **Manage Work Center Capacity**, **Capacity Scheduling Board** | Load per work center and graphical rescheduling |
+| Cross-team | **My Inbox** (Flexible Workflow), **Situation Handling** (My Situations), launchpad notifications | Tasks, alerts and notifications |
 
-**Inputs.** Command payload, current `FeasibilityRequest` / `ScheduleRequest`, data services (for snapshots).
+### 3.2 The gap
 
-**Tools.**
-- Allowed: all repositories (write), `SalesOrderService.markConfirmed`, `MaterialService` (to snapshot the stock result), `AuditRepository.append`, event publisher.
-- Denied: anything that changes stock, BOM or the production schedule (§12: no automatic rescheduling, no real production transactions).
+There is **no single standard Fiori app that runs the cross-team request → answer → confirmation conversation** between Sales, Supply Chain Planning and Production with one shared case, priority lanes and audit trail. Standard apps give each team *its own data*. They don't connect the teams' *decisions*.
 
-**Behaviour: common pipeline for every command**
+That gap is what this solution fills: **a side-by-side extension on SAP BTP** (custom Fiori apps + AI agents) that reads from and links to the standard apps above rather than replacing them.
+
+### 3.3 Standard levers to use alongside the agents
+
+Advanced ATP and embedded PP/DS are not active. That means **S/4HANA itself will not prefer high-priority orders when stock is scarce**, and capacity planning is classic and infinite (it shows overloads but doesn't prevent them). The agents fill exactly that gap: A3 finds stock that can be reassigned, and A4 scores load balance. The agents work better if these classic settings are in order:
+
+- **Delivery priority maintained consistently** in the customer master (sales area data) so it defaults correctly into sales order items, and controlled by Sales when it is changed on the order.
+- **Classic rescheduling of sales documents** (transaction V_V2), which re-runs ATP for open orders sorted by delivery priority. Use it for periodic re-confirmation, and check its status for your release in the S/4HANA simplification list.
+- **MRP lot-sizing review** (exact lot vs fixed lot) for materials with chronic excess stock.
+- **Planning time fence / firming** in MRP for the near-term frozen horizon.
+- **Work center capacities and alternative production versions** maintained, so A4 can offer alternative resources.
+
+Later options, not in scope now: Advanced ATP (Backorder Processing with *Win / Gain / Redistribute / Fill* strategies, Product Allocation) and embedded PP/DS would move part of the agents' logic into standard S/4HANA. The agent design keeps that path open, because the tool layer can switch to those engines without changing the case flow.
+
+---
+
+## 4. Solution architecture on SAP BTP
+
 ```
-handle(command):
-  1. idempotency: if idempotencyKey seen → return stored result
-  2. load request (and SCH if applicable)
-  3. authorize: command.actorRole == waitingFor(request.status)      else REFUSE(ROLE_NOT_ALLOWED)
-  4. guard:     (request.status → target) in TRANSITIONS               else REFUSE(INVALID_TRANSITION)
-  5. rules:     command-specific checks (below)                        else REFUSE(RULE_VIOLATION)
-  6. version:   request.version == command.expectedVersion             else REFUSE(STALE_VERSION)
-  7. in ONE transaction:
-       apply effects, status = target, version++
-       audit.append({actor, timestamp, comment/reason, previousStatus, newStatus, ...})
-  8. after commit: publish domain event
-  9. return updated request view
-REFUSE(code): no state change; audit.append(kind="REFUSED", ...); publish TransitionRefused; return 409/403 with message
+┌──────────────────────────── SAP Build Work Zone (launchpad, role-based spaces) ────────────────────────────┐
+│  Sales Order            Supply Planning           Production Capacity             Joule                │
+│  Feasibility (Sales)    Workbench (SCP)           Workbench (Production)          (chat entry, later)  │
+│  └─ links to standard apps: Manage Sales Orders · Monitor Material Coverage · Manage Work Center Capacity │
+└───────────────┬──────────────────────────────────────────────────────────────────────────────▲───────────┘
+                │ OData V4 (actions: Submit / Confirm / Reject / Choose option)                │ notifications
+                ▼                                                                              │
+┌──────────────────────────── CAP application (Node.js) on Cloud Foundry ─────────────────────────────────────┐
+│  A1 Case Orchestrator (state machine, business rules, authorization, audit log, case timeline)            │
+│  A2 Order Intake · A3 Supply & Inventory · A4 Capacity & Load Balancing · A5 Communication              │
+│  Tool layer: deterministic functions (ATP, BOM, stock, capacity, simulate) ── Adapters (mock|sandbox|s4) │
+└──────┬──────────────────────┬─────────────────────────────┬───────────────────────────┬────────────────────┘
+       │ persistence           │ LLM calls                   │ events                    │ S/4 APIs
+       ▼                       ▼                             ▼                           ▼
+ SAP HANA Cloud         SAP AI Core – Generative AI    SAP Event Mesh /          Destination service +
+ (cases, audit;         Hub (orchestration: prompt     Advanced Event Mesh       Cloud Connector →
+  vector engine for     templates, grounding, data    (S/4 business events:     SAP S/4HANA OData APIs
+  grounding docs)       masking, content filtering)   sales order created/changed)
 ```
 
-**Behaviour: per handler (maps §10)**
+### 4.1 BTP services
 
-| Handler | Rules (step 5) | Effects (step 7) | Event |
+| Service | Purpose here | Demo | Pilot / Production |
 |---|---|---|---|
-| `onSalesSubmit` | SO exists, priority `HIGH`, no open REQ for this SO | create `REQ-nnn`, audit `DRAFT → WAITING_FOR_PLANNING` | `RequestSubmitted` |
-| `onPlanningStockCheck` → request check | `stockResult` computed server-side via `MaterialService.explodeBom` (never trust client numbers); `planningAction = REQUEST_PRODUCTION_CHECK`; `orderToReschedule` exists, is NORMAL, same FG/resource | save `stockResult`; create `SCH-nnn` with `parentRequestId`; `schedulerCheckRequested = true`; parent → `WAITING_FOR_PRODUCTION` | `ProductionCheckRequested` |
-| `onPlanningStockCheck` → reject | `reason` non-empty | save `stockResult`; parent → `REJECTED_BY_PLANNING` | `PlanningDecisionRecorded` |
-| `onSchedulerDecision` | SCH status `WAITING_FOR_PRODUCTION`; parent status `WAITING_FOR_PRODUCTION`; SCH is parent's `activeScheduleRequestId`; CONFIRM needs `proposedProductionDate`; REJECT needs `reason` | SCH → `CONFIRMED`/`REJECTED`; parent → `PRODUCTION_CONFIRMED`/`REJECTED_BY_PRODUCTION` | `SchedulerDecisionRecorded` |
-| `onPlanningDecision` | CONFIRM: if `schedulerCheckRequested` then active SCH `decision == CONFIRM` (§6, §10); `confirmedDate` required. REJECT: `reason` required | store §7.4 `planningDecision`; parent → `PLANNING_CONFIRMED`/`REJECTED_BY_PLANNING` | `PlanningDecisionRecorded` |
-| `resubmitProductionCheck` | status `REJECTED_BY_PRODUCTION` | new `SCH-nnn` (same parent), parent → `WAITING_FOR_PRODUCTION` | `ProductionCheckRequested` |
-| `onSalesConfirm` | status **must** be `PLANNING_CONFIRMED` (§6) | `SalesOrderService.markConfirmed("SO-005")`; `salesOrderConfirmed = true`; parent → `COMPLETED` | `SalesOrderConfirmed` |
-| `closeRequest` | status `REJECTED_BY_PLANNING` | mark closed (status unchanged, `closedAt` set) | `RequestClosed` |
+| **SAP Business Application Studio** | Development of CAP + Fiori apps | ✔ | ✔ |
+| **CAP (Cloud Application Programming Model)**, Cloud Foundry runtime | Case service, agents' tools, orchestrator | ✔ | ✔ |
+| **SAP HANA Cloud** | Cases and audit. Vector engine for grounding documents (e.g. customer penalty terms) | SQLite in-memory is fine | ✔ |
+| **SAP AI Core + Generative AI Hub** (orchestration service) | LLM reasoning for agents, via SAP Cloud SDK for AI. Choice of models incl. Anthropic Claude, OpenAI GPT and Google Gemini | ✔ (needs the *extended* service plan) | ✔ |
+| **SAP Build Work Zone, standard edition** | Launchpad, role-based spaces, notifications | ✔ | ✔ |
+| **SAP Fiori elements / SAPUI5** | The three apps (§6) | ✔ | ✔ |
+| **Joule + Joule Studio (in SAP Build)** | Conversational entry point. Low-code agent builder option (§5.2) | Optional | ✔ (license dependent) |
+| **SAP Event Mesh** or **Advanced Event Mesh** | S/4HANA sales order events → case creation | Simulated | ✔ |
+| **Destination + Connectivity services, Cloud Connector** | Secure access to S/4HANA Private Cloud. Also holds the sandbox URL + API key for the demo | ✔ (sandbox destination) | ✔ |
+| **SAP Build Process Automation** | Optional: low-code approval tasks in My Inbox / SAP Task Center, if preferred over CAP actions | Optional | Optional |
+| **Authorization & Trust Management (XSUAA)** + SAP Cloud Identity Services | Role collections per team | ✔ | ✔ |
 
-**Outputs.** Updated entities, audit rows (via A6), domain events, and a per-role **available actions** list for each request (`getAvailableActions(requestId, role)`). The UI renders buttons from this list, but the server rules above still apply even if a button is forced. Per §11 the rule is enforced, not just hidden.
+**Check your global account's entitlements** for AI Core (extended plan), HANA Cloud, Work Zone and Joule before the demo build.
 
-**Guardrails.**
-- Status is written only here. Copilots get no write access.
-- Reject without a reason is refused. Confirm accepts an optional comment.
-- `SCH` without `parentRequestId`, or with a parent that doesn't exist, is refused at create.
-- Never edits `schedule.json`. The scheduler's confirmation is recorded as a decision with a proposed date only.
+### 4.2 S/4HANA APIs the agents will use
 
-**Edge cases.** Double click → idempotency key. Two Planning users at once → version check. Late scheduler decision on a superseded SCH → refused (`not active`). Sales confirm before Planning → refused + audit `REFUSED` row (good demo moment).
+API names below are from the SAP S/4HANA (private cloud / on-premise) API package on SAP Business Accelerator Hub. Confirm the version of each one against your release.
 
-**Tests.** One test per row of §2.5 (allowed), plus one per forbidden pair, e.g. `WAITING_FOR_PLANNING → PLANNING_CONFIRMED`, `WAITING_FOR_PRODUCTION → COMPLETED`, Sales confirm in every status except `PLANNING_CONFIRMED`, Planning confirm while SCH is pending or rejected, reject with empty reason, wrong role for each command.
+| Data | S/4HANA API | Used by |
+|---|---|---|
+| Sales orders, items, schedule lines, **delivery priority** | `API_SALES_ORDER_SRV` (Sales Order A2X) | A2, A3 |
+| Product availability (basic ATP) | `API_PRODUCT_AVAILY_INFO_BASIC` (Product Availability Information) | A2, A3 |
+| Stock per plant / storage location | `API_MATERIAL_STOCK_SRV` | A3 |
+| BOM | `API_BILL_OF_MATERIAL_SRV` | A3 |
+| Product master incl. MRP data (lot size) | `API_PRODUCT_SRV` | A3 |
+| Planned / production orders | `API_PLANNED_ORDERS`, `API_PRODUCTION_ORDER_2_SRV` | A3, A4 |
+| Work centers and capacity | `API_WORK_CENTERS` | A4 |
+| Capacity **load per day** | Usually not a standard released API. Pilot: custom CDS view + RAP/OData service in S/4HANA Private Cloud | A4 |
+| Events | Sales order business events (created / changed) | A2 |
 
----
+### 4.3 Data adapter modes
 
-### A2. Sales Copilot
+Every tool reads through an adapter with three modes. The mode is set per data source (CAP `cds.requires` profiles), so the demo can mix them.
 
-**Mission.** Help Sales raise a complete feasibility request quickly, understand where it is, and act correctly when Planning answers.
+| Mode | Source | When |
+|---|---|---|
+| `mock` | Local CSV/JSON with the demo data in §8 | Scripted demo scenarios. Unit tests. |
+| `sandbox` | `sandbox.api.sap.com`, using the base URL from each API's *Try out* page; API key sent in the `APIKey` header | Showing that real S/4HANA APIs and payloads work end to end |
+| `s4` | Your S/4HANA Private Cloud through a BTP destination + Cloud Connector (principal propagation or technical user) | Pilot and rollout |
 
-**Autonomy.** Advisory. Prefills forms and writes summaries. Never submits or confirms.
+What the sandbox can and cannot do for this demo:
+- ✔ Real **read** calls with real S/4HANA payload shapes, so the adapters and field mappings are proven before the pilot.
+- ✘ **Shared, read-only, fixed data.** The sandbox will not contain our demo story (FG-100, SO-5005, overloaded work center, excess stock in plant 1100), and we can't create it there. So the **scripted scenarios run in `mock` mode**, and a "live data" view in each app shows the same tools working against the sandbox.
+- ✘ **No live event stream.** Business Accelerator Hub documents the event specifications (topics and payloads), but it doesn't push events into your Event Mesh. In the demo, a "Simulate S/4 event" button posts a payload in exactly that format to the CAP event handler. In the pilot, events come from S/4HANA via **Enterprise Event Enablement** (channel to SAP Event Mesh, configured in `/IWXBE/CONFIG`).
+- ✘ Capacity load per day is probably not in the sandbox (see the table above), so A4 load data stays `mock` until the custom CDS service exists.
+- Keep the API key in a BTP destination (additional header) or a local `.env` that is never committed, not in code.
 
-**Triggers.**
-- Sales opens SO-005 in the Sales Worklist ("Check Possibility").
-- `PlanningDecisionRecorded` for a Sales-owned request.
-- Sales opens a request and asks "what's happening?" (status explainer).
-
-**Inputs.** `SalesOrderService.get`, `CustomerService.get`, `RequestRepository.get`, A6 timeline, A1 `getAvailableActions`.
-
-**Tools.**
-- Allowed (read-only): `getSalesOrder`, `getCustomer`, `getRequest`, `getTimeline`, `getAvailableActions`.
-- Denied: every A1 command.
-
-**Behaviour.**
-1. **Prefill request.** From SO-005 build a §7.1 draft: customer, SO, FG, quantity, priority, requested date. Draft a short `requestReason` (LLM optional; fallback template: *"High-priority order SO-005 for ABC Automotive (100 × FG-100) requested for 2026-10-15. Please check confirmation possibility."*). Sales edits and clicks **Submit**.
-2. **Status explainer.** Turn the current status into one line: *"REQ-001 is waiting for Production Scheduler (SCH-001: can SO-004 move so SO-005 goes first?)."*
-3. **Planning answer digest.** On CONFIRM: confirmed date, Scheduler's proposed date and comment, Planning comment, and the decision trail. On REJECT: the reason, which team rejected and the next options (close / new request).
-4. **Disabled-button reason.** If Sales hovers a disabled "Confirm Sales Order", explain *"Available only when REQ-001 is PLANNING_CONFIRMED. Current status: WAITING_FOR_PRODUCTION."*
-
-**Outputs.** Draft request (unsaved), status line, decision digest card.
-
-**Guardrails.** It must not say "SO-005 is confirmed" unless status is `COMPLETED`. It never invents dates: every date in the text comes from stored fields. The digest is labelled "Summary by assistant".
-
-**LLM prompt sketch** (if enabled)
-```
-You summarise a sales-order feasibility request for a Sales user.
-Use ONLY the JSON facts provided. Do not infer dates, quantities or decisions.
-You cannot approve, confirm or submit anything; tell the user which button they can press, if any,
-based on availableActions. Max 4 sentences.
-FACTS: {request, scheduleRequests, planningDecision, availableActions, timeline}
-```
-
-**Tests.** Prefill equals §7.1 fields for SO-005. Digest text contains the reason on rejection. No "confirmed" wording before `COMPLETED`.
+**Write-back rule:** the agents never write confirmed quantities or dates directly into sales order schedule lines. After a person approves a supply or production change, the change is executed in S/4HANA (planned order or stock transfer), and the **standard ATP check re-confirms the order**. S/4HANA stays the system of record.
 
 ---
 
-### A3. Planning Copilot
+## 5. How the agents are built
 
-**Mission.** Give Planning the connected material picture (FG → SFG → RAW) and the right next action, then help them close the loop after the Scheduler answers.
+### 5.1 Agent anatomy
 
-**Autonomy.** Advisory. Computes the stock result and recommends one of: *Request Production Check* or *Reject*. Planning clicks.
+Every agent (A2–A5) follows the same pattern. That makes them testable and lets the demo run even if the LLM is unavailable.
 
-**Triggers.**
-- `RequestSubmitted` (precompute on arrival so the inbox opens instantly).
-- Planning opens REQ in the Planning Inbox.
-- `SchedulerDecisionRecorded` (prepare the confirm/reject draft).
-
-**Inputs.** Request, `MaterialService` (stock + BOM), `ResourceService.findOrdersOn`, `SalesOrderService.list`, active SCH.
-
-**Tools.**
-- Allowed (read-only): `getRequest`, `explodeBom(fg, qty)`, `getStock(material)`, `findCandidateOrders(fg, resource, beforeDate)`, `getScheduleRequest`.
-- Denied: A1 commands, any stock or BOM write.
-
-**Behaviour.**
-1. **Material explosion** (deterministic) for FG-100 × 100:
-
-   | Level | Material | Required | Available | Status |
-   |---|---|---|---|---|
-   | FG | FG-100 | 100 | 0 | SHORT |
-   | SFG | SFG-200 | 100 | 0 | SHORT |
-   | RAW | RAW-1 | 105 | 150 | AVAILABLE |
-   | RAW | RAW-2 | 5 | 20 | AVAILABLE |
-
-   Output is exactly the §7.2 shape plus a tree view model for the inbox.
-2. **Classify the scenario**:
-   - FG available ≥ required → `FROM_STOCK` (recommend: no production check needed; flagged as an open question in §6).
-   - any RAW short → `MATERIAL_SHORT` (recommend: Reject; draft reason naming the short RAW and quantity).
-   - FG/SFG short, all RAW available → `NEEDS_CAPACITY` (recommend: **Request Production Rescheduling Check**). This is the demo case.
-3. **Find the candidate order to move.** Rule: same FG or same resource, priority `NORMAL`, status `PLANNED`, slot on or before the HP order's needed date. Result: `SO-004`. Prefill `orderToReschedule` and the §7.3 question.
-4. **After the Scheduler answers.**
-   - CONFIRM → draft §7.4: `confirmedDate = proposedProductionDate` (Planning may edit) and comment *"Material situation checked and Production Scheduler confirmed rescheduling."*
-   - REJECT → show the scheduler's reason and two drafted options: resubmit with another candidate (if `findCandidateOrders` returns one) or reject to Sales with a drafted reason.
-
-**Outputs.** `stockResult` view (A1 recomputes and stores its own snapshot on submit), material tree, recommendation + rationale, drafted comment/reason, candidate order.
-
-**Guardrails.** Recommendation is visibly labelled "Suggested" and never auto-applied. If the stock numbers changed since the inbox was opened, show a "data refreshed" notice. The numbers in the narrative must equal the computed table.
-
-**LLM prompt sketch**
 ```
-You support a production planner. Given the computed material table and scenario
-classification, explain in ≤3 sentences why the suggested action fits.
-Never change numbers. Never state that anything is approved.
-FACTS: {stockResult, scenario, candidateOrder, scheduleRequest?}
+ Trigger (event / user opens case)
+     ▼
+ Tools: deterministic CAP functions (read S/4 or mock data, calculate, simulate)  ← all numbers come from here
+     ▼
+ Reasoning: Generative AI Hub orchestration call
+     • prompt template with the tool results as the only facts
+     • data masking of customer names / prices
+     • structured JSON output (schema-validated)
+     ▼
+ Recommendation record on the case (labelled "Suggested by agent", with rationale + confidence)
+     ▼
+ Human action in Fiori (Confirm / Reject / Choose option) → A1 Case Orchestrator
 ```
 
-**Tests.** Explosion gives 100/100/105/5. Scenario = `NEEDS_CAPACITY`. Candidate = SO-004. Setting RAW-2 stock to 3 gives `MATERIAL_SHORT` and a reject draft mentioning RAW-2.
+Rules that apply to all agents:
+- **Agents never change a case status.** Only A1 does, and only in response to a human action (or an S/4 event).
+- **Numbers, dates and quantities come only from tools**, never from LLM text. Output is checked: every number in the narrative must appear in the tool result. If not, the template text is used instead.
+- **Every recommendation is stored**: inputs snapshot, output, model and prompt version, so we can later measure how often people accept suggestions.
+
+### 5.2 Build option: pro-code vs Joule Studio
+
+| | **Pro-code (recommended for the demo)** | **Joule Studio agent builder (low-code)** |
+|---|---|---|
+| Where the agent logic lives | CAP service + SAP Cloud SDK for AI (`@sap-ai-sdk/orchestration`, optional LangGraph) | Joule agent with instructions and skills in SAP Build |
+| Tools | CAP functions | Same CAP functions, exposed as actions/skills via destinations |
+| Strength | Full control, unit tests, works on a standard BTP account with AI Core | Native Joule chat experience, faster for business-led changes |
+| Constraint | More code | Requires Joule / SAP Build licensing. Check feature availability in your region and release. |
+
+**Recommendation:** build the **tool layer once as CAP APIs**. Run the agents pro-code for the demo. Expose the same tools to a Joule agent in the next phase, so users can also ask in chat, e.g. *"What's blocking FC-0001?"*. Before building, also check the SAP Business AI catalog / SAP Discovery Center for prebuilt Joule agents in order-to-cash and supply chain that could cover part of this scope in your release.
 
 ---
 
-### A4. Scheduler Copilot
+## 6. Fiori apps for the demo (custom, on BTP)
 
-**Mission.** Show the Production Scheduler what happens if SO-004 moves so SO-005 goes first, and prefill a decision they can confirm or reject.
-
-**Autonomy.** Advisory. Runs a **what-if simulation only**. Nothing is written to the schedule (§12).
-
-**Triggers.** `ProductionCheckRequested`; Scheduler opens SCH in the Scheduler Inbox.
-
-**Inputs.** SCH + parent REQ (the material summary from `stockResult`), `ResourceService.getSchedule`, both sales orders.
-
-**Tools.**
-- Allowed (read-only): `getScheduleRequest`, `getRequest`, `getSchedule(resourceId, from, to)`, `getSalesOrder`, `simulateSwap(hpOrder, orderToMove)` (pure function).
-- Denied: A1 commands, schedule writes.
-
-**Behaviour.**
-1. **Load panel.** Show LINE-01 slots before and after for 2026-10-12 to 2026-10-14 *(demo)*:
-
-   | Date | Before | After (simulated) |
-   |---|---|---|
-   | 10-12 | SO-004 (100%) | **SO-005** (100%) |
-   | 10-13 | free | **SO-004** (100%) |
-   | 10-14 | free | free |
-
-2. **Impact check.** For the moved order compare new completion with its requested date: SO-004 finishes 10-13 against a need of 10-22, so it is **still on time**. For SO-005: production 10-12 against a need of 10-15, so **on time**. Flag a conflict if either would be late or if no free slot exists.
-3. **Prefill decision.**
-   - No conflict → suggest CONFIRM with `proposedProductionDate = 2026-10-12` and comment *"Rescheduling is possible for the demo scenario."* (§7.3).
-   - Conflict → suggest REJECT with a drafted reason, e.g. *"Moving SO-004 makes it 3 days late."*
-4. The Scheduler edits and clicks **Confirm** or **Reject**. A1 records it.
-
-**Outputs.** Resource/load panel view model, impact list, suggested decision + drafts.
-
-**Guardrails.** Shows "Simulation: no schedule changed" on the panel. Never posts a decision. The proposed date must come from the simulation or the Scheduler, never from LLM text.
-
-**Tests.** Simulation gives SO-005 → 10-12 and SO-004 → 10-13. Setting SO-004 requested date to 10-12 gives a conflict and a reject suggestion. Confirming doesn't modify `schedule.json`.
-
----
-
-### A5. Notification Agent
-
-**Mission.** Make sure the right team learns, at the right moment, that it's their turn, with enough context to act and a deep link to do it.
-
-**Autonomy.** Delivery only. Content is built from event payloads.
-
-**Triggers.** Domain events from A1 (§2.7). `TransitionRefused` is shown as an inline UI error, not a notification.
-
-**Routing table** (§8, plus rejection rows required by §11)
-
-| Event (condition) | Recipient(s) | Content | Actions shown | Deep link |
+| App | Users | Floorplan | Key content | Actions |
 |---|---|---|---|---|
-| `RequestSubmitted` | PLANNING | High-priority feasibility request: SO/customer/product/date/qty, reason | Review → Request Production Check / Reject | `/planning/requests/REQ-001` |
-| `ProductionCheckRequested` | PRODUCTION_SCHEDULER | SO-005 request + SO-004 candidate + material check summary + question | Confirm / Reject | `/scheduler/schedule-requests/SCH-001` |
-| `SchedulerDecisionRecorded` (CONFIRM) | PLANNING | Scheduler decision, proposed date, comment | Confirm to Sales / Reject | `/planning/requests/REQ-001` |
-| `SchedulerDecisionRecorded` (REJECT) | PLANNING | **Rejection reason**, scheduler, SCH id | Resubmit check / Reject to Sales | `/planning/requests/REQ-001` |
-| `PlanningDecisionRecorded` (CONFIRM) | SALES | Final feasibility decision, confirmed/proposed date, decision trail | Confirm Sales Order | `/sales/requests/REQ-001` |
-| `PlanningDecisionRecorded` (REJECT) | SALES | **Rejection reason**, which team rejected | Close / New request | `/sales/requests/REQ-001` |
-| `SalesOrderConfirmed` | PLANNING + PRODUCTION_SCHEDULER | Request completed, SO-005 confirmed | View only | `/timeline/REQ-001` |
+| **Sales Order Feasibility** | Sales reps / Customer Service | Fiori elements List Report + Object Page | My open orders by priority, case status, waiting-for team, penalty-risk flag. Object page: agent recommendation, confirmed date, timeline, **drafted customer confirmation text** | Open case · Confirm to customer · Close |
+| **Supply Planning Workbench** | Supply Chain Planners | List Report (worklist sorted by lane, then requested date) + Object Page with tree table | Material tree FG → SFG → RAW with required/available, **stock in other plants, open receipts, excess and slow-moving flags**, agent recommendation | Confirm from stock · Propose stock transfer · Request production check · Reject (reason required) · Confirm date to Sales |
+| **Production Capacity Workbench** | Production Planners | Object Page with custom section (SAPUI5 chart or `sap.gantt`) | Load per work center per day **before vs after** for each option, frozen-horizon marker, load-balance score, impact on other orders | Choose option · Override frozen horizon (reason required) · Reject (reason required) |
 
-**Notification record**
-```jsonc
-{ "notificationId": "N-0007", "eventId": "...", "recipientRole": "PLANNING",
-  "requestId": "REQ-001", "scheduleRequestId": "SCH-001",
-  "title": "SO-005: Production Scheduler confirmed rescheduling",
-  "body": "...", "actions": ["CONFIRM_TO_SALES", "REJECT"],
-  "deepLink": "/planning/requests/REQ-001", "read": false, "createdAt": "..." }
-```
-
-**Behaviour.** Consume event → look up routing row → render template → dedupe on `(eventId, recipientRole)` → store → push to UI (polling or websocket) → update the unread badge. Every title starts with the request ID so all screens read as one case (§11).
-
-**Guardrails.** Actions in a notification are display hints only. Clicking opens the deep link, where A1's `getAvailableActions` is re-evaluated, so stale notifications can't trigger invalid transitions. The optional LLM may rephrase the body but must keep every ID, date, quantity and reason verbatim (validate by string check; fall back to the template if the check fails).
-
-**Channels.** In-app Notification Center for the demo. Keep a `NotificationChannel` interface so email or Teams can be added later.
-
-**Tests.** Each routing row fires exactly once per event. Rejection notifications contain the reason. Completion goes to both Planning and Scheduler.
+All apps show the **same case ID (FC-nnnn)** and child request IDs (CR-nnnn) in the header, plus a shared **Case Timeline** section. In the connected phase, each app links to the matching standard app (e.g. the sales order in *Manage Sales Orders*, the material in *Monitor Material Coverage*, the work center in *Manage Work Center Capacity*) through intent-based navigation.
 
 ---
 
-### A6. Audit & Timeline Agent
+## 7. Agent blueprints
 
-**Mission.** Keep the tamper-evident record of who did what, when and why, and present the business case as one readable timeline.
+| ID | Agent | Main user | Pain points |
+|---|---|---|---|
+| A1 | Case Orchestrator | All (system) | P1, P2, P5, P6 |
+| A2 | Order Intake & Prioritization Agent | Sales | P2, P6 |
+| A3 | Supply & Inventory Agent | Supply Chain Planning | P2, P3 |
+| A4 | Capacity & Load Balancing Agent | Production Planning | P4, P5 |
+| A5 | Communication Agent | All | P1, P2, P6 |
 
-**Autonomy.** None. Deterministic.
-
-**Triggers.** Called synchronously by A1 inside the command transaction (writes). Called by screens and copilots for reads.
-
-**Audit entry** (satisfies §6: role/user, timestamp, comment, previous/new status)
-```jsonc
-{ "auditId": "A-0004", "requestId": "REQ-001", "scheduleRequestId": "SCH-001",
-  "kind": "TRANSITION",               // TRANSITION | REFUSED | SYSTEM
-  "action": "SCHEDULER_CONFIRM",
-  "actorRole": "PRODUCTION_SCHEDULER", "actorUser": "scheduler.demo",
-  "timestamp": "2026-10-05T10:42:11Z",
-  "previousStatus": "WAITING_FOR_PRODUCTION", "newStatus": "PRODUCTION_CONFIRMED",
-  "comment": "Rescheduling is possible for the demo scenario.", "reason": null,
-  "payload": { "proposedProductionDate": "2026-10-12" } }
-```
-
-**Behaviour.**
-1. `append(entry)`: append-only, no update or delete API. Optionally chain `hash = sha256(prevHash + entry)` for tamper evidence.
-2. `getTimeline(requestId)`: merge parent + all child SCH entries in time order and group them into the five §9 stages: *Sales request → Planning stock check → Scheduler decision → Planning decision → Sales confirmation*. Each stage shows actor, time, decision, comment/reason. Stages not reached yet are shown as pending, and the current "waiting for" role is highlighted.
-3. `checkIntegrity(requestId)` (debug / test endpoint): every SCH has an existing parent; every status change has exactly one TRANSITION row; the replayed status sequence is valid against §2.5; the final status equals the replayed status.
-
-**Guardrails.** A1 must fail the whole command if `append` fails (no state change without audit). REFUSED rows never change status.
-
-**Tests.** The happy path produces 5 TRANSITION rows (§4.1 below). `checkIntegrity` passes after every scenario. Timeline for REQ-001 shows SCH-001 inside the Scheduler stage.
+A1 also owns the audit log and the case timeline.
 
 ---
 
-## 4. End-to-end scenarios
+### A1 · Case Orchestrator
 
-### 4.1 Happy path (§4 steps 1–6)
+**Mission.** Hold the single source of truth for each Order Feasibility Case: who has to act, by when, and what they are allowed to do.
 
-| # | Human action | A1 transition | Copilot help | A5 notifies | A6 rows |
+**Type.** Deterministic CAP service. **No LLM.**
+
+**Triggers.** Human actions from the Fiori apps (OData V4 bound actions), S/4 events (from A2).
+
+**Case model**
+
+```
+OrderFeasibilityCase  FC-nnnn
+  salesOrder, item, customer, material, plant, quantity, requestedDate, priority, lane
+  penaltyRisk (amount/flag), status, waitingForRole
+  supplyResult        (snapshot from A3)
+  recommendation[]    (from A2/A3/A4)
+  decision[]          (human decisions)
+  capacityRequests[]  → CapacityRequest CR-nnnn (parentCase REQUIRED)
+                          options[], chosenOption, status, decidedBy/At, reason
+  confirmedDate, confirmedQty, version
+```
+
+**Status model**
+
+| Status | Waiting for | Allowed next | Triggered by |
+|---|---|---|---|
+| `NEW` | (system) | `WITH_SUPPLY_PLANNING`, `AUTO_CONFIRMED` | A2 on intake |
+| `AUTO_CONFIRMED` | none | final | NORMAL lane, ATP confirmed in full on time |
+| `WITH_SUPPLY_PLANNING` | Supply Chain Planner | `SUPPLY_CONFIRMED`, `WITH_PRODUCTION`, `REJECTED` | Planner action |
+| `WITH_PRODUCTION` | Production Planner | `PRODUCTION_CONFIRMED`, `PRODUCTION_REJECTED` | Production Planner action |
+| `PRODUCTION_CONFIRMED` | Supply Chain Planner | `SUPPLY_CONFIRMED`, `REJECTED` | Planner action |
+| `PRODUCTION_REJECTED` | Supply Chain Planner | `WITH_PRODUCTION` (new CR), `REJECTED` | Planner action |
+| `SUPPLY_CONFIRMED` | Sales | `CONFIRMED_TO_CUSTOMER` | Sales action |
+| `REJECTED` | Sales | `CLOSED` (Sales informs customer / proposes alternative date) | Sales action |
+| `CONFIRMED_TO_CUSTOMER` | none | final | |
+| `CLOSED` | none | final | |
+
+**Business rules (enforced server-side, not just by hiding buttons)**
+1. Only the role in `waitingForRole` can act on a case.
+2. *Confirm to customer* is only allowed in `SUPPLY_CONFIRMED`.
+3. *Confirm date to Sales* after a production check is only allowed when the active CR is `PRODUCTION_CONFIRMED`.
+4. Every *Reject* and every *frozen-horizon override* requires a reason. *Confirm* takes an optional comment.
+5. A `CapacityRequest` cannot exist without a parent case.
+6. Every action writes an audit entry **in the same transaction**. No audit, no status change.
+7. Optimistic locking (`version`) and an idempotency key on each action.
+
+**Audit log.** Append-only table: case/CR, action, actor, role, timestamp, previous → new status, comment/reason, payload, and the agent recommendation shown with whether it was accepted. There is no update or delete.
+
+**Case timeline.** A read-only view of the audit log per case, across all its child CRs: *Intake → Supply check → Production check → Supply decision → Customer confirmation*, with the time each step took. It is shown as a section on the object page of all three apps.
+
+**Tests.** Every allowed and forbidden transition; wrong role per action; reject without reason; confirm to customer in every non-allowed status; CR without parent; concurrent update; exactly one audit row per status change.
+
+---
+
+### A2 · Order Intake & Prioritization Agent
+
+**Mission.** Make sure no important order waits. Detect new or changed orders, assign the lane, flag penalty risk and open the case with everything the next team needs.
+
+**Triggers.** S/4 event *SalesOrder Created/Changed* (demo: "Simulate new order" button), or Sales clicks *Check feasibility* on an order.
+
+**Tools**
+
+| Tool | Source |
+|---|---|
+| `getSalesOrder(so)` | `API_SALES_ORDER_SRV` / mock |
+| `getCustomer(id)` incl. penalty terms | Business partner API / mock. Contract terms as grounding documents in HANA vector store |
+| `runAvailabilityCheck(material, plant, qty, date)` | `API_PRODUCT_AVAILY_INFO_BASIC` / mock |
+| `openCase(...)` | A1 |
+
+**Priority mapping (delivery priority → lane)**
+
+Delivery priority is an **item-level** field on the sales order (defaulted from the customer master's sales area data). Its values are customer-specific customizing (two-digit keys). So the mapping is a configuration table in the CAP app, not hard-coded:
+
+| Delivery priority (example keys, **replace with your customizing values**) | Lane |
+|---|---|
+| `01` | HIGH |
+| `02` | MEDIUM |
+| `03` and above, or blank | NORMAL |
+
+- One case per **sales order item** that needs attention. Different items of one order can be in different lanes. The Sales app groups them by order.
+- In `API_SALES_ORDER_SRV` read the item entity's delivery priority field. Check the exact property name in the sandbox `$metadata` while building the adapter.
+- If delivery priority changes on an open order (sales order *Changed* event), A2 re-evaluates the lane and A1 records the change in the audit log. An upgrade to HIGH moves the case into the fast lane and to the top of the worklists.
+
+**Logic**
+1. Read the order item and map its delivery priority to a lane (table above). If the customer has a penalty clause and the item is not HIGH, *suggest* raising the delivery priority (Sales decides and changes it in S/4HANA).
+2. Run the availability check.
+   - NORMAL and fully confirmed on time → `AUTO_CONFIRMED`. No people involved.
+   - Otherwise → open case with the lane from the priority mapping.
+3. **LLM step:** write a 2–3 line case summary for the planner (*"ABC Automotive needs 100 × FG-100 by D+5. No stock in plant 1000. Penalty clause: 2% of order value per day late."*) and, from the contract grounding, extract the penalty rule.
+
+**Output.** Case `FC-nnnn` with lane, `penaltyRisk`, summary, ATP result.
+
+**Guardrails.** Does not change the order priority itself; it only suggests. Penalty amounts come from contract data, not from the LLM's own guess. If grounding finds no clause, it says "no penalty clause found".
+
+**Benefit.** Time from order creation to case in the planner's worklist: from hours/days to seconds.
+
+---
+
+### A3 · Supply & Inventory Agent
+
+**Mission.** Give the Supply Chain Planner a complete supply picture in one screen and recommend the option that **meets the date with the least new inventory**.
+
+**Triggers.** Case enters `WITH_SUPPLY_PLANNING`. Planner opens the case. A capacity request is answered.
+
+**Tools**
+
+| Tool | Purpose | Source |
+|---|---|---|
+| `explodeBom(material, plant, qty)` | FG → SFG → RAW requirements | `API_BILL_OF_MATERIAL_SRV` / mock |
+| `getStock(material, plants[])` | Unrestricted stock per plant and storage location | `API_MATERIAL_STOCK_SRV` / mock |
+| `getOpenReceipts(material, plant)` | Planned/production orders and POs not yet pegged | `API_PLANNED_ORDERS`, `API_PRODUCTION_ORDER_2_SRV` / mock |
+| `getSlowMovers(material)` | Days since last movement, months of supply | Stock + consumption history / mock |
+| `simulateLeftover(material, need, lotSizePolicy)` | Excess created by production lot size | Material master MRP data / mock |
+| `findReallocationCandidates(material, needDate)` | Stock/receipts reserved for lower-priority orders whose own date would still hold | Sales orders + ATP / mock |
+
+**Decision ladder.** Deterministic. The first option that meets the date is recommended. All feasible options are shown.
+
+| Rank | Option | Why it ranks here |
+|---|---|---|
+| 1 | Confirm from local stock / open receipt | No new inventory, no transport |
+| 2 | **Stock transfer** from another plant (prefer slow-moving / excess stock) | Turns excess into a sale (P3) |
+| 3 | Reallocate from a lower-priority order whose own date still holds | No new inventory. Needs the planner's approval. Without Advanced ATP, S/4HANA won't do this itself: after approval, the confirmation is moved in S/4HANA (the lower-priority order is re-confirmed later, the HIGH order is re-checked). |
+| 4 | Produce (→ production check). Show leftover from lot size and its value. | Last resort for inventory. Flags excess. |
+| 5 | Reject / propose the earliest possible date | When nothing meets the date |
+
+**Excess-inventory guard.** For option 4, if the lot-size leftover is above *X* days of supply (configurable), add a warning and propose exact lot size for this order. The planner decides.
+
+**LLM step.** Explain the recommendation in plain words and draft the message to Sales or the production check question (*"Can we produce 100 × FG-100 by D+3? RAW-1 and RAW-2 are available. Plant 1100 has no FG-100 stock."*).
+
+**Human actions (via A1).** Confirm from stock · Approve stock transfer · Request production check · Reject (reason) · Confirm date to Sales.
+
+**Guardrails.** Doesn't create stock transfers or planned orders itself. In the connected phase, an approved transfer creates a **proposal** (e.g. an STO request) that is posted in S/4 by the planner or by an approved, auditable API call.
+
+---
+
+### A4 · Capacity & Load Balancing Agent
+
+**Mission.** Give the Production Planner ready-made, scored options to fit the order in, preferring **free capacity on alternative resources** over disrupting the near-term plan.
+
+**Triggers.** A capacity request `CR-nnnn` is created (case → `WITH_PRODUCTION`).
+
+**Tools**
+
+| Tool | Source |
+|---|---|
+| `getWorkCenters(material, plant)` incl. alternatives (production versions / alternative routings) | `API_WORK_CENTERS`, routing / production version data / mock |
+| `getLoad(workCenter, from, to)` | Capacity load (CDS-based custom API) / mock |
+| `getScheduledOrders(workCenter, from, to)` | Planned/production orders / mock |
+| `simulate(option)` | Pure function: new load per day, moved orders, their new completion vs delivery date |
+| `score(option)` | Pure function, see below |
+
+**Options generated**
+- **O-ALT:** produce on an alternative work center with free capacity (may split across days).
+- **O-MOVE:** move one or more lower-priority orders later on the primary work center.
+- **O-SPLIT:** partial quantity now, the rest later (only if Sales allows partial delivery).
+- **O-OVERTIME:** extra shift (flagged as cost).
+
+**Scoring** (lower is better; weights configurable)
+
+```
+score = w1 · peakUtilization(after)              // avoid overload
+      + w2 · utilizationSpread(after)            // load balancing across work centers
+      + w3 · frozenHorizonViolations             // near-term stability (P5)
+      + w4 · daysLateForMovedOrders              // never break other customers' dates
+      + w5 · setupChanges + w6 · overtimeHours
+infeasible if HIGH order date missed or any moved order becomes late
+```
+
+**Frozen horizon.** Orders already scheduled in the next *N* days (demo: 3) are frozen. Options that move them are allowed but marked **"needs override"**, and choosing them requires a reason. New orders may use *free* capacity inside the frozen window.
+
+**LLM step.** Compare the top options in 3–4 sentences (*"O-ALT keeps SO-5004 unchanged and lifts ASSY-02 from 30% to 100% on D+2. O-MOVE needs a frozen-horizon override."*). Draft the planner's comment.
+
+**Human actions (via A1).** Choose option (+ comment) · Choose override option (+ reason) · Reject (reason).
+
+**Guardrails.** Simulation only. Nothing is rescheduled in S/4. In the connected phase, the chosen option becomes a task for the planner to execute in *Manage Production Orders* / *Capacity Scheduling Board* (classic capacity planning), linked from the case.
+
+---
+
+### A5 · Communication Agent
+
+**Mission.** Replace phone and email with short, complete, actionable messages, and give Sales a ready-to-send customer confirmation.
+
+**Triggers.** Every status change from A1.
+
+**Routing**
+
+| Event | To | Message contains | Deep link |
+|---|---|---|---|
+| Case opened (HIGH/MEDIUM) | Supply Chain Planners (plant) | Summary, priority, requested date, penalty risk | Supply Planning Workbench → FC |
+| Production check requested | Production Planners | Question, material status, need-by date, options ready | Production Capacity Workbench → CR |
+| Production confirmed / rejected (+reason) | Supply Chain Planner | Chosen option, date, comment / reason | Supply Planning Workbench → FC |
+| Supply confirmed | Sales rep | Confirmed date and qty, decision trail, **draft customer message** | Sales Order Feasibility → FC |
+| Rejected (+reason) | Sales rep | Reason, earliest possible date, alternatives | Sales Order Feasibility → FC |
+| Confirmed to customer | Supply Chain + Production | Closure info | Case Timeline |
+
+**Channels.** Work Zone notifications (demo). Later: email, Microsoft Teams, My Inbox / SAP Task Center.
+
+**LLM step.** Draft the customer confirmation (or delay) message in the customer's language and tone, using only case facts. Sales edits and sends it. The agent never sends to customers itself.
+
+**Guardrails.** Dates, quantities, IDs and reasons are inserted from data and checked after generation. Notifications are informational. Actions are always re-validated by A1 when the user opens the link.
+
+---
+
+## 8. Demo storyline and data
+
+All dates are relative to the demo day (D). Plant 1000 is the main plant; plant 1100 is the second plant.
+
+### 8.1 Master data
+
+| Object | Data |
+|---|---|
+| Customers | `C-1001` ABC Automotive (penalty 2%/day late), `C-1002` Delta Machines, `C-1003` Nova Retail |
+| Materials | `FG-100` Gearbox Assembly · `SFG-200` Gear Housing · `RAW-1` Aluminium Casting · `RAW-2` Bearing Set · `FG-300` Pump Unit |
+| BOM (per 1) | FG-100 → 1 SFG-200 · SFG-200 → 1.05 RAW-1 + 0.05 RAW-2 |
+| Stock plant 1000 | FG-100: 0 · SFG-200: 0 · RAW-1: 150 · RAW-2: 20 · FG-300: 20 |
+| Stock plant 1100 | FG-300: 200 (last movement 120 days ago, demand 25/month → 8 months of supply = **excess**) |
+| Work centers plant 1000 | `WC-MACH-01` machining 200/day · `WC-ASSY-01` assembly 100/day (primary for FG-100) · `WC-ASSY-02` assembly 80/day (alternative production version) |
+| Frozen horizon | D+0 … D+3 |
+
+### 8.2 Load before the HIGH order
+
+| Work center | D+1 | D+2 | D+3 | D+4 | D+5 |
 |---|---|---|---|---|---|
-| 1 | Sales clicks Check Possibility → Submit | `DRAFT → WAITING_FOR_PLANNING` (REQ-001) | A2 prefills §7.1 | Planning | 1 |
-| 2–3 | Planning reviews tree, clicks Request Production Check (SO-004) | `→ WAITING_FOR_PRODUCTION`, SCH-001 created | A3: table, NEEDS_CAPACITY, candidate SO-004 | Scheduler | 2 |
-| 4 | Scheduler confirms, date 2026-10-12 | SCH-001 `→ CONFIRMED`; REQ `→ PRODUCTION_CONFIRMED` | A4: swap simulation, prefilled confirm | Planning | 3 |
-| 5 | Planning confirms to Sales | `→ PLANNING_CONFIRMED` | A3 drafts §7.4 | Sales | 4 |
-| 6 | Sales clicks Confirm Sales Order | `→ COMPLETED`, SO-005 confirmed | A2 digest | Planning + Scheduler | 5 |
+| WC-MACH-01 | 40% | 50% | 30% | 30% | 20% |
+| WC-ASSY-01 | 100% (SO-5001) | 100% (**SO-5004**, NORMAL, 100 × FG-100, due D+9) | 90% | 60% | 50% |
+| WC-ASSY-02 | 40% | 30% | 25% | 20% | 20% |
 
-One audit row per human command. The step 4 row carries both the SCH-001 and the REQ-001 status change.
+### 8.3 Scenarios
 
-### 4.2 Alternate paths to demo
+**Scenario 1: HIGH order, production needed, load balancing (main demo)**
+- `SO-5005`, C-1001, 100 × FG-100, priority HIGH, requested D+5 (must be produced by D+3).
+- A2: HIGH lane, penalty risk flagged, case **FC-0001** at the top of the Supply Chain Planning worklist.
+- A3: FG 0/100, SFG 0/100, RAW-1 150/105 ✔, RAW-2 20/5 ✔, no stock in plant 1100, no reallocation candidate → recommends **production check**. Lot size = exact, so no leftover.
+- Planner requests the production check → **CR-0001**.
+- A4 options:
+  - **O-ALT** (recommended): machining 100 on WC-MACH-01 D+1 (40% → 90%), assembly on WC-ASSY-02 56 on D+2 + 44 on D+3 (30% → 100%, 25% → 80%). No order moved. Finishes D+3 ✔.
+  - **O-MOVE**: SO-5004 moved D+2 → D+4 on WC-ASSY-01 (inside the frozen horizon → **needs override**). SO-5004 still on time for D+9. WC-ASSY-01 D+4 becomes 160%, so SO-5004 must be split or it is infeasible → shown with a lower score.
+- Production Planner chooses O-ALT → case `PRODUCTION_CONFIRMED`. Planner confirms D+5 to Sales. A5 drafts the customer email. Sales confirms → `CONFIRMED_TO_CUSTOMER`.
+- Case timeline: answered in minutes instead of days, frozen horizon untouched, load spread across both assembly lines.
 
-| Scenario | Setup | Expected |
-|---|---|---|
-| **Early confirm attempt** | After step 2, Sales calls `confirmSalesOrder` | 409 `INVALID_TRANSITION`; REFUSED audit row; status unchanged |
-| **Planning rejects at stock check** | RAW-2 stock = 3 | A3 suggests Reject; `→ REJECTED_BY_PLANNING`; Sales notified with reason |
-| **Scheduler rejects, Planning rejects** | Scheduler rejects SCH-001 with reason | `→ REJECTED_BY_PRODUCTION`; Planning notified with reason; Planning rejects → `REJECTED_BY_PLANNING`; Sales notified with both reasons in the trail |
-| **Scheduler rejects, Planning resubmits** | As above, Planning resubmits | SCH-002 with same parent; `→ WAITING_FOR_PRODUCTION`; Scheduler confirms; happy path continues; timeline shows SCH-001 (rejected) and SCH-002 |
-| **Planning confirms while SCH pending** | Force `planningDecision(CONFIRM)` in `WAITING_FOR_PRODUCTION` | Refused (wrong role/state + scheduler not confirmed) |
-| **Reject without reason** | Any reject with empty reason | 400 `REASON_REQUIRED` |
+**Scenario 2: MEDIUM order, excess stock used instead of production**
+- `SO-5006`, C-1002, 50 × FG-300, MEDIUM, requested D+6. Plant 1000 has 20.
+- A3 recommends a **stock transfer of 30 from plant 1100** (slow-moving excess) instead of producing → planner approves → Sales confirms. Result: 30 units of excess stock turned into a sale; no new production.
 
----
+**Scenario 3: NORMAL order, no human step**
+- `SO-5007`, C-1003, 10 × FG-300, NORMAL. ATP confirms from stock in plant 1000 → `AUTO_CONFIRMED`. Visible in the Sales Order Feasibility list only; no team gets a task.
 
-## 5. Acceptance criteria traceability (§11)
+**Scenario 4: rejection loop**
+- Variant of scenario 1 where WC-ASSY-02 is down for maintenance. The Production Planner rejects with the reason *"No capacity before D+6 without moving frozen orders"*. A3 proposes the earliest date D+7 → planner rejects to Sales with that date → A5 drafts a delay message with the alternative date.
 
-| §11 criterion | Agents | Verified by |
-|---|---|---|
-| Sales submits; Planning gets a notification | A1, A2, A5 | Happy path step 1 |
-| Planning sees FG/SFG/RAW and sends a scheduler request | A3, A1 | A3 explosion test; step 2–3 |
-| Scheduler can Confirm or Reject | A4, A1 | Step 4; "Scheduler rejects" scenarios |
-| Planning auto-receives the Scheduler response and can Confirm/Reject to Sales | A5, A3, A1 | Step 4–5 notification test |
-| Sales cannot confirm SO-005 before Planning confirms | A1 (server guard), A2 (explains) | "Early confirm attempt" |
-| After Sales confirms → COMPLETED + full audit visible | A1, A6 | Step 6; `checkIntegrity`; Timeline screen |
-| Rejections go back to the preceding team with a reason | A1, A5 | Rejection scenarios; notification content test |
-| Same request ID/linkage on every screen | A1 (IDs), A5 (titles/links), A6 (timeline) | Every screen header shows `REQ-001` (+ `SCH-00n`) |
+**Scenario 5: guardrail**
+- Sales tries *Confirm to customer* while the case is `WITH_PRODUCTION` → refused by A1, shown in the timeline as a refused action.
 
 ---
 
-## 6. Build order (recommended)
+## 9. Roadmap
 
-1. **Foundation**: mock data + services (§2.2–2.3), entities, ID generator.
-2. **A1 Orchestrator + A6 Audit** with the full transition test suite. This alone passes most of §11 through the API.
-3. **A5 Notifications** + Notification Center.
-4. **Screens** (§9) driven by `getAvailableActions`.
-5. **A3 → A4 → A2 copilots**, facts first and then the optional LLM narrative.
-6. Scripted demo run of §4.1 and §4.2.
+| Phase | Scope | Data | Outcome |
+|---|---|---|---|
+| **0 · Prerequisites** (1–2 wks) | BTP subaccount, entitlements (AI Core extended, HANA Cloud, Work Zone), role collections. Business Accelerator Hub API key + sandbox destination. Delivery priority customizing values | – | Ready environment |
+| **1 · Demo** (4–6 wks) | A1–A5 in CAP, 3 Fiori apps, Work Zone site, Generative AI Hub, scenarios 1–5, "live data" view against the sandbox, simulated S/4 events | `mock` for scenarios, `sandbox` for live reads (§4.3) | Clickable end-to-end demo for the business |
+| **2 · Pilot** (6–8 wks) | S/4HANA Private Cloud via destination + Cloud Connector. Activate the OData services. Enterprise Event Enablement → Event Mesh. Custom CDS service for capacity load. Joule agent on the same tools. One plant, HIGH lane only | `s4` read-only | Measured lead time vs baseline |
+| **3 · Rollout** | All lanes and plants. Controlled write-back (stock transfer proposals, planned order changes via approved APIs, ATP re-check). Teams / email channels. | S/4 read + controlled write | Production use |
 
-Optional LLM layer: if enabled, use one small call per narrative with the facts JSON as the only context and strict output-length limits. A fast model is enough. Every LLM output has a template fallback so the demo never depends on the model being available.
+**Baseline now.** To prove value, capture today's numbers before the pilot: average confirmation lead time per priority, penalty cost per quarter, excess-stock value and work center overload days.
 
 ---
 
-## 7. Open questions for the spec owner
+## 10. Open decisions
 
-1. **Direct Planning confirm.** §8 lists "Confirm" among Planning's actions on a new request, but §6 has no `WAITING_FOR_PLANNING → PLANNING_CONFIRMED` transition. This blueprint follows §6 (not allowed). Should a `FROM_STOCK` case be allowed to confirm directly?
-2. **Resubmit semantics.** Is resubmitting a new SCH (SCH-002) the intended reading of "resubmit scheduler request", and should a second candidate order be allowed?
-3. **Schedule after confirm.** Should the demo schedule show SO-004 moved once the Scheduler confirms, or (as here) only record the proposed date?
-4. **Demo dates.** §7 uses `<demo-date>`. The dates in §2.2 are placeholders. Fixed dates, or relative to "today" at demo start?
-5. **Closed requests.** After `REJECTED_BY_PLANNING`, should "new request" link back to the old one (`previousRequestId`)?
-6. **Users.** Is one user per role enough, or do we need several Planning users (which would make the version check visible)?
+Decided: S/4HANA Private Cloud · sandbox APIs for the demo · no Advanced ATP · no PP/DS · priority from delivery priority (§0).
+
+1. **S/4HANA release** (e.g. 2022 / 2023) of the Private Cloud system. This fixes the API versions and Fiori app availability.
+2. **Delivery priority values** used in your customizing, and which ones mean HIGH, MEDIUM and NORMAL (§7 A2).
+3. Is delivery priority **maintained reliably** today (customer master default + manual changes on orders), or does it need a cleanup before the pilot?
+4. **Frozen horizon** length per plant, and who may override it.
+5. Where are **customer penalty terms** stored (contract documents, condition records, CRM)?
+6. **Licensing:** AI Core / Generative AI Hub, Joule and Joule Studio, SAP Build. Is a Joule-based front end required for the demo, or is it a phase-2 item?
+7. Allowed **LLM models** and data-privacy rules (e.g. customer names masked before LLM calls).

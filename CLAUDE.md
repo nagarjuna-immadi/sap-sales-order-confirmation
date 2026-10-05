@@ -4,50 +4,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository state
 
-There is no code yet, so no build, lint or test commands exist. The only source of truth is `High_Priority_Sales_Order_Communication_Agent_Design.pdf`, the demo design spec. Extract its text with `pdftotext -layout High_Priority_Sales_Order_Communication_Agent_Design.pdf -` (poppler's `pdftotext` is on PATH under Git Bash; `pdftoppm` is not installed, so the Read tool cannot render the PDF). `blueprint.md` breaks the spec into six agents (Orchestrator, Sales/Planning/Scheduler copilots, Notification, Audit & Timeline) and records demo-data choices and open questions. The spec does not choose a tech stack. When one is chosen, add its build, test and run commands here.
+There is no code yet, so no build, lint or test commands exist. The source of truth is `blueprint.md`. `High_Priority_Sales_Order_Communication_Agent_Design.pdf` is an outdated draft: don't use it, and don't refer to it. When code is added, put its build, test and run commands here.
 
 ## What is being built
 
-A demo orchestration agent for a human-in-the-loop approval chain on a high-priority sales order: **Sales → Planning → Production Scheduler → Planning → Sales**. The agent routes requests, sends notifications, enforces status transitions and keeps an audit trail. **It never makes business decisions itself.** Confirming the SO or rescheduling production is always an explicit Confirm/Reject action by a human role.
+Sales-to-Planning order confirmation agents on **SAP BTP**. They replace phone and email between Sales, Supply Chain Planning and Production Planning with one shared **Order Feasibility Case** (`FC-nnnn`, child capacity requests `CR-nnnn`). The first deliverable is a **demo** with mock data. A pilot on real S/4HANA data comes later.
 
-Out of scope: Company Planner, ATP engines, SAP integration, automatic rescheduling, optimization and real production transactions. All data (stock, orders, BOM, capacity) comes from mock JSON, an in-memory DB or demo tables. Keep data access behind a service layer so real APIs can replace it later without changing the approval flow.
+Landscape (blueprint §0): SAP S/4HANA **Private Cloud**. The demo uses the SAP Business Accelerator Hub **sandbox** APIs. **No Advanced ATP and no embedded PP/DS** (basic ATP, classic capacity planning). Lane priority comes from the item-level **delivery priority**, through a configurable mapping table.
 
-## Connected demo data (must stay consistent)
+Data adapters have three modes: `mock` (scripted demo data, tests), `sandbox` (sandbox.api.sap.com, `APIKey` header; never commit the key), and `s4` (destination + Cloud Connector). The sandbox is shared read-only data with no live events, so the demo scenarios run in `mock` and S/4 events are simulated in the demo.
 
-`CUST-1001` (ABC Automotive) → `SO-005` (HIGH, FG-100, qty 100) → `FG-100` (stock 0) → `SFG-200` (stock 0) → `RAW-1` (stock 150, need 105) + `RAW-2` (stock 20, need 5).
-`SO-004` (NORMAL, FG-100, qty 100) is the planned order that may be moved behind SO-005.
-FG and SFG are short but both raw materials are available, so Planning does not reject. It asks the Production Scheduler whether SO-004 can be rescheduled.
+Planned stack (see blueprint §4–§5): CAP (Node.js) on Cloud Foundry, SAP Fiori elements apps in SAP Build Work Zone, SAP AI Core Generative AI Hub via SAP Cloud SDK for AI, and SAP HANA Cloud (SQLite for the demo). Joule / Joule Studio is a later phase.
 
-## Request model
+## Rules that must hold in code
 
-- Parent feasibility request `REQ-xxx`, owned by Sales.
-- Child scheduling request `SCH-xxx`. It **must always reference its parent** (`parentRequestId`). Scheduler decisions update the parent's status.
-- Every screen shows the same request ID and linkage, so the whole flow reads as one traceable business case.
-- Payload shapes (feasibility request, planning stock result, scheduler request/decision, final planning response) are in spec §7. Use those field names (`requestId`, `scheduleRequestId`, `parentRequestId`, `planningAction: "REQUEST_PRODUCTION_CHECK"`, `decision: "CONFIRM"|...`, etc.).
-
-## Status state machine (spec §6)
-
-| Status | Waiting for | Allowed next |
-|---|---|---|
-| DRAFT | Sales | WAITING_FOR_PLANNING |
-| WAITING_FOR_PLANNING | Planning | WAITING_FOR_PRODUCTION, REJECTED_BY_PLANNING |
-| WAITING_FOR_PRODUCTION | Production Scheduler | PRODUCTION_CONFIRMED, REJECTED_BY_PRODUCTION |
-| PRODUCTION_CONFIRMED | Planning | PLANNING_CONFIRMED, REJECTED_BY_PLANNING |
-| PLANNING_CONFIRMED | Sales | COMPLETED |
-| REJECTED_BY_PRODUCTION | Planning | REJECTED_BY_PLANNING, or resubmit scheduler request |
-| REJECTED_BY_PLANNING | Sales | closed / new request |
-| COMPLETED | none | final |
-
-Business rules the agent must enforce (reject invalid transitions, don't just hide buttons):
-- Sales "Confirm Sales Order" is allowed only when the request is `PLANNING_CONFIRMED`.
-- Planning Confirm is blocked if a scheduler check was requested and the scheduler has not confirmed.
-- Every Confirm/Reject records acting role/user, timestamp, comment and previous/new status in the audit log.
-- Reject requires a reason. Confirm takes an optional comment. Rejections go back to the preceding team with the reason.
-
-## Orchestration handlers (spec §10)
-
-`onSalesSubmit` → `onPlanningStockCheck` (reject, or create SCH + parent → WAITING_FOR_PRODUCTION) → `onSchedulerDecision` (parent → PRODUCTION_CONFIRMED / REJECTED_BY_PRODUCTION, notify Planning) → `onPlanningDecision` → `onSalesConfirm` (→ COMPLETED, notify Planning + Scheduler, view-only). The notification recipients, content and available actions for each trigger are in spec §8.
-
-## Suggested screens (spec §9)
-
-Sales Worklist, Planning Inbox (with the FG→SFG→RAW material tree), Production Scheduler Inbox (with a resource/load panel), Request Timeline, and Notification Center (with deep links to the request). The acceptance criteria are in spec §11.
+- Five agents: A1 Case Orchestrator (deterministic, no LLM, the only writer of case status; also owns the append-only audit log and the case timeline), A2 Order Intake & Prioritization, A3 Supply & Inventory, A4 Capacity & Load Balancing, A5 Communication.
+- Demo has exactly three Fiori apps (Sales Order Feasibility, Supply Planning Workbench, Production Capacity Workbench). No analytical apps, dashboards or KPI cockpit.
+- Never use the word "copilot" for these agents.
+- Agents recommend. Humans confirm or reject through Fiori actions. Agents never change status, never send to customers and never write to S/4HANA directly.
+- Numbers, dates and quantities come from deterministic tool functions, never from LLM text.
+- Every action writes an audit row in the same transaction as the status change. Reject and frozen-horizon override require a reason.
+- Data access goes through adapters (mock or S/4 API), so the demo and the pilot share the same agent logic.
+- The demo data and scenarios in blueprint §8 must stay consistent across mock files.
