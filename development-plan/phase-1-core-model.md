@@ -106,7 +106,7 @@ One service per app, all delegating to `orchestrator.executeAction()`. Keep them
 - [x] `CaseTimeline` view over `AuditLog` per case **including its child CRs**, with a step label (*Intake → Supply check → Production check → Supply decision → Customer confirmation*) and the time since the previous step. Read-only in all three services.
 - [x] `srv/lib/case-access.js` with `canRead(user, caseRow)`, used by the services' `@restrict` handlers and later by the Order Assistant tools (rule 8).
 - [x] Generate `xs-security.json` (`cds add xsuaa`) with the scopes and role templates `Sales`, `SupplyPlanner` and `ProductionPlanner`, and the role collections `OrderConf_Sales`, `OrderConf_SupplyPlanner` and `OrderConf_ProductionPlanner`.
-- [ ] Check by hand through the CAP index page (`http://localhost:4004`): open a case by hand (until phase 2), walk the scenario 1 status path as `supplychain_user` and `production_user`, and confirm to customer as `sales_user`. Also try the forbidden steps: wrong user (403), reject without a reason (400), confirm to customer in `WITH_PRODUCTION` and `WITH_SUPPLY_PLANNING` (refused, visible in the timeline; scenario 5).
+- [x] Check by hand through the CAP index page (`http://localhost:4004`): open a case by hand (until phase 2), walk the scenario 1 status path as `supplychain_user` and `production_user`, and confirm to customer as `sales_user`. Also try the forbidden steps: wrong user (403), reject without a reason (400), confirm to customer in `WITH_PRODUCTION` and `WITH_SUPPLY_PLANNING` (refused, visible in the timeline; scenario 5).
 
 ### Case services result (done 2026-10-06, hand check open)
 
