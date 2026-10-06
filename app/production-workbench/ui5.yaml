@@ -2,7 +2,7 @@
 
 specVersion: "4.0"
 metadata:
-  name: order.conf.supplyworkbench
+  name: order.conf.productionworkbench
 type: application
 server:
   customMiddleware:
@@ -29,8 +29,8 @@ server:
           # the sandbox launchpad (test/flp.html) registers the app under its
           # manifest inbound, so the notifications' deep links resolve
           intent:
-            object: FeasibilityCase
-            action: plan
+            object: CapacityRequest
+            action: decide
     - name: ui5-tooling-transpile-middleware
       afterMiddleware: compression
       configuration:

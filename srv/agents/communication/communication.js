@@ -21,11 +21,12 @@ const { SELECT, INSERT } = cds.ql
 const AGENT = 'COMMUNICATION_AGENT'
 const S = CASE_STATUS
 
-// Semantic-object intents of the three case apps (phases 3–5 use the same ones).
+// Semantic-object intents of the three case apps, one inbound per app
+// (manifest crossNavigation, development plan 4).
 export const INTENTS = Object.freeze({
-  supply: caseId => `#SupplyPlanningCase-display?caseId=${caseId}`,
-  production: crId => `#ProductionCapacityRequest-display?crId=${crId}`,
-  sales: caseId => `#SalesOrderFeasibility-display?caseId=${caseId}`,
+  supply: caseId => `#FeasibilityCase-plan?caseId=${caseId}`,
+  production: crId => `#CapacityRequest-decide?crId=${crId}`,
+  sales: caseId => `#FeasibilityCase-track?caseId=${caseId}`,
 })
 
 // --- Notifications ------------------------------------------------------------------------
@@ -87,14 +88,15 @@ async function notificationsFor(event, f) {
       }]
     }
     case S.CONFIRMED_TO_CUSTOMER: {
-      const hasCr = !!(await SELECT.one.from('order.conf.CapacityRequest').columns('crId').where({ parentCase_caseId: f.caseId }))
+      const lastCr = await SELECT.one.from('order.conf.CapacityRequest').columns('crId').where({ parentCase_caseId: f.caseId }).orderBy('createdAt desc', 'crId desc')
       const closure = {
         title: `${f.caseId}: confirmed to the customer`,
         text: `${f.salesOrder} item ${f.item}: ${f.confirmedQty ?? f.quantity} × ${f.material} for ${f.confirmedDate ?? f.requestedDate}. See the case timeline.`,
       }
+      // Production sees the case through its capacity request
       return [
         { recipientRole: ROLES.SUPPLY_PLANNER, ...closure, deepLink: INTENTS.supply(f.caseId) },
-        ...(hasCr ? [{ recipientRole: ROLES.PRODUCTION_PLANNER, ...closure, deepLink: INTENTS.supply(f.caseId) }] : []),
+        ...(lastCr ? [{ recipientRole: ROLES.PRODUCTION_PLANNER, ...closure, crId: lastCr.crId, deepLink: INTENTS.production(lastCr.crId) }] : []),
       ]
     }
     default:

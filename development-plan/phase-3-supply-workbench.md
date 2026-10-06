@@ -4,7 +4,7 @@
 
 **Goal:** the supply planner works the HIGH/MEDIUM worklist and decides in the UI (§6.1).
 
-- [x] Generate a Fiori elements V4 **List Report + Object Page** on `SupplyPlanningService.Cases` in `app/supply-workbench/` (Fiori tools generator, TypeScript like the TM project). Done 2026-10-06: written by hand in the generator's layout (same files as the TM `dispatch-cockpit`), app ID `order.conf.supplyworkbench`, inbound `SupplyPlanningCase-display` (the Communication agent's deep links). `cds-plugin-ui5` and npm workspaces in the root `package.json`.
+- [x] Generate a Fiori elements V4 **List Report + Object Page** on `SupplyPlanningService.Cases` in `app/supply-workbench/` (Fiori tools generator, TypeScript like the TM project). Done 2026-10-06: written by hand in the generator's layout (same files as the TM `dispatch-cockpit`), app ID `order.conf.supplyworkbench`, inbound `FeasibilityCase-plan` (the Communication agent's deep links; `SupplyPlanningCase-display` until phase 4). `cds-plugin-ui5` and npm workspaces in the root `package.json`.
 - [x] `srv/common-annotations.cds`: value helps and texts for the code lists (`Common.Text`, `TextArrangement`), lane and status criticality, and the shared **case header** and **Case Timeline** annotations that all three apps reuse.
 - [x] `app/supply-workbench/annotations.cds`:
   - `SelectionFields`: plant, lane, status, material, requested date, penalty risk.
@@ -21,7 +21,7 @@
 - [x] Header button **Notifications**: popover with the user's `Notification` rows and their deep links. Built as a dialog (an FE custom action has no button to anchor a popover to), on the object page header and in the worklist toolbar. A deep link goes through the launchpad's navigation service; without a launchpad (`index.html`) the app follows its own intent and names the link for other apps.
 - [x] Header button **Ask about this case**: placeholder until phase 7 (opens the Order Assistant with the case ID).
 - [x] A small **data source** badge (`mock` / `s4`) from the tool results' `source`. In the header, from the latest `SupplyResult.source` (else `atpResult.source`).
-- [x] Root `server.js` that strips the `/<app-id>` prefix for local `cds watch` (as in the TM project), relative `dataSources` URIs (`odata/v4/...`), and a `watch-supply-workbench` npm script. The sandbox launchpad (`/order.conf.supplyworkbench/test/flp.html`) registers the app under `SupplyPlanningCase-display` (`ui5.yaml`), so deep links and `?caseId=` start parameters open the case.
+- [x] Root `server.js` that strips the `/<app-id>` prefix for local `cds watch` (as in the TM project), relative `dataSources` URIs (`odata/v4/...`), and a `watch-supply-workbench` npm script. The sandbox launchpad (`/order.conf.supplyworkbench/test/flp.html`) registers the app under `FeasibilityCase-plan` (`ui5.yaml`), so deep links and `?caseId=` start parameters open the case.
 - [x] Until phases 4 and 5 exist, run the production and sales steps through the CAP index page (`http://localhost:4004`). `srv/preview-annotations.cds` keeps the preview for the Sales and Production services only.
 
 **Exit criteria:** locally, as `supplychain_user`, simulate SO-5005 and SO-5006, see FC-0001 (HIGH) above the MEDIUM case, request the production check on FC-0001 (CR-0001 appears), approve the stock transfer on SO-5006's case, and see status, recommendation and timeline update.

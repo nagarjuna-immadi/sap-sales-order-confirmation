@@ -1,7 +1,7 @@
 {
   "_version": "1.89.0",
   "sap.app": {
-    "id": "order.conf.supplyworkbench",
+    "id": "order.conf.productionworkbench",
     "type": "application",
     "i18n": "i18n/i18n.properties",
     "applicationVersion": {
@@ -13,11 +13,11 @@
     "sourceTemplate": {
       "id": "@sap/generator-fiori:lrop",
       "version": "1.33.0",
-      "toolsId": "5d1f7c3e-8f0a-4c52-9b7e-2a61e4d9c0b1"
+      "toolsId": "8c2e4a61-3b7d-4f09-a5e2-6d1b9f3c7a40"
     },
     "dataSources": {
       "mainService": {
-        "uri": "odata/v4/supply/",
+        "uri": "odata/v4/production/",
         "type": "OData",
         "settings": {
           "annotations": [
@@ -36,12 +36,12 @@
     },
     "crossNavigation": {
       "inbounds": {
-        "FeasibilityCase-plan": {
-          "semanticObject": "FeasibilityCase",
-          "action": "plan",
+        "CapacityRequest-decide": {
+          "semanticObject": "CapacityRequest",
+          "action": "decide",
           "title": "{{appTitle}}",
           "subTitle": "{{flpSubtitle}}",
-          "icon": "sap-icon://supplier",
+          "icon": "sap-icon://factory",
           "signature": {
             "parameters": {},
             "additionalParameters": "allowed"
@@ -73,7 +73,10 @@
       "libs": {
         "sap.m": {},
         "sap.ui.core": {},
-        "sap.fe.templates": {}
+        "sap.fe.templates": {},
+        "sap.viz": {
+          "lazy": true
+        }
       }
     },
     "contentDensities": {
@@ -84,7 +87,7 @@
       "i18n": {
         "type": "sap.ui.model.resource.ResourceModel",
         "settings": {
-          "bundleName": "order.conf.supplyworkbench.i18n.i18n"
+          "bundleName": "order.conf.productionworkbench.i18n.i18n"
         }
       },
       "": {
@@ -109,28 +112,28 @@
       "routes": [
         {
           "pattern": ":?query:",
-          "name": "CasesList",
-          "target": "CasesList"
+          "name": "CapacityRequestsList",
+          "target": "CapacityRequestsList"
         },
         {
-          "pattern": "Cases({key}):?query:",
-          "name": "CasesObjectPage",
-          "target": "CasesObjectPage"
+          "pattern": "CapacityRequests({key}):?query:",
+          "name": "CapacityRequestsObjectPage",
+          "target": "CapacityRequestsObjectPage"
         }
       ],
       "targets": {
-        "CasesList": {
+        "CapacityRequestsList": {
           "type": "Component",
-          "id": "CasesList",
+          "id": "CapacityRequestsList",
           "name": "sap.fe.templates.ListReport",
           "options": {
             "settings": {
-              "contextPath": "/Cases",
+              "contextPath": "/CapacityRequests",
               "variantManagement": "Page",
               "navigation": {
-                "Cases": {
+                "CapacityRequests": {
                   "detail": {
-                    "route": "CasesObjectPage"
+                    "route": "CapacityRequestsObjectPage"
                   }
                 }
               },
@@ -141,7 +144,7 @@
                   },
                   "actions": {
                     "notifications": {
-                      "press": "order.conf.supplyworkbench.ext.controller.CaseActions.openNotifications",
+                      "press": "order.conf.productionworkbench.ext.controller.CaseActions.openNotifications",
                       "visible": true,
                       "enabled": true,
                       "requiresSelection": false,
@@ -154,33 +157,54 @@
             }
           }
         },
-        "CasesObjectPage": {
+        "CapacityRequestsObjectPage": {
           "type": "Component",
-          "id": "CasesObjectPage",
+          "id": "CapacityRequestsObjectPage",
           "name": "sap.fe.templates.ObjectPage",
           "options": {
             "settings": {
               "editableHeaderContent": false,
-              "contextPath": "/Cases",
+              "contextPath": "/CapacityRequests",
               "content": {
                 "header": {
                   "actions": {
                     "notifications": {
-                      "press": "order.conf.supplyworkbench.ext.controller.CaseActions.openNotifications",
+                      "press": "order.conf.productionworkbench.ext.controller.CaseActions.openNotifications",
                       "visible": true,
                       "enabled": true,
                       "text": "{i18n>notifications}"
                     },
                     "askAboutCase": {
-                      "press": "order.conf.supplyworkbench.ext.controller.CaseActions.askAboutCase",
+                      "press": "order.conf.productionworkbench.ext.controller.CaseActions.askAboutCase",
                       "visible": true,
                       "enabled": true,
                       "text": "{i18n>askAboutCase}"
                     }
                   }
+                },
+                "body": {
+                  "sections": {
+                    "LoadBeforeAfter": {
+                      "template": "order.conf.productionworkbench.ext.fragment.LoadChart",
+                      "title": "{i18n>loadSection}",
+                      "position": {
+                        "placement": "After",
+                        "anchor": "Options"
+                      }
+                    }
+                  }
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "extends": {
+      "extensions": {
+        "sap.ui.controllerExtensions": {
+          "sap.fe.templates.ObjectPage.ObjectPageController#order.conf.productionworkbench::CapacityRequestsObjectPage": {
+            "controllerName": "order.conf.productionworkbench.ext.controller.LoadChart"
           }
         }
       }

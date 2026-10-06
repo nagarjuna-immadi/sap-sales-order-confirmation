@@ -1,0 +1,56 @@
+<!--
+  Load Before / After (development plan 4, the only chart in the demo):
+  utilization per work center and day before and after the chosen option,
+  with the 100% line and the frozen days marked on the day axis. The data is
+  in the "load" model, filled by ext/controller/LoadChart.ts.
+-->
+<core:FragmentDefinition
+    xmlns:core="sap.ui.core"
+    xmlns="sap.m"
+    xmlns:viz="sap.viz.ui5.controls"
+    xmlns:viz.data="sap.viz.ui5.data"
+    xmlns:viz.feeds="sap.viz.ui5.controls.common.feeds">
+    <VBox
+        core:require="{ handler: 'order/conf/productionworkbench/ext/fragment/LoadChart', formatMessage: 'sap/base/strings/formatMessage' }"
+        width="100%">
+        <HBox alignItems="Center" visible="{= ${load>/options}.length > 0 }">
+            <Label text="{i18n>loadOption}" class="sapUiSmallMarginEnd" />
+            <Select
+                items="{load>/options}"
+                selectedKey="{load>/selected}"
+                change="handler.onOptionChange"
+                width="40rem">
+                <core:Item key="{load>optionId}" text="{load>text}" />
+            </Select>
+        </HBox>
+        <Text text="{i18n>noOptions}" visible="{= ${load>/options}.length === 0 }" />
+        <viz:VizFrame
+            vizType="column"
+            width="100%"
+            height="26rem"
+            vizProperties="{load>/vizProperties}"
+            visible="{= ${load>/points}.length > 0 }">
+            <viz:dataset>
+                <viz.data:FlattenedDataset data="{load>/points}">
+                    <viz.data:dimensions>
+                        <viz.data:DimensionDefinition name="Work Center" value="{load>workCenter}" />
+                        <viz.data:DimensionDefinition name="Day" value="{load>day}" />
+                    </viz.data:dimensions>
+                    <viz.data:measures>
+                        <viz.data:MeasureDefinition name="Before (%)" value="{load>before}" />
+                        <viz.data:MeasureDefinition name="After (%)" value="{load>after}" />
+                    </viz.data:measures>
+                </viz.data:FlattenedDataset>
+            </viz:dataset>
+            <viz:feeds>
+                <viz.feeds:FeedItem uid="valueAxis" type="Measure" values="Before (%),After (%)" />
+                <viz.feeds:FeedItem uid="categoryAxis" type="Dimension" values="Work Center,Day" />
+            </viz:feeds>
+        </viz:VizFrame>
+        <MessageStrip
+            text="{parts: ['i18n>loadNote', 'frozenHorizon'], formatter: 'formatMessage'}"
+            type="Information"
+            showIcon="true"
+            class="sapUiSmallMarginTop" />
+    </VBox>
+</core:FragmentDefinition>

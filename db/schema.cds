@@ -236,7 +236,7 @@ entity Notification : cuid, managed {
   event           : String(40);
   title           : String(255);
   text            : String(1000);
-  deepLink        : String(255); // semantic object intent, e.g. #SupplyPlanningCase-display?caseId=FC-0001
+  deepLink        : String(255); // semantic object intent, e.g. #FeasibilityCase-plan?caseId=FC-0001
   isRead          : Boolean default false;
 }
 

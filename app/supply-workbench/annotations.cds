@@ -191,26 +191,26 @@ annotate service.Cases with @(
   ],
 );
 
-// After an action: the case comes back as the action's result; the lists on
-// the object page are read again.
+// After an action: the case comes back as the action's result; the status
+// text and the lists on the object page are read again.
 annotate service.Cases actions {
   confirmFromStock       @Core.OperationAvailable: {$edmJson: {$Path: 'in/canConfirmFromStock'}}
-                         @Common.SideEffects: {TargetEntities: ['in/timeline', 'in/supplyOptions', 'in/capacityRequests']}
+                         @Common.SideEffects: {TargetEntities: ['in/status', 'in/timeline', 'in/supplyOptions', 'in/capacityRequests']}
                          (comment @title: 'Comment'  @UI.MultiLineText);
   approveStockTransfer   @Core.OperationAvailable: {$edmJson: {$Path: 'in/canApproveStockTransfer'}}
-                         @Common.SideEffects: {TargetEntities: ['in/timeline', 'in/supplyOptions', 'in/capacityRequests']}
+                         @Common.SideEffects: {TargetEntities: ['in/status', 'in/timeline', 'in/supplyOptions', 'in/capacityRequests']}
                          (comment @title: 'Comment'  @UI.MultiLineText);
   approveReallocation    @Core.OperationAvailable: {$edmJson: {$Path: 'in/canApproveReallocation'}}
-                         @Common.SideEffects: {TargetEntities: ['in/timeline', 'in/supplyOptions', 'in/capacityRequests']}
+                         @Common.SideEffects: {TargetEntities: ['in/status', 'in/timeline', 'in/supplyOptions', 'in/capacityRequests']}
                          (comment @title: 'Comment'  @UI.MultiLineText);
   requestProductionCheck @Core.OperationAvailable: {$edmJson: {$Path: 'in/canRequestProductionCheck'}}
-                         @Common.SideEffects: {TargetEntities: ['in/timeline', 'in/supplyOptions', 'in/capacityRequests']}
+                         @Common.SideEffects: {TargetEntities: ['in/status', 'in/timeline', 'in/supplyOptions', 'in/capacityRequests']}
                          (comment @title: 'Question to Production'  @UI.MultiLineText);
   reject                 @Core.OperationAvailable: {$edmJson: {$Path: 'in/canReject'}}
-                         @Common.SideEffects: {TargetEntities: ['in/timeline', 'in/supplyOptions', 'in/capacityRequests']}
+                         @Common.SideEffects: {TargetEntities: ['in/status', 'in/timeline', 'in/supplyOptions', 'in/capacityRequests']}
                          (reason @title: 'Reason'  @UI.MultiLineText);
   confirmDateToSales     @Core.OperationAvailable: {$edmJson: {$Path: 'in/canConfirmDateToSales'}}
-                         @Common.SideEffects: {TargetEntities: ['in/timeline', 'in/supplyOptions', 'in/capacityRequests']}
+                         @Common.SideEffects: {TargetEntities: ['in/status', 'in/timeline', 'in/supplyOptions', 'in/capacityRequests']}
                          (comment @title: 'Comment'  @UI.MultiLineText);
 };
 

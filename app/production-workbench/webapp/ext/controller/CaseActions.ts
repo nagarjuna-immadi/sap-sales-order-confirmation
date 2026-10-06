@@ -11,10 +11,11 @@ import Sorter from "sap/ui/model/Sorter";
 import UI5Event from "sap/ui/base/Event";
 
 /**
- * Header buttons of the Supply Planning Workbench (development plan 3):
- * - Notifications: the Communication agent's notifications for the supply
+ * Header buttons of the Production Capacity Workbench (development plan 4,
+ * the same as the Supply Planning Workbench's):
+ * - Notifications: the Communication agent's notifications for the production
  *   planner, each with its deep link (a semantic-object intent such as
- *   #FeasibilityCase-plan?caseId=FC-0001).
+ *   #CapacityRequest-decide?crId=CR-0001).
  * - Ask about this case: placeholder until the Order Assistant (phase 7).
  */
 
@@ -39,10 +40,10 @@ async function follow(api: ExtensionAPI, deepLink: string): Promise<void> {
 		return;
 	}
 	// this app's own intent can be followed without a launchpad (index.html)
-	const own = /^FeasibilityCase-plan\?(?:.*&)?caseId=([^&]+)/.exec(hash);
+	const own = /^CapacityRequest-decide\?(?:.*&)?crId=([^&]+)/.exec(hash);
 	if (own) {
-		const caseId = decodeURIComponent(own[1]).replace(/'/g, "''");
-		await api.getRouting().navigateToRoute("CasesObjectPage", { key: `'${caseId}'` });
+		const crId = decodeURIComponent(own[1]).replace(/'/g, "''");
+		await api.getRouting().navigateToRoute("CapacityRequestsObjectPage", { key: `'${crId}'` });
 		return;
 	}
 	MessageToast.show(bundleOf(api).getText("openInLaunchpad", [deepLink]) ?? "");
@@ -90,7 +91,7 @@ export function openNotifications(this: ExtensionAPI): void {
 	dialog.open();
 }
 
-/** Placeholder: the Order Assistant comes in phase 7 and opens with the case ID. */
+/** Placeholder: the Order Assistant comes in phase 7 and opens with the parent case's ID. */
 export async function askAboutCase(this: ExtensionAPI, context: Context): Promise<void> {
 	const caseId = (await context.requestProperty("caseId")) as string;
 	MessageToast.show(bundleOf(this).getText("assistantNotAvailable", [caseId]) ?? "");
