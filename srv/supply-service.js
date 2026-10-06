@@ -1,6 +1,6 @@
 import cds from '@sap/cds'
 import { registerCaseHandlers } from './lib/case-service.js'
-import { actionFlags, page, registerComputedFields } from './lib/case-view.js'
+import { actionFlags, page, registerComputedFields, textSource } from './lib/case-view.js'
 import { getCaseFacts, latestRecommendation } from './lib/case-facts.js'
 import { getPlanningParameters } from './lib/tools/config.js'
 import { dateOf, offsetOf } from './lib/demo-clock.js'
@@ -125,9 +125,10 @@ export function optionRows(caseId, recommendation) {
 /** Fills the requested virtual fields and lists of Cases rows. */
 async function fillCases(rows, requested) {
   const needsSupply = ['activeCrId', 'dataSource', 'dataSourceCriticality', 'recommendedOption', 'recommendedOptionLabel',
-    'recommendationRationale', 'productionCheckQuestion', 'excessWarning', 'supplyTree', 'supplyOptions'].some(n => requested.has(n))
+    'recommendationRationale', 'rationaleSource', 'productionCheckQuestion', 'excessWarning', 'supplyTree', 'supplyOptions'].some(n => requested.has(n))
   for (const row of rows) {
     for (const [name, value] of Object.entries(actionFlags(row.status_code, ACTIONS))) if (requested.has(name)) row[name] = value
+    if (requested.has('summarySource')) row.summarySource = textSource(await latestRecommendation(row.caseId, 'CASE_SUMMARY'))
     if (!needsSupply) continue
 
     const { cr, result, recommendation } = await latestSupply(row.caseId)
@@ -141,6 +142,7 @@ async function fillCases(rows, requested) {
       recommendedOption: recommendation?.recommendedOption ?? null,
       recommendedOptionLabel: recommended?.label ?? null,
       recommendationRationale: recommendation?.rationale ?? null,
+      rationaleSource: textSource(recommendation),
       productionCheckQuestion: recommended?.optionId === 'S-PRODUCE' ? (QUESTION.exec(recommendation.rationale ?? '')?.[1] ?? null) : null,
       excessWarning: result ? !!result.excessWarning : null,
     }

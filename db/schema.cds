@@ -326,8 +326,9 @@ entity Customers {
 }
 
 // Contract terms per customer. clauseText is null when there is no penalty
-// clause. The structured penalty fields are read by Sales Order Intake until phase 6 extracts
-// them from the clause text.
+// clause. The structured penalty fields are Sales Order Intake's template
+// rule; with Claude, the agent reads the rule from the clause text and the
+// rate must be written in it (phase 6).
 entity CustomerContract {
   key customer         : Association to Customers;
       clauseText       : String(1000);

@@ -24,6 +24,8 @@ annotate service.Cases with {
   recommendedOption       @title: 'Recommended Option ID'  @UI.HiddenFilter;
   recommendedOptionLabel  @title: 'Recommended Option'  @UI.HiddenFilter;
   recommendationRationale @title: 'Rationale'  @UI.MultiLineText  @UI.HiddenFilter;
+  rationaleSource         @title: 'Text Source'  @UI.HiddenFilter;
+  summarySource           @title: 'Summary Source'  @UI.HiddenFilter;
   productionCheckQuestion @title: 'Production Check Question'  @UI.MultiLineText  @UI.HiddenFilter;
   excessWarning           @title: 'Excess Inventory Warning'  @UI.HiddenFilter;
   penaltyCriticality      @UI.Hidden;
@@ -94,6 +96,7 @@ annotate service.Cases with @(
     {Value: penaltyRule},
     {Value: penaltyAmount},
     {Value: summary},
+    {Value: summarySource},
   ]},
 
   UI.FieldGroup #Recommendation     : {Data: [
@@ -101,6 +104,7 @@ annotate service.Cases with @(
     {Value: excessWarning},
     {Value: productionCheckQuestion},
     {Value: recommendationRationale},
+    {Value: rationaleSource},
   ]},
 
   UI.Facets                         : [

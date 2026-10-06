@@ -14,7 +14,7 @@ Phase 6.0 already checked `srv.chat`, `emit_data_part`, masking and the middlewa
 - [ ] A middleware added with `srv.after('buildMiddleware', …)` on an AGENTS.md agent can replace the final answer text (`afterAgent` or `afterModel` on the last model turn), and the replaced text is what the `response` artifact carries.
 - [ ] A function tool that returns `{"kind":"data","data":{…}}` in its result reaches the client as a `data-*` artifact.
 - [ ] The query tool runs with the user's identity, so a `before READ` handler (or `@restrict … where`) on the projections filters what the assistant sees.
-- [ ] Masking (checked in 6.0) also resolves the pseudonyms back in the answer the user sees.
+- [ ] Masking (checked in 6.0) also resolves the pseudonyms back in the answer the user sees. Register `fixMasking(this)` from `srv/lib/agent-masking.js` on the service too (two plugin bugs found in 6.0).
 - [ ] A conversation (`contextId`) of one user cannot be continued by another user.
 
 ## 7.1 `OrderAssistantService` (`srv/agents/order-assistant/`)

@@ -4,7 +4,14 @@
 // basic ATP. NORMAL and confirmed in full on time → the orchestrator auto-
 // confirms the case; everything else goes to Supply Planning. A penalty clause
 // on a non-HIGH item only gives a PRIORITY_RAISE suggestion (plan 2.0): Sales
-// changes the priority in S/4HANA. Template texts until phase 6.
+// changes the priority in S/4HANA.
+//
+// Claude step (phase 6): after the commit, the agent service writes the
+// summary and reads the penalty rule from the clause text (agent-call.js).
+// The rule counts only if its rate is written in the clause; then
+// calculatePenalty() gives the amount. Otherwise the case says "No penalty
+// rule verified". The template summary and the contract's structured rule
+// stay when Claude is not used (llm-mock) or its result fails a check.
 //
 // Runs in the caller's transaction (a DemoService or SalesService request).
 // Agents never change a status: the orchestrator's system steps do.
@@ -21,12 +28,41 @@ import { laneOf } from '../../lib/tools/config.js'
 import { getSalesOrderItems } from '../../lib/s4/sales-order.js'
 import { getProduct } from '../../lib/s4/product.js'
 import { getCaseFacts } from '../../lib/case-facts.js'
+import { refineRecommendation } from '../../lib/agent-call.js'
+import { numbersIn } from '../../lib/number-check.js'
 
 const { SELECT, UPDATE } = cds.ql
 
 const AGENT = 'SALES_ORDER_INTAKE_AGENT'
+const AGENT_SERVICE = 'SalesOrderIntakeAgentService'
+const NO_RULE_VERIFIED = 'No penalty rule verified'
 
-// --- Template texts (phase 6 puts Claude on top, with these as the fallback) ---
+// The emit_data_part shape of the agent service (AGENTS.md).
+const OUTPUT_SCHEMA = {
+  type: 'object',
+  required: ['summary', 'penaltyRule'],
+  additionalProperties: false,
+  properties: {
+    summary: { type: 'string', minLength: 1, maxLength: 600 },
+    penaltyRule: {
+      oneOf: [
+        { type: 'null' },
+        {
+          type: 'object',
+          required: ['rate', 'unit', 'basis'],
+          additionalProperties: false,
+          properties: {
+            rate: { type: 'number', exclusiveMinimum: 0 },
+            unit: { enum: ['DAY', 'WEEK', 'OTHER'] },
+            basis: { enum: ['ORDER_VALUE', 'OTHER'] },
+          },
+        },
+      ],
+    },
+  },
+}
+
+// --- Template texts (the fallback of the Claude step) ----------------------------
 
 const summaryText = ({ item, customer, product, atp, rule, penaltyAmount, lane }) => {
   const need = `${customer?.name ?? item.customer} needs ${item.quantity} ${item.quantityUnit} × ${item.material} (${product?.description ?? item.material}) by ${item.requestedDate}. Lane ${lane}.`
@@ -67,14 +103,40 @@ async function assess(item) {
 
 const snapshot = (item, a) => ({ item, atp: a.atp, lane: a.lane, penaltyRule: a.rule, penaltyAmount: a.penaltyAmount })
 
+/**
+ * The penalty facts of the case from Claude's rule: the rule counts only when
+ * its rate is written in the clause text (blueprint §7 A2 guardrail).
+ */
+function verifiedPenalty(rule, clauseText, orderValue) {
+  if (!clauseText) return null // no clause: the summary says so, nothing to change
+  if (!rule || !numbersIn(clauseText).has(rule.rate)) return { penaltyRule: NO_RULE_VERIFIED, penaltyAmount: null }
+  const toolRule = { rate: rule.rate, per: rule.unit, basis: rule.basis }
+  return { penaltyRule: penaltyRuleText(toolRule), penaltyAmount: calculatePenalty(toolRule, orderValue, 1) }
+}
+
 async function recommend(caseId, item, a) {
-  await attachRecommendation({
+  const template = { summary: a.summary, penaltyRule: a.rule && { rate: a.rule.rate, unit: a.rule.per, basis: a.rule.basis } }
+  const recommendationId = await attachRecommendation({
     caseId,
     agent: AGENT,
     kind: 'CASE_SUMMARY',
     recommendedOption: a.lane,
     rationale: a.summary,
     inputSnapshot: snapshot(item, a),
+  })
+  refineRecommendation({
+    recommendationId,
+    agent: AGENT_SERVICE,
+    query: `Case ${caseId}: write the case summary and read the penalty rule.`,
+    schema: OUTPUT_SCHEMA,
+    template,
+    render: output => output.summary,
+    mustMention: [item.material, item.requestedDate],
+    apply: async run => {
+      if (!run.llmUsed) return
+      const facts = verifiedPenalty(run.output.penaltyRule, a.customer?.clauseText, item.netAmount)
+      if (facts) await UPDATE('order.conf.OrderFeasibilityCase').set(facts).where({ caseId })
+    },
   })
   if (a.rule && a.lane !== 'HIGH') {
     const high = await SELECT.one.from('order.conf.DeliveryPriorityLane').columns('deliveryPriority').where({ lane_code: 'HIGH' })

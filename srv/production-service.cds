@@ -53,6 +53,7 @@ service ProductionService {
       virtual null as recommendedOptionLabel  : String(255),
       virtual null as overrideOption          : String(20), // the best option that needs an override
       virtual null as comparison              : LargeString,
+      virtual null as comparisonSource        : String(20), // Agent (Claude) | Template text
       virtual null as frozenHorizon           : String(20), // e.g. "D+0 … D+3"
       // Which actions the case status allows (case-rules.js TRANSITIONS) on an
       // OPEN CR, for @Core.OperationAvailable. The orchestrator still checks.

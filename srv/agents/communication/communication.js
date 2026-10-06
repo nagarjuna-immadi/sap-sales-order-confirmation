@@ -5,8 +5,13 @@
 // AUTO_CONFIRMED. On SUPPLY_CONFIRMED and REJECTED: a customer draft
 // (confirmation, or delay with the earliest date from A3), stored as a
 // CUSTOMER_DRAFT recommendation and copied to the case. A5 never sends
-// anything to a customer: Sales edits and sends the draft. Template texts
-// until phase 6; dates, quantities and IDs come from the case and the tools.
+// anything to a customer: Sales edits and sends the draft. Dates, quantities
+// and IDs come from the case and the tools.
+//
+// Claude step (phase 6): after the commit, the agent service writes the draft
+// in the customer's language and tone (agent-call.js); the number check
+// compares its dates, quantities and IDs with the case. The English template
+// stays when Claude is not used. Notification texts stay templates.
 
 import cds from '@sap/cds'
 import { attachRecommendation } from '../feasibility-case-orchestrator/orchestrator.js'
@@ -15,11 +20,27 @@ import { onStatusChange } from '../../lib/agent-trigger.js'
 import { getCaseFacts, getCapacityRequest, latestRecommendation } from '../../lib/case-facts.js'
 import { getCustomer } from '../../lib/tools/order-intake.js'
 import { getProduct } from '../../lib/s4/product.js'
+import { refineRecommendation } from '../../lib/agent-call.js'
 
 const { SELECT, INSERT } = cds.ql
 
 const AGENT = 'COMMUNICATION_AGENT'
+const AGENT_SERVICE = 'CommunicationAgentService'
 const S = CASE_STATUS
+
+// The emit_data_part shape of the agent service (AGENTS.md).
+const OUTPUT_SCHEMA = {
+  type: 'object',
+  required: ['subject', 'body'],
+  additionalProperties: false,
+  properties: {
+    subject: { type: 'string', minLength: 1, maxLength: 200 },
+    body: { type: 'string', minLength: 1, maxLength: 3000 },
+  },
+}
+
+/** The stored draft text (also copied to the case for the Sales app). */
+const render = draft => `Subject: ${draft.subject}\n\n${draft.body}`
 
 // Semantic-object intents of the three case apps, one inbound per app
 // (manifest crossNavigation, development plan 4).
@@ -104,10 +125,12 @@ async function notificationsFor(event, f) {
   }
 }
 
-const earliestDate = async caseId =>
+/** The earliest date of the latest supply check's reject option, or null. */
+export const earliestDate = async caseId =>
   (await latestRecommendation(caseId, 'SUPPLY_OPTIONS'))?.options.find(o => o.optionId === 'S-REJECT')?.earliestDate ?? null
 
-const lastReason = async caseId =>
+/** The reason of the case's last rejection, or undefined. */
+export const lastReason = async caseId =>
   (await SELECT.one.from('order.conf.AuditLog').columns('reason').where({ parentCase_caseId: caseId, toStatus: S.REJECTED, outcome: 'DONE' }).orderBy('at desc'))?.reason
 
 // --- Customer drafts ------------------------------------------------------------------------
@@ -115,7 +138,7 @@ const lastReason = async caseId =>
 const GREETING = { formal: name => `Dear ${name},`, neutral: name => `Hello ${name},`, friendly: name => `Hi ${name},` }
 const CLOSING = { formal: 'Kind regards', neutral: 'Best regards', friendly: 'Many thanks and best wishes' }
 
-/** { subject, body } in the customer's tone (English templates for every language until phase 6). */
+/** { subject, body } in the customer's tone; English for every language (Claude writes in the customer's language). */
 async function customerDraft(f, kind) {
   const customer = await getCustomer(f.customer)
   const product = await getProduct(f.material)
@@ -160,13 +183,22 @@ export async function communicate(event) {
   const kind = event.to === S.SUPPLY_CONFIRMED ? 'confirmation' : event.to === S.REJECTED ? 'delay' : null
   if (!kind) return
   const draft = await customerDraft(f, kind)
-  await attachRecommendation({
+  const recommendationId = await attachRecommendation({
     caseId: f.caseId,
     agent: AGENT,
     kind: 'CUSTOMER_DRAFT',
     recommendedOption: kind,
-    rationale: `Subject: ${draft.subject}\n\n${draft.body}`,
+    rationale: render(draft),
     inputSnapshot: { draft, kind, confirmedDate: f.confirmedDate, confirmedQty: f.confirmedQty, requestedDate: f.requestedDate },
+  })
+  refineRecommendation({
+    recommendationId,
+    agent: AGENT_SERVICE,
+    query: `Case ${f.caseId}: draft the customer ${kind === 'confirmation' ? 'confirmation' : 'delay message'}.`,
+    schema: OUTPUT_SCHEMA,
+    template: draft,
+    render,
+    mustMention: [f.salesOrder, kind === 'confirmation' ? (f.confirmedDate ?? f.requestedDate) : await earliestDate(f.caseId)],
   })
 }
 

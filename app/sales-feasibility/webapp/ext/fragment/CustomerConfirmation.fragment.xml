@@ -26,6 +26,8 @@
             <Text text="{= ${confirmedQty} === null ? '' : ${confirmedQty} + ' ' + (${quantityUnit} || '') }" emptyIndicatorMode="On" />
             <Label text="{i18n>draftKind}" />
             <Text text="{draftKind}" emptyIndicatorMode="On" />
+            <Label text="{i18n>draftSource}" />
+            <Text text="{draftSource}" emptyIndicatorMode="On" />
         </form:SimpleForm>
         <MessageStrip
             text="{= ${canConfirmToCustomer} === true ? ${i18n>draftEditable} : ${i18n>draftReadOnly} }"

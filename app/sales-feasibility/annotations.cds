@@ -32,6 +32,9 @@ annotate service.Cases with {
   recommendationKind      @title: 'Kind'  @UI.HiddenFilter;
   recommendedOptionLabel  @title: 'Recommended'  @UI.HiddenFilter;
   recommendationRationale @title: 'Explanation'  @UI.MultiLineText  @UI.HiddenFilter;
+  rationaleSource         @title: 'Text Source'  @UI.HiddenFilter;
+  summarySource           @title: 'Summary Source'  @UI.HiddenFilter;
+  draftSource             @title: 'Draft Source'  @UI.HiddenFilter;
   recommendationAt        @title: 'Suggested At'  @UI.HiddenFilter;
   draftKind               @title: 'Draft'  @UI.HiddenFilter;
   penaltyCriticality      @UI.Hidden;
@@ -90,6 +93,7 @@ annotate service.Cases with @(
 
   UI.FieldGroup #Summary            : {Data: [
     {Value: summary},
+    {Value: summarySource},
     {Value: salesOrder},
     {Value: item},
     {Value: plant},
@@ -105,6 +109,7 @@ annotate service.Cases with @(
     {Value: recommendationAgent},
     {Value: recommendationAt},
     {Value: recommendationRationale},
+    {Value: rationaleSource},
   ]},
 
   // The Customer Confirmation section is a custom section after Recommendation (manifest.json)

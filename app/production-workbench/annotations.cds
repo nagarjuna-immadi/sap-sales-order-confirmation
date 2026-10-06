@@ -52,6 +52,7 @@ annotate service.CapacityRequests with {
   recommendedOptionLabel @title: 'Suggested by Agent'  @UI.HiddenFilter;
   overrideOption         @UI.Hidden;
   comparison             @title: 'Comparison (Lower Score Is Better)'  @UI.MultiLineText  @UI.HiddenFilter;
+  comparisonSource       @title: 'Text Source'  @UI.HiddenFilter;
   frozenHorizon          @title: 'Frozen Horizon'  @UI.HiddenFilter;
   canChooseOption         @UI.Hidden;
   canChooseOverrideOption @UI.Hidden;
@@ -120,6 +121,7 @@ annotate service.CapacityRequests with @(
   UI.FieldGroup #Comparison         : {Data: [
     {Value: recommendedOptionLabel},
     {Value: comparison},
+    {Value: comparisonSource},
   ]},
 
   UI.FieldGroup #Decision           : {Data: [

@@ -21,6 +21,12 @@ export function actionFlags(status, actions) {
   return Object.fromEntries(actions.map(action => [flagOf(action), TRANSITIONS[action].from.includes(status)]))
 }
 
+/**
+ * Who wrote a recommendation's text (plan 6.2): the agent through Claude, or
+ * the template (llm-mock, a failed check, or while the agent is still running).
+ */
+export const textSource = rec => (rec ? (rec.llmUsed ? 'Agent (Claude)' : 'Template text') : null)
+
 /** The page of `rows` a READ asks for ($skip / $top), with $count. */
 export function page(rows, query) {
   const { offset, rows: top } = query?.SELECT?.limit ?? {}

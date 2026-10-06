@@ -8,7 +8,12 @@
 // - PRODUCTION_CONFIRMED: confirm the date to Sales (chosen option's finish +
 //   shipping lead time, never before the requested date);
 // - PRODUCTION_REJECTED: reject with the earliest date (free capacity only).
-// The ranking comes from the tools, never from text. Template texts until phase 6.
+// The ranking comes from the tools, never from text.
+//
+// Claude step (phase 6): after the commit, the agent service explains why the
+// recommended option ranks first and drafts the production check question or
+// the message to Sales (agent-call.js). The options list under it stays the
+// tools' own, and the template text stays when Claude is not used.
 
 import cds from '@sap/cds'
 import { attachRecommendation } from '../feasibility-case-orchestrator/orchestrator.js'
@@ -18,31 +23,56 @@ import { getPlanningParameters } from '../../lib/tools/config.js'
 import { onStatusChange } from '../../lib/agent-trigger.js'
 import { getCaseFacts, getCapacityRequest } from '../../lib/case-facts.js'
 import { dateOf, offsetOf } from '../../lib/demo-clock.js'
+import { refineRecommendation } from '../../lib/agent-call.js'
 
 const { SELECT, INSERT } = cds.ql
 
 const AGENT = 'SUPPLY_INVENTORY_AGENT'
+const AGENT_SERVICE = 'SupplyInventoryAgentService'
 const TRIGGERS = [CASE_STATUS.WITH_SUPPLY_PLANNING, CASE_STATUS.PRODUCTION_CONFIRMED, CASE_STATUS.PRODUCTION_REJECTED]
 
-// --- Template texts -----------------------------------------------------------------
+// The emit_data_part shape of the agent service (AGENTS.md).
+const OUTPUT_SCHEMA = {
+  type: 'object',
+  required: ['explanation', 'message'],
+  additionalProperties: false,
+  properties: {
+    explanation: { type: 'string', minLength: 1, maxLength: 1000 },
+    message: { type: ['string', 'null'], maxLength: 800 },
+  },
+}
+
+// --- Texts ----------------------------------------------------------------------------
 
 const optionLine = o => `${o.rank ? `${o.rank}. ` : ''}${o.label}${o.feasible ? '' : ` (not possible: ${o.reason})`}`
 
-function explanation(facts, picture, options, recommended) {
-  const lines = [`Recommended: ${recommended.label}.`]
-  if (recommended.optionId === 'S-PRODUCE') {
-    const components = picture.materialTree
-      .filter(n => n.level > 0 && !n.hasBom)
-      .map(n => `${n.material} ${n.availableQty}/${n.requiredQty}`)
-      .join(', ')
-    lines.push(
-      `Production check question: can we produce ${recommended.produceQty} × ${facts.material} by ${recommended.needByDate}? ` +
-        `Components in plant ${facts.plant}: ${components || 'none needed'}. ` +
-        `No ${facts.material} stock in other plants and no lower-priority order to reallocate from.` +
-        (picture.leftoverQty > 0 ? ` Lot size leaves ${picture.leftoverQty} over.` : ' Lot size leaves nothing over.'),
-    )
-    if (recommended.excessWarning) lines.push(`Excess warning: the leftover is above the excess threshold; consider an exact lot size for this order.`)
+/** Template output: { explanation, message }; message is the production check question or null. */
+function templateOutput(facts, picture, recommended) {
+  if (recommended.optionId !== 'S-PRODUCE') return { explanation: `Recommended: ${recommended.label}.`, message: null }
+  const components = picture.materialTree
+    .filter(n => n.level > 0 && !n.hasBom)
+    .map(n => `${n.material} ${n.availableQty}/${n.requiredQty}`)
+    .join(', ')
+  return {
+    explanation: `Recommended: ${recommended.label}.`,
+    message:
+      `Can we produce ${recommended.produceQty} × ${facts.material} by ${recommended.needByDate}? ` +
+      `Components in plant ${facts.plant}: ${components || 'none needed'}. ` +
+      `No ${facts.material} stock in other plants and no lower-priority order to reallocate from.` +
+      (picture.leftoverQty > 0 ? ` Lot size leaves ${picture.leftoverQty} over.` : ' Lot size leaves nothing over.'),
   }
+}
+
+/**
+ * The stored rationale: explanation, the message (supply-service.js reads the
+ * production check question from its own line), the excess warning and the
+ * options as the tools ranked them.
+ */
+function rationale(output, options, recommended) {
+  const message = output.message?.replace(/\s*\n\s*/g, ' ').trim()
+  const lines = [output.explanation]
+  if (message) lines.push(`${recommended.optionId === 'S-PRODUCE' ? 'Production check question' : 'Message to Sales'}: ${message}`)
+  if (recommended.excessWarning) lines.push(`Excess warning: the leftover is above the excess threshold; consider an exact lot size for this order.`)
   lines.push('Options:', ...options.map(optionLine))
   return lines.join('\n')
 }
@@ -110,16 +140,30 @@ export async function assessSupply(caseId, crId) {
     excessWarning: picture.excessWarning,
     source: picture.source,
   })
-  return attachRecommendation({
+  const template = templateOutput(facts, picture, recommended)
+  const render = output => rationale(output, options, recommended)
+  const recommendationId = await attachRecommendation({
     caseId,
     crId: facts.status === CASE_STATUS.WITH_SUPPLY_PLANNING ? null : (crId ?? null),
     agent: AGENT,
     kind: 'SUPPLY_OPTIONS',
     options,
     recommendedOption,
-    rationale: explanation(facts, picture, options, recommended),
+    rationale: render(template),
     inputSnapshot: picture,
   })
+  const draft = recommendedOption === 'S-PRODUCE' ? 'the production check question' : 'the message to Sales'
+  refineRecommendation({
+    recommendationId,
+    agent: AGENT_SERVICE,
+    query: `Case ${caseId}: explain the supply recommendation and draft ${draft}.`,
+    schema: OUTPUT_SCHEMA,
+    template,
+    render,
+    // the date the message is about: need-by, confirmed or earliest date
+    mustMention: [recommended.needByDate ?? recommended.confirmedDate ?? recommended.earliestDate],
+  })
+  return recommendationId
 }
 
 const latestCrId = async caseId =>

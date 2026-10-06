@@ -1,6 +1,6 @@
 import cds from '@sap/cds'
 import { registerCaseHandlers } from './lib/case-service.js'
-import { actionFlags, registerComputedFields } from './lib/case-view.js'
+import { actionFlags, registerComputedFields, textSource } from './lib/case-view.js'
 import { latestRecommendation } from './lib/case-facts.js'
 import { isFinal } from './agents/feasibility-case-orchestrator/case-rules.js'
 import { reevaluateCase } from './agents/sales-order-intake/sales-order-intake.js'
@@ -48,7 +48,7 @@ async function latestDecision(caseId) {
 
 /** Fills the requested virtual fields of Cases rows. */
 async function fillCases(rows, requested) {
-  const needsRecommendation = ['recommendationAgent', 'recommendationKind', 'recommendedOptionLabel', 'recommendationRationale', 'recommendationAt'].some(n => requested.has(n))
+  const needsRecommendation = ['recommendationAgent', 'recommendationKind', 'recommendedOptionLabel', 'recommendationRationale', 'rationaleSource', 'recommendationAt'].some(n => requested.has(n))
   for (const row of rows) {
     const open = !isFinal(row.status_code)
     const values = {
@@ -64,13 +64,16 @@ async function fillCases(rows, requested) {
         recommendationKind: rec ? (KIND_NAME[rec.kind_code] ?? rec.kind_code) : null,
         recommendedOptionLabel: rec ? (option?.label ?? rec.recommendedOption) : null,
         recommendationRationale: rec?.rationale ?? null,
+        rationaleSource: textSource(rec),
         recommendationAt: rec?.createdAt ?? null,
       })
     }
-    if (requested.has('draftKind')) {
+    if (requested.has('draftKind') || requested.has('draftSource')) {
       const draft = await latestRecommendation(row.caseId, 'CUSTOMER_DRAFT')
       values.draftKind = draft ? (DRAFT_KIND[draft.recommendedOption] ?? null) : null
+      values.draftSource = textSource(draft)
     }
+    if (requested.has('summarySource')) values.summarySource = textSource(await latestRecommendation(row.caseId, 'CASE_SUMMARY'))
     for (const [name, value] of Object.entries(values)) if (requested.has(name)) row[name] = value
   }
 }

@@ -1,9 +1,12 @@
+using {cap.agent} from '@cap-js/agents/srv/entities';
+
 /**
  * Demo helpers (development plan 2.4). Demo only, never part of the case
  * apps: simulated S/4 sales order events that call Sales Order Intake, a
  * delivery priority change, the scenario 4 switch and a reset. Event Mesh is
  * not on trial, so the events are posted here in the S/4 format (CloudEvents
- * 1.0, Hub event object Sales Order Events 1.0.0, phase 0.1).
+ * 1.0, Hub event object Sales Order Events 1.0.0, phase 0.1). From phase 6
+ * also the agents' Claude runs (AgentTasks), to check them by hand.
  */
 @path    : '/odata/v4/demo'
 @requires: 'authenticated-user'
@@ -83,4 +86,22 @@ service DemoService {
 
   /** Reseeds the database (cases, audit, mocks), scenario 'default', IDs from FC-0001 / CR-0001. */
   action resetDemo()                                                                          returns ResetResult;
+
+  /**
+   * The Claude runs of the agents (development plan 6.3): one row per run in
+   * the plugin's cap.agent.Tasks, with state, tokens and tool calls.
+   * Recommendation.agentTaskId points here. Read-only and without the task
+   * payload; the plugin deletes rows after cds.agents.retention (30 days).
+   */
+  @readonly
+  entity AgentTasks as
+    projection on agent.Tasks {
+      taskId,
+      agentService,
+      state,
+      usageLlmTokens,
+      usageToolCalls,
+      createdAt,
+      modifiedAt,
+    };
 }

@@ -18,8 +18,9 @@ export function getSalesOrder(salesOrder, item) {
 /**
  * Customer with contract terms, or null:
  * { id, name, clauseText, language, tone, penaltyRule: { rate, per, basis } | null }.
- * The structured rule is read from CustomerContract until phase 6 extracts it
- * from the clause text. No clause → penaltyRule null.
+ * The structured rule from CustomerContract is the template rule; with
+ * Claude, the Sales Order Intake agent reads it from the clause text instead
+ * (phase 6). No clause → penaltyRule null.
  */
 export async function getCustomer(customerId) {
   const customer = await SELECT.one.from('order.conf.Customers').columns('ID', 'name').where({ ID: customerId })

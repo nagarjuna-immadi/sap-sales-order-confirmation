@@ -24,9 +24,12 @@ service SalesService {
       virtual null as recommendationKind      : String(40),
       virtual null as recommendedOptionLabel  : String(255),
       virtual null as recommendationRationale : LargeString,
+      virtual null as rationaleSource         : String(20), // Agent (Claude) | Template text
       virtual null as recommendationAt        : Timestamp,
-      // The Communication agent's draft: "Confirmation" or "Delay"
+      virtual null as summarySource           : String(20), // of the Sales Order Intake summary
+      // The Communication agent's draft: "Confirmation" or "Delay", and who wrote it
       virtual null as draftKind               : String(20),
+      virtual null as draftSource             : String(20),
       // Which actions the case status allows (case-rules.js TRANSITIONS), for
       // @Core.OperationAvailable. The orchestrator still checks on every call.
       virtual null as canConfirmToCustomer    : Boolean,

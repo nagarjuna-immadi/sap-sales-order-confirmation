@@ -6,7 +6,8 @@
 //   One transaction (the request's): lock the case, check the ETag, ask
 //   case-rules, update case (and CR), write exactly one audit row (rule 6).
 // - openCase / systemTransition / updateLane: steps of the Sales Order Intake
-//   agent. attachRecommendation: A2–A5 write recommendations, never a status.
+//   agent. attachRecommendation: A2–A5 write recommendations, never a status;
+//   recordAgentRun adds the Claude text to one afterwards (phase 6).
 // - A refused action writes an AuditLog row with outcome REFUSED in its own
 //   transaction, after the request's has ended (the in-memory SQLite has one
 //   connection, so a second transaction cannot run alongside the first).
@@ -422,6 +423,43 @@ export function attachRecommendation(rec) {
     const copyTo = CASE_TEXT_FIELD[rec.kind]
     if (copyTo) await UPDATE(DB.Cases).set({ [copyTo]: rec.rationale ?? null }).where({ caseId: rec.caseId })
     return ID
+  })
+}
+
+/**
+ * Records an agent's Claude run on a stored recommendation (plan 6.1): the
+ * checked text replaces the rationale when llmUsed, and the run's model,
+ * persona version, fallback reason, task ID and tool results are kept. The
+ * case copy of a summary or customer draft follows, as long as this is still
+ * the case's latest recommendation of its kind. Never a status change.
+ * run: { text, llmUsed, fallbackReason, modelId, promptVersion, agentTaskId, inputSnapshot }
+ * Returns false when the recommendation no longer exists (e.g. after a demo reset).
+ */
+export function recordAgentRun(recommendationId, run) {
+  return inTransaction(async () => {
+    const rec = await SELECT.one.from(DB.Recommendations)
+      .columns('ID', 'parentCase_caseId', 'capacityRequest_crId', 'kind_code', 'createdAt')
+      .where({ ID: recommendationId })
+    if (!rec) return false
+    await UPDATE(DB.Recommendations)
+      .set({
+        ...(run.llmUsed && { rationale: run.text }),
+        llmUsed: !!run.llmUsed,
+        fallbackReason: run.fallbackReason ?? null,
+        modelId: run.llmUsed ? (run.modelId ?? null) : null,
+        promptVersion: run.promptVersion ?? null,
+        agentTaskId: run.agentTaskId ?? null,
+        inputSnapshot: json(run.inputSnapshot),
+      })
+      .where({ ID: recommendationId })
+    const copyTo = CASE_TEXT_FIELD[rec.kind_code]
+    if (copyTo && run.llmUsed) {
+      const latest = await SELECT.one.from(DB.Recommendations).columns('ID')
+        .where({ parentCase_caseId: rec.parentCase_caseId, kind_code: rec.kind_code })
+        .orderBy('createdAt desc')
+      if (latest?.ID === rec.ID) await UPDATE(DB.Cases).set({ [copyTo]: run.text }).where({ caseId: rec.parentCase_caseId })
+    }
+    return true
   })
 }
 

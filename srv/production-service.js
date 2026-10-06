@@ -1,6 +1,6 @@
 import cds from '@sap/cds'
 import { registerCaseHandlers } from './lib/case-service.js'
-import { actionFlags, page, registerComputedFields } from './lib/case-view.js'
+import { actionFlags, page, registerComputedFields, textSource } from './lib/case-view.js'
 import { getCapacityRequest, latestRecommendation } from './lib/case-facts.js'
 import { getPlanningParameters } from './lib/tools/config.js'
 import { label } from './lib/demo-clock.js'
@@ -117,6 +117,7 @@ async function fillRequests(rows, requested) {
       recommendedOptionLabel: recommended?.label ?? null,
       overrideOption: override?.optionId ?? null,
       comparison: recommendation?.rationale ?? null,
+      comparisonSource: textSource(recommendation),
       frozenHorizon: `D+0 … ${label(frozenDays)}`,
       canChooseOption: open && flags.canChooseOption && options.some(o => !o.needsOverride),
       canChooseOverrideOption: open && flags.canChooseOverrideOption && !!override,

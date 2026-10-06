@@ -36,7 +36,9 @@ service SupplyPlanningService {
       virtual null as recommendedOption       : String(20),
       virtual null as recommendedOptionLabel  : String(255),
       virtual null as recommendationRationale : LargeString,
+      virtual null as rationaleSource         : String(20), // Agent (Claude) | Template text
       virtual null as productionCheckQuestion : String(1000),
+      virtual null as summarySource           : String(20), // of the Sales Order Intake summary
       virtual null as excessWarning           : Boolean,
       // Which actions the case status allows (case-rules.js TRANSITIONS), for
       // @Core.OperationAvailable. The orchestrator still checks on every call.
