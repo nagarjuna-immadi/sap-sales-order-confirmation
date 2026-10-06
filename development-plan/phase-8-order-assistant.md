@@ -27,7 +27,7 @@ Difference to TM Assistant in the TM project: no `@cap-js/agents`, no A2A, no ap
   - LLM unavailable → no text, only the cards for the case ID found in the question
   - action request ("Confirm FC-0001 to the customer") → explains it can't act, gives the current status from `getCase`, links to the case app; no status change and no audit row
 - [ ] Store each turn in `ChatMessage` (question, answer, tool calls, model ID, tokens). Cleared on app restart (demo retention).
-- [ ] Check by hand in the Order Assistant app: the three scenario 6 questions as `srini` and `satish`, a question about a case the user may not see, and an action request.
+- [ ] Check by hand in the Order Assistant app: the three scenario 6 questions as `sales_user` and `production_user`, a question about a case the user may not see, and an action request.
 
 ## 8.2 Chat UI: Order Assistant (`app/order-assistant/`)
 

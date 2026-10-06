@@ -1,0 +1,18 @@
+{
+  "requires": {
+    "[development]": {
+      "auth": {
+        "kind": "mocked",
+        "users": {
+          "supplychain_user": { "roles": ["SupplyPlanner"] },
+          "production_user": { "roles": ["ProductionPlanner"] },
+          "sales_user": { "roles": ["Sales"] },
+          "demo_user": { "roles": ["Sales", "SupplyPlanner", "ProductionPlanner"] },
+          "alice": false, "bob": false, "carol": false, "dave": false,
+          "erin": false, "fred": false, "me": false, "yves": false,
+          "*": false
+        }
+      }
+    }
+  }
+}
