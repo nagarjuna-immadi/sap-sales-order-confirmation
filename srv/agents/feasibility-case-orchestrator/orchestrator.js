@@ -206,6 +206,8 @@ async function apply({ caseId, crId, action, input, actor, ifMatch }) {
   const caseUpdate = { status_code: next.status, waitingForRole: next.waitingForRole, version: caseRow.version + 1 }
   if (input.confirmedDate !== undefined) caseUpdate.confirmedDate = input.confirmedDate
   if (input.confirmedQty !== undefined) caseUpdate.confirmedQty = input.confirmedQty
+  // Confirm to customer: the draft as Sales edited it (nothing is sent, plan 5)
+  if (input.customerDraft) caseUpdate.customerDraft = input.customerDraft
   const updated = await UPDATE(DB.Cases).set(caseUpdate).where({ caseId, version: caseRow.version })
   if (updated !== 1) {
     // rolled back by the caller: the request fails, so the CR insert/update goes too
@@ -223,7 +225,7 @@ async function apply({ caseId, crId, action, input, actor, ifMatch }) {
     toStatus: next.status,
     comment: input.comment,
     reason: input.reason,
-    payload: input.optionId ? json({ chosenOption: input.optionId, overrideUsed: action === 'chooseOverrideOption' }) : null,
+    payload: payloadOf(action, input),
     recommendation_ID: recommendation?.ID ?? null,
     recommendationAccepted,
     outcome: 'DONE',
@@ -242,7 +244,19 @@ async function apply({ caseId, crId, action, input, actor, ifMatch }) {
   return { ok: true, result }
 }
 
-const normalize = (input = {}) => ({ ...input, comment: text(input.comment), reason: text(input.reason) })
+const normalize = (input = {}) => ({
+  ...input,
+  comment: text(input.comment),
+  reason: text(input.reason),
+  customerDraft: input.customerDraft == null || String(input.customerDraft).trim() === '' ? null : String(input.customerDraft),
+})
+
+/** The audit payload of an action: the chosen option of a decision, the customer draft of a confirmation. */
+function payloadOf(action, input) {
+  if (input.optionId) return json({ chosenOption: input.optionId, overrideUsed: action === 'chooseOverrideOption' })
+  if (input.customerDraft) return json({ customerDraft: input.customerDraft })
+  return null
+}
 
 // --- Human actions ------------------------------------------------------------
 
@@ -250,7 +264,7 @@ const normalize = (input = {}) => ({ ...input, comment: text(input.comment), rea
  * A bound action of a case service, on a case (key caseId) or a capacity
  * request (key crId). The request needs the case version as If-Match.
  * input: { comment, reason, optionId, recommendationId, recommendationAccepted,
- *          confirmedDate, confirmedQty, needByDate }
+ *          confirmedDate, confirmedQty, needByDate, customerDraft }
  * Returns { caseId, crId, from, to, actor, action, version }.
  */
 export async function executeAction(req, action, input = {}) {

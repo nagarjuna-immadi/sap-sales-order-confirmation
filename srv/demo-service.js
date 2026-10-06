@@ -12,6 +12,7 @@ import { clearCache } from './lib/cache.js'
 const { UPDATE, SELECT } = cds.ql
 
 const SALES_ORDER_SERVICE = 'API_SALES_ORDER_SRV'
+const DEMO_ROLES = ['Sales', 'SupplyPlanner', 'ProductionPlanner']
 const EVENT_TYPE = {
   created: 'sap.s4.beh.salesorder.v1.SalesOrder.Created.v1',
   changed: 'sap.s4.beh.salesorder.v1.SalesOrder.Changed.v1',
@@ -59,6 +60,12 @@ export default class DemoService extends cds.ApplicationService {
       }
       return getScenario()
     })
+    // The Demo panel is for the presenter who walks the whole demo, i.e. has all
+    // three case roles (demo_user locally); the other users never see it.
+    this.on('demoStatus', req => ({
+      visible: DEMO_ROLES.every(role => req.user.is(role)),
+      scenario: getScenario(),
+    }))
     this.on('resetDemo', req => this.onReset(req))
     return super.init()
   }

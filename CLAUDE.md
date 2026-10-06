@@ -12,6 +12,7 @@ The project is being scaffolded (phase 0 of `development-plan/`). The source of 
 - `npm run watch`: local dev server (`cds watch`) on mock data and SQLite, at `http://localhost:4004`.
 - `npm run watch-supply-workbench`: `cds watch` and opens the Supply Planning Workbench (`/order.conf.supplyworkbench/index.html`; sandbox launchpad at `/order.conf.supplyworkbench/test/flp.html`).
 - `npm run watch-production-workbench`: `cds watch` and opens the Production Capacity Workbench (`/order.conf.productionworkbench/index.html`; sandbox launchpad at `/order.conf.productionworkbench/test/flp.html`).
+- `npm run watch-sales-feasibility`: `cds watch` and opens Sales Order Feasibility (`/order.conf.salesfeasibility/index.html`; sandbox launchpad at `/order.conf.salesfeasibility/test/flp.html`). Log in as `demo_user` for the Demo panel (simulated orders, priority change, scenario 4, reset).
 - `npm run watch-hybrid`: local server against bound BTP services (`cds watch --profile hybrid`; the Anthropic key from `.env` from phase 6, the CAL credentials and binding set up by the user in phase 8).
 - `node scripts/gen-mock-data.js [--base YYYY-MM-DD]`: regenerate the S/4 mock CSVs in `srv/external/data/` (blueprint §8; dates relative to the base date, default today).
 - `npm start`: production start (`cds-serve`), used by Cloud Foundry.

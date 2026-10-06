@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Client-side annotations of the Sales Order Feasibility app. None yet: no
+  action parameter is mandatory here (Confirm to customer and Close take an
+  optional comment, rule 4), and every check is the orchestrator's.
+-->
+<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
+    <edmx:Reference Uri="/odata/v4/sales/$metadata">
+        <edmx:Include Namespace="SalesService"/>
+    </edmx:Reference>
+    <edmx:DataServices>
+        <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="local">
+        </Schema>
+    </edmx:DataServices>
+</edmx:Edmx>

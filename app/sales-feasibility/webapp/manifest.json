@@ -1,0 +1,264 @@
+{
+  "_version": "1.89.0",
+  "sap.app": {
+    "id": "order.conf.salesfeasibility",
+    "type": "application",
+    "i18n": "i18n/i18n.properties",
+    "applicationVersion": {
+      "version": "0.0.1"
+    },
+    "title": "{{appTitle}}",
+    "description": "{{appDescription}}",
+    "resources": "resources.json",
+    "sourceTemplate": {
+      "id": "@sap/generator-fiori:lrop",
+      "version": "1.33.0",
+      "toolsId": "a7c3e9d2-4b1f-4e8a-9c6d-3f2b8e1a5d70"
+    },
+    "dataSources": {
+      "mainService": {
+        "uri": "odata/v4/sales/",
+        "type": "OData",
+        "settings": {
+          "annotations": [
+            "annotation"
+          ],
+          "odataVersion": "4.0"
+        }
+      },
+      "annotation": {
+        "type": "ODataAnnotation",
+        "uri": "annotations/annotation.xml",
+        "settings": {
+          "localUri": "annotations/annotation.xml"
+        }
+      },
+      "demoService": {
+        "uri": "odata/v4/demo/",
+        "type": "OData",
+        "settings": {
+          "odataVersion": "4.0"
+        }
+      }
+    },
+    "crossNavigation": {
+      "inbounds": {
+        "FeasibilityCase-track": {
+          "semanticObject": "FeasibilityCase",
+          "action": "track",
+          "title": "{{appTitle}}",
+          "subTitle": "{{flpSubtitle}}",
+          "icon": "sap-icon://sales-order-item",
+          "signature": {
+            "parameters": {},
+            "additionalParameters": "allowed"
+          }
+        }
+      }
+    }
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "icons": {
+      "icon": "",
+      "favIcon": "",
+      "phone": "",
+      "phone@2": "",
+      "tablet": "",
+      "tablet@2": ""
+    },
+    "deviceTypes": {
+      "desktop": true,
+      "tablet": true,
+      "phone": true
+    }
+  },
+  "sap.ui5": {
+    "flexEnabled": true,
+    "dependencies": {
+      "minUI5Version": "1.152.0",
+      "libs": {
+        "sap.m": {},
+        "sap.ui.core": {},
+        "sap.fe.templates": {},
+        "sap.ui.layout": {}
+      }
+    },
+    "contentDensities": {
+      "compact": true,
+      "cozy": true
+    },
+    "models": {
+      "i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "settings": {
+          "bundleName": "order.conf.salesfeasibility.i18n.i18n"
+        }
+      },
+      "": {
+        "dataSource": "mainService",
+        "preload": true,
+        "settings": {
+          "operationMode": "Server",
+          "autoExpandSelect": true,
+          "earlyRequests": true
+        }
+      },
+      "@i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "uri": "i18n/i18n.properties"
+      },
+      "demo": {
+        "dataSource": "demoService",
+        "preload": false,
+        "settings": {
+          "operationMode": "Server",
+          "autoExpandSelect": true
+        }
+      },
+      "demoPanel": {
+        "type": "sap.ui.model.json.JSONModel",
+        "settings": {}
+      }
+    },
+    "resources": {
+      "css": []
+    },
+    "routing": {
+      "config": {},
+      "routes": [
+        {
+          "pattern": ":?query:",
+          "name": "CasesList",
+          "target": "CasesList"
+        },
+        {
+          "pattern": "Cases({key}):?query:",
+          "name": "CasesObjectPage",
+          "target": "CasesObjectPage"
+        }
+      ],
+      "targets": {
+        "CasesList": {
+          "type": "Component",
+          "id": "CasesList",
+          "name": "sap.fe.templates.ListReport",
+          "options": {
+            "settings": {
+              "contextPath": "/Cases",
+              "variantManagement": "Page",
+              "navigation": {
+                "Cases": {
+                  "detail": {
+                    "route": "CasesObjectPage"
+                  }
+                }
+              },
+              "controlConfiguration": {
+                "@com.sap.vocabularies.UI.v1.LineItem": {
+                  "tableSettings": {
+                    "type": "ResponsiveTable"
+                  },
+                  "actions": {
+                    "notifications": {
+                      "press": "order.conf.salesfeasibility.ext.controller.CaseActions.openNotifications",
+                      "visible": true,
+                      "enabled": true,
+                      "requiresSelection": false,
+                      "text": "{i18n>notifications}"
+                    },
+                    "demo": {
+                      "press": "order.conf.salesfeasibility.ext.controller.DemoPanel.openDemoPanel",
+                      "visible": "{demoPanel>/visible}",
+                      "enabled": true,
+                      "requiresSelection": false,
+                      "text": "{i18n>demo}"
+                    }
+                  }
+                }
+              },
+              "initialLoad": "Enabled"
+            }
+          }
+        },
+        "CasesObjectPage": {
+          "type": "Component",
+          "id": "CasesObjectPage",
+          "name": "sap.fe.templates.ObjectPage",
+          "options": {
+            "settings": {
+              "editableHeaderContent": false,
+              "contextPath": "/Cases",
+              "content": {
+                "header": {
+                  "actions": {
+                    "confirmToCustomer": {
+                      "press": "order.conf.salesfeasibility.ext.controller.CaseActions.confirmToCustomer",
+                      "visible": "{= ${offerConfirmToCustomer} === true }",
+                      "enabled": true,
+                      "text": "{i18n>confirmToCustomer}"
+                    },
+                    "notifications": {
+                      "press": "order.conf.salesfeasibility.ext.controller.CaseActions.openNotifications",
+                      "visible": true,
+                      "enabled": true,
+                      "text": "{i18n>notifications}"
+                    },
+                    "askAboutCase": {
+                      "press": "order.conf.salesfeasibility.ext.controller.CaseActions.askAboutCase",
+                      "visible": true,
+                      "enabled": true,
+                      "text": "{i18n>askAboutCase}"
+                    },
+                    "demo": {
+                      "press": "order.conf.salesfeasibility.ext.controller.DemoPanel.openDemoPanelOnCase",
+                      "visible": "{demoPanel>/visible}",
+                      "enabled": true,
+                      "text": "{i18n>demo}"
+                    }
+                  },
+                  "facets": {
+                    "S4Apps": {
+                      "type": "XMLFragment",
+                      "template": "order.conf.salesfeasibility.ext.fragment.S4Apps",
+                      "title": "{i18n>s4Apps}",
+                      "position": {
+                        "placement": "After",
+                        "anchor": "CaseHeader"
+                      },
+                      "stashed": false,
+                      "flexSettings": {
+                        "designtime": "Default"
+                      }
+                    }
+                  }
+                },
+                "body": {
+                  "sections": {
+                    "CustomerConfirmation": {
+                      "template": "order.conf.salesfeasibility.ext.fragment.CustomerConfirmation",
+                      "title": "{i18n>customerConfirmation}",
+                      "position": {
+                        "placement": "After",
+                        "anchor": "Recommendation"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "sap.fiori": {
+    "registrationIds": [],
+    "archeType": "transactional"
+  },
+  "sap.fe": {
+    "app": {
+      "enableLazyLoading": true
+    }
+  }
+}

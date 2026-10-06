@@ -4,19 +4,19 @@
 
 **Goal:** Sales sees its orders and confirms to the customer; scenarios 1–5 work across all three apps locally (§6.1, §8.3).
 
-- [ ] Generate a Fiori elements V4 **List Report + Object Page** on `SalesService.Cases` in `app/sales-feasibility/`.
-- [ ] `app/sales-feasibility/annotations.cds`:
+- [x] Generate a Fiori elements V4 **List Report + Object Page** on `SalesService.Cases` in `app/sales-feasibility/`. Done 2026-10-06: written by hand in the generator's layout, like phases 3 and 4; app ID `order.conf.salesfeasibility`. `srv/preview-annotations.cds` is gone: all three services have their app now.
+- [x] `app/sales-feasibility/annotations.cds`:
   - `SelectionFields`: sales order, customer, lane, status, penalty risk, requested date.
-  - `LineItem`: sales order / item, customer, material, quantity, requested date, lane, status, waiting for, penalty risk, confirmed date. Grouped by sales order. Includes `AUTO_CONFIRMED` items (scenario 3).
-  - `HeaderInfo` / `HeaderFacets`: the shared case header.
+  - `LineItem`: sales order / item, customer, material, quantity, requested date, lane, status, waiting for, penalty risk, confirmed date. Grouped by sales order. Includes `AUTO_CONFIRMED` items (scenario 3). Also the case ID. Sorted by sales order and item, `GroupBy` sales order (`PresentationVariant`).
+  - `HeaderInfo` / `HeaderFacets`: the shared case header (`srv/common-annotations.cds`).
   - Facets:
-    - **Summary**: the A2 case summary and the penalty rule and amount.
-    - **Recommendation**: latest agent recommendation, labelled **"Suggested by agent"**.
-    - **Customer confirmation**: the A5 draft in an editable text area bound to `customerDraft`, with the confirmed date and quantity.
+    - **Summary**: the A2 case summary and the penalty rule and amount (plus delivery priority and penalty risk).
+    - **Recommendation**: latest agent recommendation, labelled **"Suggested by agent"**. The latest `PRIORITY_RAISE`, `SUPPLY_OPTIONS` or `CAPACITY_OPTIONS` recommendation (the summary and the draft have their own sections), as virtual fields of `Cases` (`sales-service.js`): recommended option, kind, agent, time, explanation.
+    - **Customer confirmation**: the A5 draft in an editable text area bound to `customerDraft`, with the confirmed date and quantity. A custom section (`ext/fragment/CustomerConfirmation.fragment.xml`): the text area is bound one way, so an edit never writes to the case, and is editable only in `SUPPLY_CONFIRMED`. Also shows whether the draft is a confirmation or a delay message.
     - **Case Timeline**, including refused actions.
-  - Actions: *Check feasibility* (calls A2 for the order item), *Confirm to customer* (only `SUPPLY_CONFIRMED`; stores the edited draft in the audit payload and sends nothing), *Close* (`REJECTED` → `CLOSED`).
-- [ ] A **Demo** panel in the header, visible only to the `demo_user` user: *Simulate new order* (SO-5005 / SO-5006 / SO-5007), *Simulate priority change*, *Scenario 4 on/off*, *Reset demo* (calls `DemoService`). It is part of this app, not a fifth app.
-- [ ] Links to the standard S/4 apps (*Manage Sales Orders*, *Monitor Material Coverage*, *Manage Work Center Capacity*) are disabled placeholders with a tooltip; they become intent-based navigation only with a real S/4 (phase 10).
-- [ ] `crossNavigation` inbound `FeasibilityCase-track`, and the `watch-sales-feasibility` npm script.
+  - Actions: *Check feasibility* (calls A2 for the order item), *Confirm to customer* (only `SUPPLY_CONFIRMED`; stores the edited draft in the audit payload and sends nothing), *Close* (`REJECTED` → `CLOSED`). *Check feasibility* is hidden on final cases (and refused there). *Confirm to customer* is a custom header action (`ext/controller/CaseActions.ts`): it reads the text area and calls the action with a new `customerDraft` parameter, without a dialog. It is offered on every open case except `REJECTED`, so that scenario 5 can be clicked: the orchestrator refuses it before `SUPPLY_CONFIRMED`, and the app reads the timeline again to show the refusal. The orchestrator writes `{ customerDraft }` into the audit payload and onto the case (same transaction), and marks the `CUSTOMER_DRAFT` recommendation accepted when a text is sent. *Close* takes an optional comment (how the customer was informed).
+- [x] A **Demo** panel in the header, visible only to the `demo_user` user: *Simulate new order* (SO-5005 / SO-5006 / SO-5007), *Simulate priority change*, *Scenario 4 on/off*, *Reset demo* (calls `DemoService`). It is part of this app, not a fifth app. Built as a **Demo** button (worklist toolbar and object page header) that opens a dialog (`ext/controller/DemoPanel.ts`), like the notifications. Visibility comes from the new `DemoService.demoStatus()`: true for a user with all three case roles, which is `demo_user` locally and, on BTP, a presenter with the three role collections (phase 9 runbook). It also returns the active scenario for the switch. DemoService itself still only needs an authenticated user, so the curl commands of phases 1–4 keep working.
+- [x] Links to the standard S/4 apps (*Manage Sales Orders*, *Monitor Material Coverage*, *Manage Work Center Capacity*) are disabled placeholders with a tooltip; they become intent-based navigation only with a real S/4 (phase 10). A custom header facet *S/4HANA Apps* (`ext/fragment/S4Apps.fragment.xml`).
+- [x] `crossNavigation` inbound `FeasibilityCase-track`, and the `watch-sales-feasibility` npm script. Notifications and *Ask about this case* header buttons as in phases 3 and 4; the sandbox launchpad registers the app under `FeasibilityCase-track` (`ui5.yaml`).
 
 **Exit criteria:** locally, scenarios 1–5 can be clicked through with `sales_user` (Sales), `supplychain_user` (Supply) and `production_user` (Production): scenario 1 ends in `CONFIRMED_TO_CUSTOMER` with the draft, scenario 2 without production, scenario 3 is `AUTO_CONFIRMED` with no task for any team, scenario 4 ends in `CLOSED` with the delay draft, and scenario 5's refused *Confirm to customer* shows in the timeline.

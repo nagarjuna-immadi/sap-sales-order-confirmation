@@ -1,0 +1,44 @@
+<!--
+  Customer Confirmation (development plan 5): the confirmed date and quantity,
+  and the Communication agent's draft (confirmation, or delay with the
+  earliest date) in a text area Sales can edit while the case is
+  SUPPLY_CONFIRMED. The text area is bound one way, so an edit never writes to
+  the case: Confirm to customer (ext/controller/CaseActions.ts) reads it and
+  sends it with the action, and the orchestrator stores it in the audit row.
+  Nothing is sent to the customer.
+-->
+<core:FragmentDefinition
+    xmlns:core="sap.ui.core"
+    xmlns="sap.m"
+    xmlns:form="sap.ui.layout.form">
+    <VBox
+        core:require="{ DateType: 'sap/ui/model/odata/type/Date' }"
+        width="100%">
+        <form:SimpleForm
+            editable="false"
+            layout="ColumnLayout"
+            columnsM="2"
+            columnsL="3"
+            columnsXL="3">
+            <Label text="{i18n>confirmedDate}" />
+            <Text text="{path: 'confirmedDate', type: 'DateType'}" emptyIndicatorMode="On" />
+            <Label text="{i18n>confirmedQty}" />
+            <Text text="{= ${confirmedQty} === null ? '' : ${confirmedQty} + ' ' + (${quantityUnit} || '') }" emptyIndicatorMode="On" />
+            <Label text="{i18n>draftKind}" />
+            <Text text="{draftKind}" emptyIndicatorMode="On" />
+        </form:SimpleForm>
+        <MessageStrip
+            text="{= ${canConfirmToCustomer} === true ? ${i18n>draftEditable} : ${i18n>draftReadOnly} }"
+            type="Information"
+            showIcon="true"
+            class="sapUiSmallMarginBottom" />
+        <TextArea
+            id="customerDraftText"
+            value="{path: 'customerDraft', mode: 'OneWay'}"
+            editable="{= ${canConfirmToCustomer} === true }"
+            placeholder="{i18n>noDraft}"
+            rows="12"
+            growing="true"
+            width="100%" />
+    </VBox>
+</core:FragmentDefinition>

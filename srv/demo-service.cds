@@ -43,6 +43,12 @@ service DemoService {
     laneChanged : Boolean;
   }
 
+  /** For the Demo panel of the Sales Order Feasibility app (plan 5). */
+  type DemoStatus {
+    visible  : Boolean; // the user may walk the whole demo: all three case roles (demo_user)
+    scenario : String(30);
+  }
+
   type ResetResult {
     scenario : String(30);
     cases    : Integer;
@@ -71,6 +77,9 @@ service DemoService {
    * active scenario.
    */
   action setScenario(scenario : String(30))                                                    returns String;
+
+  /** Whether the Demo panel is shown to this user, and the active scenario. */
+  function demoStatus()                                                                      returns DemoStatus;
 
   /** Reseeds the database (cases, audit, mocks), scenario 'default', IDs from FC-0001 / CR-0001. */
   action resetDemo()                                                                          returns ResetResult;

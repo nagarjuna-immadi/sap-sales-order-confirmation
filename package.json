@@ -21,6 +21,7 @@
     "watch-hybrid": "cds watch --profile hybrid",
     "watch-supply-workbench": "cds watch --open order.conf.supplyworkbench/index.html?sap-ui-xx-viewCache=false --livereload false",
     "watch-production-workbench": "cds watch --open order.conf.productionworkbench/index.html?sap-ui-xx-viewCache=false --livereload false",
+    "watch-sales-feasibility": "cds watch --open order.conf.salesfeasibility/index.html?sap-ui-xx-viewCache=false --livereload false",
     "lint": "eslint .",
     "check:wording": "git grep -niI --untracked copilot -- app srv db; test $? -eq 1"
   },
@@ -77,6 +78,7 @@
   ],
   "sapux": [
     "app/supply-workbench",
-    "app/production-workbench"
+    "app/production-workbench",
+    "app/sales-feasibility"
   ]
 }
