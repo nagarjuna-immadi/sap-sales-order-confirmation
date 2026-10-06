@@ -18,7 +18,7 @@ export function getSalesOrder(salesOrder, item) {
 /**
  * Customer with contract terms, or null:
  * { id, name, clauseText, language, tone, penaltyRule: { rate, per, basis } | null }.
- * The structured rule is read from CustomerContract until phase 7 extracts it
+ * The structured rule is read from CustomerContract until phase 6 extracts it
  * from the clause text. No clause → penaltyRule null.
  */
 export async function getCustomer(customerId) {

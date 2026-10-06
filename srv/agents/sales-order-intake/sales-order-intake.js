@@ -4,7 +4,7 @@
 // basic ATP. NORMAL and confirmed in full on time → the orchestrator auto-
 // confirms the case; everything else goes to Supply Planning. A penalty clause
 // on a non-HIGH item only gives a PRIORITY_RAISE suggestion (plan 2.0): Sales
-// changes the priority in S/4HANA. Template texts until phase 7.
+// changes the priority in S/4HANA. Template texts until phase 6.
 //
 // Runs in the caller's transaction (a DemoService or SalesService request).
 // Agents never change a status: the orchestrator's system steps do.
@@ -26,7 +26,7 @@ const { SELECT, UPDATE } = cds.ql
 
 const AGENT = 'SALES_ORDER_INTAKE_AGENT'
 
-// --- Template texts (phase 7 puts Claude on top, with these as the fallback) ---
+// --- Template texts (phase 6 puts Claude on top, with these as the fallback) ---
 
 const summaryText = ({ item, customer, product, atp, rule, penaltyAmount, lane }) => {
   const need = `${customer?.name ?? item.customer} needs ${item.quantity} ${item.quantityUnit} × ${item.material} (${product?.description ?? item.material}) by ${item.requestedDate}. Lane ${lane}.`

@@ -8,7 +8,7 @@
 // - PRODUCTION_CONFIRMED: confirm the date to Sales (chosen option's finish +
 //   shipping lead time, never before the requested date);
 // - PRODUCTION_REJECTED: reject with the earliest date (free capacity only).
-// The ranking comes from the tools, never from text. Template texts until phase 7.
+// The ranking comes from the tools, never from text. Template texts until phase 6.
 
 import cds from '@sap/cds'
 import { attachRecommendation } from '../feasibility-case-orchestrator/orchestrator.js'

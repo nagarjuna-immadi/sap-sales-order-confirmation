@@ -326,7 +326,7 @@ entity Customers {
 }
 
 // Contract terms per customer. clauseText is null when there is no penalty
-// clause. The structured penalty fields are read by Sales Order Intake until phase 7 extracts
+// clause. The structured penalty fields are read by Sales Order Intake until phase 6 extracts
 // them from the clause text.
 entity CustomerContract {
   key customer         : Association to Customers;

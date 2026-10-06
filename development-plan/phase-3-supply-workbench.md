@@ -19,7 +19,7 @@
   - *Reject* opens a dialog with a mandatory `reason`; the confirms take an optional `comment`.
   - `Common.SideEffects` on the actions, so status, recommendation and timeline refresh.
 - [ ] Header button **Notifications**: popover with the user's `Notification` rows and their deep links.
-- [ ] Header button **Ask about this case**: placeholder until phase 8 (opens the Order Assistant with the case ID).
+- [ ] Header button **Ask about this case**: placeholder until phase 7 (opens the Order Assistant with the case ID).
 - [ ] A small **data source** badge (`mock` / `s4`) from the tool results' `source`.
 - [ ] Root `server.js` that strips the `/<app-id>` prefix for local `cds watch` (as in the TM project), relative `dataSources` URIs (`odata/v4/...`), and a `watch-supply-workbench` npm script.
 - [ ] Until phases 4 and 5 exist, run the production and sales steps through the CAP index page (`http://localhost:4004`).

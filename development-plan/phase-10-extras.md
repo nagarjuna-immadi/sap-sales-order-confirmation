@@ -4,12 +4,12 @@
 
 These steps need a real S/4HANA Private Cloud system, a paid BTP subaccount, or both. None of them is needed for the demo. Data privacy approval is required before any real S/4 data is sent to the Claude API (§4.4, §10.6).
 
-- [ ] **`s4` against the Private Cloud:** destination `S4_PRIVATE_CLOUD` through the Cloud Connector (principal propagation or technical user), replacing `S4_CAL` from phase 6. The `srv/lib/s4/` modules stay the same; only the `[production]` credentials change. Activate the OData services in S/4.
+- [ ] **`s4` against the Private Cloud:** destination `S4_PRIVATE_CLOUD` through the Cloud Connector (principal propagation or technical user), replacing `S4_CAL` from phase 8. The `srv/lib/s4/` modules stay the same; only the `[production]` credentials change. Activate the OData services in S/4.
 - [ ] **Capacity load API:** first try the standard `API_WORK_CENTERS` capacity evaluation (`A_WorkCenterCapPerBucket`, daily buckets, converted from time units to pieces), see open decision 7. Only if it does not fit, build a custom CDS view + RAP/OData service in S/4 for load per work center per day (§4.2). Either one replaces the local `CapacityLoad` mock.
 - [ ] **Routing from S/4:** replace the local `ProductionRouting` mock (phase 2.0) with routings and production versions read from S/4.
 - [ ] **O-SPLIT and O-OVERTIME** (§7 A4, left out of the demo in phase 2.0): O-SPLIT only when the item's `PartialDeliveryIsAllowed` is set; O-OVERTIME from an overtime capacity per work center and day, scored with `w6`.
 - [ ] **Real events:** Enterprise Event Enablement (`/IWXBE/CONFIG`) → SAP Event Mesh → CAP subscriber, using the payload format already accepted by `simulateS4Event`.
-- [ ] **HANA Cloud** (if phase 6 stayed on SQLite): `cds add hana`, retention for audit log and cases.
+- [ ] **HANA Cloud** (if phase 8 stayed on SQLite): `cds add hana`, retention for audit log and cases.
 - [ ] **Intent-based navigation** to *Manage Sales Orders*, *Monitor Material Coverage* and *Manage Work Center Capacity*, replacing the placeholders from phase 5.
 - [ ] **Write-back proposals** behind a profile flag (off by default), refused against `S4_CAL` (its technical user is display-only): approved stock transfer → STO proposal, chosen capacity option → task or planned order change through an approved API. The order is then re-confirmed by the standard ATP check (§4.3). Each call writes an audit row with the S/4 document number.
 - [ ] **AI Core mode:** switch `cds.requires.llm` to the plugin's AI Core model kind, if the paid account has AI Core (§5.2). Agents, personas and checks stay the same.

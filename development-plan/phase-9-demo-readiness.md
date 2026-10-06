@@ -1,6 +1,6 @@
 # Phase 9: Demo readiness
 
-[← Development plan](README.md) · Previous: [Phase 8](phase-8-order-assistant.md) · Next: [Phase 10](phase-10-extras.md)
+[← Development plan](README.md) · Previous: [Phase 8](phase-8-deployment.md) · Next: [Phase 10](phase-10-extras.md)
 
 **Goal:** all six §8.3 scenarios run in the cloud, with a demo reset, a measured model choice and a runbook.
 

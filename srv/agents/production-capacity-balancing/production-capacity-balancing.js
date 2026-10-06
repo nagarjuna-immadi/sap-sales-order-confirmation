@@ -3,7 +3,7 @@
 // When a capacity request is created (case → WITH_PRODUCTION), A4 generates,
 // simulates and scores the options, stores them on the CR (CapacityRequest.options,
 // not a status field) and attaches a CAPACITY_OPTIONS recommendation. The
-// production planner chooses; nothing is rescheduled. Template texts until phase 7.
+// production planner chooses; nothing is rescheduled. Template texts until phase 6.
 
 import cds from '@sap/cds'
 import { attachRecommendation } from '../feasibility-case-orchestrator/orchestrator.js'

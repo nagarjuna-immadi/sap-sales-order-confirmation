@@ -6,7 +6,7 @@
 // (confirmation, or delay with the earliest date from A3), stored as a
 // CUSTOMER_DRAFT recommendation and copied to the case. A5 never sends
 // anything to a customer: Sales edits and sends the draft. Template texts
-// until phase 7; dates, quantities and IDs come from the case and the tools.
+// until phase 6; dates, quantities and IDs come from the case and the tools.
 
 import cds from '@sap/cds'
 import { attachRecommendation } from '../feasibility-case-orchestrator/orchestrator.js'
@@ -113,7 +113,7 @@ const lastReason = async caseId =>
 const GREETING = { formal: name => `Dear ${name},`, neutral: name => `Hello ${name},`, friendly: name => `Hi ${name},` }
 const CLOSING = { formal: 'Kind regards', neutral: 'Best regards', friendly: 'Many thanks and best wishes' }
 
-/** { subject, body } in the customer's tone (English templates for every language until phase 7). */
+/** { subject, body } in the customer's tone (English templates for every language until phase 6). */
 async function customerDraft(f, kind) {
   const customer = await getCustomer(f.customer)
   const product = await getProduct(f.material)

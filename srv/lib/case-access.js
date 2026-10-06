@@ -1,5 +1,5 @@
 // Read access to cases (blueprint §7 A1, rule 8). One rule for the three case
-// services and the Order Assistant tools (phase 8):
+// services and the Order Assistant tools (phase 7):
 //   Sales              every case (the demo has one sales team and no owner
 //                      on the case; the pilot narrows this to the user's orders)
 //   SupplyPlanner      every case that reached Supply Planning: not NEW, not AUTO_CONFIRMED

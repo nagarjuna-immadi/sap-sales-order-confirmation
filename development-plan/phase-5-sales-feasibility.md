@@ -1,6 +1,6 @@
 # Phase 5: Fiori app 3, Sales Order Feasibility
 
-[← Development plan](README.md) · Previous: [Phase 4](phase-4-production-workbench.md) · Next: [Phase 6](phase-6-deployment.md)
+[← Development plan](README.md) · Previous: [Phase 4](phase-4-production-workbench.md) · Next: [Phase 6](phase-6-llm-agents.md)
 
 **Goal:** Sales sees its orders and confirms to the customer; scenarios 1–5 work across all three apps locally (§6.1, §8.3).
 
