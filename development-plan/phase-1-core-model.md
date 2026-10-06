@@ -41,15 +41,28 @@ A1 lives in `srv/agents/feasibility-case-orchestrator/`, next to A2–A5 (phase 
 
 Each function takes plain objects and returns `{ ok: true, next }` or `{ ok: false, code, message }`:
 
-- [ ] The §7 A1 status table as data: `TRANSITIONS[action] = { from: [...], to, role, needsReason }`, plus `waitingForRole(status)`.
-- [ ] `canAct({ caseRow, action, userRoles, input, activeCr })` covering the business rules:
+- [x] The §7 A1 status table as data: `TRANSITIONS[action] = { from: [...], to, role, needsReason }`, plus `waitingForRole(status)`.
+- [x] `canAct({ caseRow, action, userRoles, input, activeCr })` covering the business rules:
   - only the role in `waitingForRole` can act (rule 1)
   - *Confirm to customer* only in `SUPPLY_CONFIRMED` (rule 2)
   - *Confirm date to Sales* after a production check only when the active CR is `PRODUCTION_CONFIRMED` (rule 3)
   - *Reject*, *Reject production* and *Choose override option* need a reason (rule 4)
   - a CR needs a parent case (rule 5)
-- [ ] `mapLane(deliveryPriority, mappingRows)`: blank → NORMAL.
-- [ ] `isFinal(status)`, `nextCaseId(lastId)`, `nextCrId(lastId)`.
+- [x] `mapLane(deliveryPriority, mappingRows)`: blank → NORMAL.
+- [x] `isFinal(status)`, `nextCaseId(lastId)`, `nextCrId(lastId)`.
+
+### Case rules result (done 2026-10-06)
+
+Choices that §7 and the list above leave open:
+
+- **Actions:** `TRANSITIONS` has one row per bound action of 1.4 (`checkFeasibility` is not a transition), plus the system steps `autoConfirm` and `routeToSupplyPlanning` for A2. Rows also carry `crTo` (the active CR's next status) and `createsCr` (`requestProductionCheck`). The orchestrator passes `ROLES.SYSTEM` as the user role for agent steps.
+- **Refusals** also carry `httpStatus`: 403 for rule 1 (`NOT_WAITING_FOR_ROLE`), 400 for everything else. Codes: `UNKNOWN_ACTION`, `UNKNOWN_STATUS`, `CASE_FINAL`, `CONFIRM_ONLY_IN_SUPPLY_CONFIRMED` (rule 2), `INVALID_TRANSITION`, `NOT_WAITING_FOR_ROLE` (rule 1), `NO_ACTIVE_CR`, `CR_WITHOUT_PARENT` (rule 5, also when the CR belongs to another case), `CR_NOT_OPEN`, `CR_NOT_PRODUCTION_CONFIRMED` (rule 3), `REASON_REQUIRED` (rule 4), `OPTION_REQUIRED`, `UNKNOWN_OPTION`, `OVERRIDE_NEEDS_REASON`.
+- **Order of checks:** status before role, so Sales confirming to the customer in `WITH_PRODUCTION` gets rule 2 (400, "not yet `SUPPLY_CONFIRMED`"), not a 403 (scenario 5 and the scenario 6 answer). A wrong user in the right status gets 403.
+- **Rule 1** uses `waitingForRole(status)`, not the stored column, so a stale `waitingForRole` cannot let the wrong role in.
+- **Override:** `chooseOption` refuses an option with `needsOverride` (`OVERRIDE_NEEDS_REASON`); it has to go through `chooseOverrideOption` with a reason. `next.needsOverride` tells the orchestrator to set `overrideUsed`.
+- **`checkCapacityRequest(cr, caseRow)`** is exported for rule 5 when the orchestrator creates a CR.
+- **`mapLane`** reads a one-digit priority as NUMC 2 (`1` = `01`). Blank, null and unknown keys map to NORMAL.
+
 
 ## 1.3 Orchestrator: `srv/agents/feasibility-case-orchestrator/orchestrator.js`
 
