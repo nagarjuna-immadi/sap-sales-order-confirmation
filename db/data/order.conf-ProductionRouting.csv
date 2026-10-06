@@ -1,0 +1,5 @@
+material,plant,productionVersion,sequence,isPrimary,operation,operationText,workCenter,qtyPerPiece
+FG-100,1000,0001,1,true,0010,Machining,WC-MACH-01,1
+FG-100,1000,0001,2,true,0020,Final assembly,WC-ASSY-01,1
+FG-100,1000,0002,1,false,0010,Machining,WC-MACH-01,1
+FG-100,1000,0002,2,false,0020,Final assembly,WC-ASSY-02,1

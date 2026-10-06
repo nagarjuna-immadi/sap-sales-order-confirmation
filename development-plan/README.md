@@ -67,7 +67,7 @@ All checks are manual. There are no unit tests.
 | 2 | Persistence on trial: SQLite reseeded at every start (blueprint default, a restart resets the demo) or HANA Cloud trial as in the TM project (survives restarts, stops every night) | Phase 6 |
 | 3 | Behaviour if a §4.2 API cannot be activated in the CAL system or has no usable data there. Default: that API stays mock-only on BTP and the Live data dialog shows the `mock` badge for it. (The Hub sandbox is not used: blueprint §4.3) | Phase 0.8 |
 | 4 | Delivery priority keys for HIGH / MEDIUM / NORMAL (§10.2). Default `01` / `02` / `03`+blank | Phase 1 |
-| 5 | Frozen horizon length and who may override it (§10.4). Default 3 days, Production Planner | Phase 2 |
+| 5 | Frozen horizon length and who may override it (§10.4). **Decided 2026-10-06** for the demo: 3 days, Production Planner (phase 2.0) | Done |
 | 6 | Models and effort per agent (§10.7). Default `claude-opus-5-5`; cheaper options measured in phase 9 | Phase 7, 9 |
 | 7 | Capacity load per day: §4.2 assumes no standard API, but `API_WORK_CENTERS` has the capacity evaluation `A_WorkCenterCapPerBucket` (load per work center and bucket, in time units). It can be tested in the CAL system (phase 0.8). Default: the demo keeps the local `CapacityLoad` mock (scripted §8 values in pieces per day) with field names that mirror the API; the pilot tries the API before building a custom CDS view (phase 10). Mentioning it in §4.2 needs a blueprint update first | Phase 10 |
 | 8 | How BTP reaches the CAL system (blueprint §10.9): internet destination with basic auth if the Gateway port is reachable from outside, otherwise a Cloud Connector. Default: internet destination | Phase 0.8 |

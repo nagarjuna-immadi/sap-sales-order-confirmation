@@ -1,2 +1,2 @@
-plant,frozenHorizonDays,excessThresholdDays,slowMovingAfterDays
-1000,3,90,90
+plant,frozenHorizonDays,excessThresholdDays,slowMovingAfterDays,shippingLeadDays
+1000,3,90,90,2

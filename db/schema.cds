@@ -254,6 +254,7 @@ entity PlanningParameters {
       frozenHorizonDays   : Integer; // D+0 … D+n are frozen
       excessThresholdDays : Integer; // leftover or stock above this many days of supply = excess
       slowMovingAfterDays : Integer; // no movement for this many days = slow-moving
+      shippingLeadDays    : Integer; // production finish → delivery; needByDate = requestedDate − this
 }
 
 // Production Capacity Balancing score weights (§7 A4), lower score is better.
@@ -267,19 +268,23 @@ entity ScoringWeights {
       w6    : Decimal(9, 3); // overtime hours
 }
 
-entity LotSizePolicy {
-  key material      : String(40);
-  key plant         : String(4);
-      policy        : String(10) enum {
-        EXACT;
-        FIXED;
-        MINIMUM;
-      };
-      lotSizeQty    : Quantity; // FIXED: lot size; MINIMUM: minimum lot
-      roundingQty   : Quantity;
-}
-
 // --- Local mocks for data without a standard S/4 API (§4.2) -------------------
+
+// Which work centers make a material, per production version (§7 A4: primary
+// and alternative). §4.2 has no routing API; the pilot reads routings from S/4
+// (phase 10). Operations run in sequence; qtyPerPiece is pieces of capacity
+// per piece produced.
+entity ProductionRouting {
+  key material          : String(40);
+  key plant             : String(4);
+  key productionVersion : String(4);
+  key sequence          : Integer;
+      isPrimary         : Boolean default false;
+      operation         : String(4);
+      operationText     : String(40);
+      workCenter        : String(10);
+      qtyPerPiece       : Quantity default 1;
+}
 
 // Capacity load per work center and day, in pieces per day (§8.2). Field
 // names mirror A_WorkCenterCapPerBucket (open decision 7), which reports the

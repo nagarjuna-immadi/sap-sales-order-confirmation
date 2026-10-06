@@ -4,47 +4,87 @@
 
 **Goal:** A2–A5 run end to end **without an LLM**. Every number, ranking and score comes from a deterministic tool. Where the blueprint has an LLM step, this phase uses a template text; phase 7 adds Claude on top and keeps the template as the fallback.
 
+## 2.0 Decisions and seed data
+
+The rules below fill gaps that §7 and §8 leave open. Each one is needed to reproduce the §8.3 outcomes; change them here first if they change. Decided 2026-10-06, choosing the least work for the demo.
+
+- [x] **Open decision 5** (frozen horizon): 3 days (`PlanningParameters.frozenHorizonDays`, §8.1 D+0 … D+3), overridden only by the Production Planner through `chooseOverrideOption` with a reason. Already seeded and enforced in phase 1.
+- [x] **Lane rule:** §2.2 lists "the customer has a penalty clause" as a HIGH trigger, §7 A2 says A2 only *suggests* raising the delivery priority. The plan follows §7 A2: the lane comes from the delivery priority alone, and a clause on a non-HIGH item gives a `PRIORITY_RAISE` recommendation. No §8.3 scenario has a clause on a non-HIGH item, so this changes no outcome.
+- [x] **Routing (local mock entity `ProductionRouting`):** §4.2 has no routing API, and nothing in the mocks says which work centers make FG-100. Seed for FG-100 in plant 1000: version `0001` (primary) = 0010 machining on WC-MACH-01 → 0020 assembly on WC-ASSY-01; version `0002` (alternative) = 0010 machining on WC-MACH-01 → 0020 assembly on WC-ASSY-02. Read by `work-center.js` in every profile; a routing API is a pilot topic (phase 10).
+- [x] **Shipping lead time:** `PlanningParameters.shippingLeadDays` (plant 1000: **2**). It is the gap in §8.3 between "requested D+5" and "must be produced by D+3". `needByDate = requestedDate − shippingLeadDays`; earliest delivery = earliest production finish + `shippingLeadDays`.
+- [x] **O-SPLIT and O-OVERTIME are not built for the demo.** §8 has no data for either (no overtime capacity, no order that allows partial delivery), and no §8.3 scenario uses them. A4 generates O-ALT and O-MOVE only; `overtimeHours` is always 0 in the score. Both options are pilot topics (phase 10).
+- [x] **Scoring:** as defined in 2.2 (percent, window D+1 … D+5, spread = highest minus lowest per-work-center average). It fixes the expected scores, so phase 3–4 and scenario 6 can be checked against numbers.
+- [x] **Lot size:** one source, `A_ProductSupplyPlanning` (`LotSizingProcedure` + lot-size quantities) through `product.js`, as noted in phase 0. The phase 1 `LotSizePolicy` entity and its CSV are removed.
+- [x] **Text fields on the case:** `summary` and `customerDraft` are copies of the latest `CASE_SUMMARY` / `CUSTOMER_DRAFT` recommendation's rationale, written together with it. The recommendation is the record (template or LLM, fallback reason); phase 7 updates both. Done in `orchestrator.attachRecommendation`: same transaction, case `version` unchanged (not a status change).
+
 ## 2.1 S/4 access layer: `srv/lib/s4/`
 
 The blueprint's adapters (§4.3) map onto CAP profiles, as in the TM project: the imported services are mocked from CSV in development (`mock`), and point at the S/4HANA CAL system in `[hybrid]` (technical user from `.env`) and `[production]` (destination `S4_CAL`), both `s4` (phase 6). The pilot later swaps only the `s4` credentials to the Private Cloud system (phase 10).
 
 - [ ] One module per data source (`sales-order.js`, `availability.js`, `stock.js`, `bom.js`, `product.js`, `orders.js`, `work-center.js`), each connecting once (`cds.connect.to`) and returning **plain domain objects** (`{ material, plant, unrestrictedQty }`), never raw OData payloads. Field mapping lives only here, with the real names from the phase 0 table.
+- [ ] **Mode per data source, not per profile** (§4.3): a shared `isMocked(serviceName)` (no `credentials` in `cds.requires.<service>`) decides `mock` or `s4`. Phase 6 keeps APIs that are not active in CAL mocked in `[production]` (open decision 3), so a profile check would be wrong there.
 - [ ] Always use an explicit `$select`.
-- [ ] `availability.js`: in the mock profile, compute basic ATP from the stock CSV (the generic mock cannot run the function) and return the `AvailabilityRecord` shape. In `[hybrid]`, call the real V2 function import (`DetermineAvailabilityOf` for quantity → date).
+- [ ] `sales-order.js`: header, item and first schedule line (flat reads, phase 0), including `DeliveryPriority` and `NetAmount`. Replaces the direct read in `DemoService.openCase`.
+- [ ] `availability.js`: when mocked, compute basic ATP from the stock CSV (unrestricted stock of the material in the plant; the generic mock cannot run the function) and return the `AvailabilityRecord` shape. When `s4`, call the real V2 function import (`DetermineAvailabilityOf` for quantity → date).
+- [ ] `stock.js`: unrestricted stock (`InventoryStockType` `01`) per plant, summed over storage locations. Filter by material only, so every plant that has the material is returned (plant 1100 is not configured anywhere else).
 - [ ] `bom.js`: explode level by level over `MaterialBOMItem` in every profile; do not call the `ExplodeBOM` function import (no mock for it).
+- [ ] `orders.js`: planned and production orders with their capacity or operation rows. A receipt with `SalesOrder` set is **pegged** to that order.
+- [ ] `work-center.js`: work centers and capacity, plus the `ProductionRouting` mock (2.0).
 - [ ] Call only entity reads and the GET function imports. The imported models also contain write function imports (release, convert, schedule, approve); no module calls them.
 - [ ] `capacity-load.js` and `movement-stats.js`: read the local mock entities from phase 1 (no API, §4.2).
-- [ ] `srv/lib/cache.js`: a small TTL cache for master data (products, BOM, work centers).
+- [ ] `srv/lib/cache.js`: a small TTL cache for master data (products, BOM, work centers, routing).
 - [ ] Every result carries a `source` field (`mock` / `s4`), so the UI can show where the data came from.
 
 ## 2.2 Tools: `srv/lib/tools/` (pure or read-only, no LLM)
 
-- [ ] A2: `getSalesOrder`, `getCustomer` (with clause text), `runAvailabilityCheck`, `calculatePenalty(rule, orderValue, daysLate)`.
-- [ ] A3: `explodeBom`, `getStock(material, plants[])`, `getOpenReceipts`, `getSlowMovers` (days since last movement, months of supply), `simulateLeftover(material, need, lotSizePolicy)`, `findReallocationCandidates(material, needDate)`, `buildSupplyPicture(case)`.
-- [ ] A3 decision ladder `rankSupplyOptions(picture, case)`: the first option that meets the date is recommended, and all feasible options are returned (rank 1 local stock / receipt, 2 stock transfer preferring excess, 3 reallocation, 4 produce with leftover, 5 reject with the earliest possible date). Add the excess-inventory warning for rank 4 (§7 A3).
-- [ ] A4: `getWorkCenters` (with alternatives), `getLoad`, `getScheduledOrders`, `generateOptions(cr)` (O-ALT, O-MOVE, O-SPLIT only if partial delivery is allowed, O-OVERTIME), `simulate(option)`, `score(option)` with the §7 A4 formula and `ScoringWeights`. Infeasible if the HIGH date is missed or a moved order becomes late; `needsOverride` if an order inside the frozen horizon moves.
+- [ ] A2: `getSalesOrder`, `getCustomer` (with clause text), `runAvailabilityCheck`, `calculatePenalty(rule, orderValue, daysLate)`. At intake `daysLate` is 1, so `penaltyAmount` is the amount per day late.
+- [ ] A3: `explodeBom`, `getStock(material)`, `getOpenReceipts`, `getSlowMovers` (days since last movement, months of supply), `simulateLeftover(material, need, lotSizePolicy)`, `findReallocationCandidates(material, needDate)`, `earliestDeliveryDate(case)`, `buildSupplyPicture(case)`.
+  - `getOpenReceipts` returns only receipts **not pegged** to a sales order. SO-5001's and SO-5004's production orders are pegged, so FG-100 has no open receipt.
+  - `findReallocationCandidates`: stock or receipts pegged to an order in a lower lane, **only if** that order stays covered by its own date from the remaining unpegged stock and receipts, without new production. SO-5001 and SO-5004 are therefore no candidates.
+  - `earliestDeliveryDate(case)`: earliest production finish using free capacity only (no order moved), with the A4 simulation rules below, plus `shippingLeadDays`. Uses the A4 tools. If nothing fits in the `CapacityLoad` window (D+1 … D+5), it returns no date and says so.
+- [ ] A3 decision ladder `rankSupplyOptions(picture, case)`: the first option that meets the date is recommended, and all feasible options are returned (rank 1 local stock / receipt, 2 local stock plus stock transfer for the rest, preferring excess, 3 reallocation, 4 produce with leftover, 5 reject with `earliestDeliveryDate`). Add the excess-inventory warning for rank 4 when the leftover is above `excessThresholdDays` of supply (§7 A3).
+- [ ] A4: `getWorkCenters(material, plant)` (primary and alternative versions from `ProductionRouting`), `getLoad`, `getScheduledOrders`, `generateOptions(cr)`, `simulate(option)`, `score(option)`.
+  - **Simulation:** operations run in routing sequence; an operation starts the day after the previous one ends and fills free capacity (`remainingCapacity`) from its first day. New orders may use free capacity inside the frozen horizon.
+  - **O-ALT:** the alternative version on free capacity. **O-MOVE:** primary version; the lower-lane order on the day the assembly needs is moved, whole, to the first day after the frozen horizon. No O-SPLIT or O-OVERTIME in the demo (2.0).
+  - **Feasibility** (§7 A4): infeasible if the CR's `needByDate` is missed or a moved order misses its own date. An overload above 100% is **not** infeasible; it raises the score. `needsOverride` if an order inside the frozen horizon moves.
+  - **Score** (lower is better, utilization in percent, window D+1 … D+5, work centers with zero capacity left out):
+    - `peakUtilization` = highest utilization of any work center on any day, after the option
+    - `utilizationSpread` = highest minus lowest per-work-center average utilization over the window, after the option
+    - `frozenHorizonViolations` = orders moved inside the frozen horizon
+    - `daysLateForMovedOrders` = total days late of moved orders
+    - `setupChanges` = work-center days the option puts an operation on (the new order's and the moved orders')
+    - `overtimeHours` = overtime used (0 in the demo)
+    - `score = w1·peak + w2·spread + w3·frozen + w4·daysLate + w5·setups + w6·overtime`, with `ScoringWeights`. The lowest feasible score is recommended.
 - [ ] §8.3 golden values, checked by hand through the CAP index page (`http://localhost:4004`):
-  - Scenario 1: BOM → SFG-200 100, RAW-1 105, RAW-2 5; FG 0/100, SFG 0/100, RAW-1 150/105, RAW-2 20/5; nothing in plant 1100; no reallocation candidate → **production check**; leftover 0.
-  - O-ALT: WC-MACH-01 D+1 +100 (40% → 90%), WC-ASSY-02 D+2 +56 (30% → 100%) and D+3 +44 (25% → 80%), no order moved, finished D+3. O-MOVE: SO-5004 D+2 → D+4, `needsOverride`, WC-ASSY-01 D+4 at 160%, worse score. O-ALT is recommended.
-  - Scenario 2: stock transfer of 30 from plant 1100 (excess, 8 months of supply).
-  - Scenario 4 (WC-ASSY-02 down): no option before D+6 without moving frozen orders; earliest date **D+7**.
+  - Scenario 1, A2: HIGH lane, penalty risk, penalty 2,500 EUR per day late (2% of 125,000 EUR).
+  - Scenario 1, A3: BOM → SFG-200 100, RAW-1 105, RAW-2 5; FG 0/100, SFG 0/100, RAW-1 150/105, RAW-2 20/5; nothing in plant 1100; no open receipt and no reallocation candidate → **production check**; leftover 0. `needByDate` D+3.
+  - Scenario 1, A4: **O-ALT**: WC-MACH-01 D+1 +100 (40% → 90%), WC-ASSY-02 D+2 +56 (30% → 100%) and D+3 +44 (25% → 80%), no order moved, finished D+3; peak 100, spread 36 (WC-ASSY-01 avg 80, WC-MACH-01 avg 44), 3 setups → **score 133**. **O-MOVE**: SO-5004 D+2 → D+4, `needsOverride`, WC-ASSY-01 D+2 100% and D+4 160%, finished D+2; peak 160, spread 73 (WC-ASSY-01 avg 100, WC-ASSY-02 avg 27), 1 frozen violation, 3 setups → **score 261.5**. O-ALT is recommended.
+  - Scenario 2: 20 from plant 1000 plus a stock transfer of 30 from plant 1100 (slow-moving, 120 days without movement; excess, 8 months of supply). No production.
+  - Scenario 3: ATP 20 ≥ 10 in plant 1000 → `AUTO_CONFIRMED`.
+  - Scenario 4 (WC-ASSY-02 capacity 0): A4 has no O-ALT; O-MOVE is the only option (`needsOverride`, peak 160, spread 56, score 253). After the planner rejects, A3's earliest production finish without moving any order is D+5 (WC-ASSY-01 free 10 + 40 + 50 on D+3 … D+5), so the earliest delivery is **D+7**. (The planner's reason in §8.3, *"No capacity before D+6 without moving frozen orders"*, is free text, not a computed value.)
 
 ## 2.3 Agents without LLM: `srv/agents/<agent>/`
 
 A2–A5 sit next to A1 (`srv/agents/feasibility-case-orchestrator/`, phase 1). Each agent: trigger → tools → template text → `orchestrator.attachRecommendation()`. **Agents never change a status**; only A1 does.
 
-- [ ] **A2 Order Intake** (`srv/agents/sales-order-intake/`): per item, map the lane, check the penalty clause (non-HIGH item with a clause → *suggest* raising the priority), run ATP. NORMAL and fully confirmed on time → A1 `AUTO_CONFIRMED`; otherwise A1 opens the case in `WITH_SUPPLY_PLANNING`. Template summary for now. The penalty rule is read from a structured field on `CustomerContract` until phase 7 extracts it from the clause text.
-- [ ] **A3 Supply** (`srv/agents/supply-inventory/`): on `WITH_SUPPLY_PLANNING` and when a CR is answered, build and store the supply picture and the ranked options. Template explanation and production-check question.
-- [ ] **A4 Capacity** (`srv/agents/production-capacity-balancing/`): on CR created, generate, simulate and score the options, and store them on the CR. Template comparison.
-- [ ] **A5 Communication** (`srv/agents/communication/`): on every status change, write `Notification` rows per the §7 A5 routing table (role, text, deep link as a semantic-object intent). None for `AUTO_CONFIRMED`. Template customer draft on `SUPPLY_CONFIRMED` (confirmation) and `REJECTED` (delay with the earliest date), stored as `customerDraft`. A5 never sends anything to a customer.
+- [ ] **A2 Order Intake** (`srv/agents/sales-order-intake/`): per item, map the lane, check the penalty clause (non-HIGH item with a clause → `PRIORITY_RAISE` recommendation), run ATP. NORMAL and fully confirmed on time → A1 `AUTO_CONFIRMED`; otherwise A1 routes the case to `WITH_SUPPLY_PLANNING`. Writes `penaltyRisk`, `penaltyAmount`, `penaltyRule`, `atpResult` and a template `CASE_SUMMARY`. The penalty rule is read from the structured fields on `CustomerContract` until phase 7 extracts it from the clause text.
+- [ ] **`SalesService.checkFeasibility`** (501 since phase 1): re-runs A2 for the case's item. A changed delivery priority goes through `updateLane`; ATP and the summary are refreshed. No status change.
+- [ ] **A3 Supply** (`srv/agents/supply-inventory/`): on `WITH_SUPPLY_PLANNING` and when a CR is answered (`PRODUCTION_CONFIRMED`, `PRODUCTION_REJECTED`), build and store the `SupplyResult` and a `SUPPLY_OPTIONS` recommendation with the ranked options. After `PRODUCTION_CONFIRMED` it recommends confirming the delivery date to Sales; after `PRODUCTION_REJECTED` it recommends rank 5 with `earliestDeliveryDate`. Template explanation and production-check question.
+- [ ] **`SupplyPlanningService.requestProductionCheck`:** when the input has no `needByDate`, the handler sets it to `requestedDate − shippingLeadDays` before calling the orchestrator.
+- [ ] **A4 Capacity** (`srv/agents/production-capacity-balancing/`): on CR created (`to = WITH_PRODUCTION` with a `crId`), generate, simulate and score the options, store them in `CapacityRequest.options` (not a status field) and a `CAPACITY_OPTIONS` recommendation. Template comparison.
+- [ ] **A5 Communication** (`srv/agents/communication/`): on every status change, write `Notification` rows per the §7 A5 routing table (role, text, deep link as a semantic-object intent, e.g. `#SupplyPlanningCase-display?caseId=FC-0001`; phases 3–5 use the same intents). None for `AUTO_CONFIRMED`. Template customer draft on `SUPPLY_CONFIRMED` (confirmation) and `REJECTED` (delay with the earliest date from A3's latest recommendation), stored as a `CUSTOMER_DRAFT` recommendation and copied to `customerDraft`, in the language and tone from `CustomerContract`. A5 never sends anything to a customer.
 - [ ] Wire the subscribers to the `case.statusChanged` bus from phase 1. They run after the commit; a failure is logged and never rolls back the action.
 
 ## 2.4 Simulated S/4 events: `DemoService`
 
-- [ ] `srv/demo-service.cds` (`@requires: 'authenticated-user'`, demo only): `simulateS4Event(payload)` accepts a payload in the *SalesOrder Created / Changed* format noted in phase 0.1 and calls A2. Shortcuts: `simulateNewOrder(salesOrder)` for SO-5005, SO-5006 and SO-5007.
-- [ ] `Changed` event with a new delivery priority: A2 re-evaluates the lane, A1 updates it with an audit row. An upgrade to HIGH moves the case to the top of the worklists.
-- [ ] `setScenario('default' | 'sc4-assy02-down')`: switches the mock override for scenario 4 (WC-ASSY-02 capacity 0).
-- [ ] `resetDemo()`: reseeds the database and resets the IDs to FC-0001 / CR-0001.
-- [ ] Walk scenarios 1–5 by hand through the CAP index page with the three users.
+- [ ] `srv/demo-service.cds` (`@requires: 'authenticated-user'`, demo only): `simulateS4Event(payload)` accepts a CloudEvents payload in the *SalesOrder Created / Changed* format noted in phase 0.1 and calls A2, which reads the order through `sales-order.js` (the event carries no items or priority). Shortcut: `simulateNewOrder(salesOrder)` for SO-5005, SO-5006 and SO-5007. Remove the phase 1 `openCase` action.
+- [ ] `simulatePriorityChange(salesOrder, item, deliveryPriority)`: the *Changed* payload has no `DeliveryPriority`, so this first updates the mocked `A_SalesOrderItem` (refused when the sales order service is `s4`), then posts a `Changed` event. A2 re-evaluates the lane, and A1 updates it with an audit row. An upgrade to HIGH moves the case to the top of the worklists. Phase 5's *Simulate priority change* button calls it.
+- [ ] `setScenario('default' | 'sc4-assy02-down')`: switches the mock override for scenario 4 (WC-ASSY-02 capacity 0 in `CapacityLoad`). Set it **before** the production check is requested: A4 computes the options when the CR is created.
+- [ ] `resetDemo()`: reseeds the database (cases, CRs, audit, notifications, recommendations, mock S/4 rows changed by `simulatePriorityChange`), sets the scenario back to `default`, and so resets the IDs to FC-0001 / CR-0001.
+- [ ] The index page cannot call unbound actions (phase 1.4), so `DemoService` is called with curl, e.g.:
+  - `curl -u demo_user: -X POST http://localhost:4004/odata/v4/demo/simulateNewOrder -H 'Content-Type: application/json' -d '{"salesOrder":"SO-5005"}'`
+  - `curl -u demo_user: -X POST http://localhost:4004/odata/v4/demo/setScenario -H 'Content-Type: application/json' -d '{"scenario":"sc4-assy02-down"}'`
+  - `curl -u demo_user: -X POST http://localhost:4004/odata/v4/demo/resetDemo -H 'Content-Type: application/json' -d '{}'`
+- [ ] Walk scenarios 1–5 by hand: events with curl, then the case actions through the CAP index page with the three users.
 
-**Exit criteria:** under `cds watch`, simulating SO-5005, SO-5006 and SO-5007 gives exactly the §8.3 outcomes through the CAP index page, the golden values in 2.2 match, notifications appear for the right roles, and scenario 4 ends with D+7 and a delay draft.
+**Exit criteria:** under `cds watch`, simulating SO-5005, SO-5006 and SO-5007 with curl gives exactly the §8.3 outcomes, visible through the CAP index page; the golden values in 2.2 match, including the scores; notifications appear for the right roles; and scenario 4 ends with D+7 and a delay draft.

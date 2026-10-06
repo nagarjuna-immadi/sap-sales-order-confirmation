@@ -44,6 +44,8 @@ const DB = {
 const ORCHESTRATOR = 'FEASIBILITY_CASE_ORCHESTRATOR_AGENT'
 const INTAKE = 'SALES_ORDER_INTAKE_AGENT'
 const CASE_ROLES = [ROLES.SALES, ROLES.SUPPLY_PLANNER, ROLES.PRODUCTION_PLANNER]
+// Recommendation kinds whose rationale is copied onto the case (plan 2.0).
+const CASE_TEXT_FIELD = { CASE_SUMMARY: 'summary', CUSTOMER_DRAFT: 'customerDraft' }
 
 // --- Event bus ----------------------------------------------------------------
 
@@ -401,6 +403,10 @@ export function attachRecommendation(rec) {
       fallbackReason: rec.fallbackReason ?? null,
       agentTaskId: rec.agentTaskId ?? null,
     })
+    // The case keeps a copy of the latest summary and customer draft for the
+    // apps (plan 2.0). Not a status change, so the version (ETag) stays.
+    const copyTo = CASE_TEXT_FIELD[rec.kind]
+    if (copyTo) await UPDATE(DB.Cases).set({ [copyTo]: rec.rationale ?? null }).where({ caseId: rec.caseId })
     return ID
   })
 }
