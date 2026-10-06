@@ -1,0 +1,54 @@
+{
+  "scopes": [
+    {
+      "name": "$XSAPPNAME.Sales",
+      "description": "Sales: Sales Order Feasibility (confirm to customer, close)"
+    },
+    {
+      "name": "$XSAPPNAME.SupplyPlanner",
+      "description": "Supply Chain Planner: Supply Planning Workbench"
+    },
+    {
+      "name": "$XSAPPNAME.ProductionPlanner",
+      "description": "Production Planner: Production Capacity Workbench"
+    }
+  ],
+  "attributes": [],
+  "role-templates": [
+    {
+      "name": "Sales",
+      "description": "Sales rep / customer service",
+      "scope-references": ["$XSAPPNAME.Sales"],
+      "attribute-references": []
+    },
+    {
+      "name": "SupplyPlanner",
+      "description": "Supply chain planner",
+      "scope-references": ["$XSAPPNAME.SupplyPlanner"],
+      "attribute-references": []
+    },
+    {
+      "name": "ProductionPlanner",
+      "description": "Production planner",
+      "scope-references": ["$XSAPPNAME.ProductionPlanner"],
+      "attribute-references": []
+    }
+  ],
+  "role-collections": [
+    {
+      "name": "OrderConf_Sales",
+      "description": "Order confirmation: Sales",
+      "role-template-references": ["$XSAPPNAME.Sales"]
+    },
+    {
+      "name": "OrderConf_SupplyPlanner",
+      "description": "Order confirmation: Supply Chain Planner",
+      "role-template-references": ["$XSAPPNAME.SupplyPlanner"]
+    },
+    {
+      "name": "OrderConf_ProductionPlanner",
+      "description": "Order confirmation: Production Planner",
+      "role-template-references": ["$XSAPPNAME.ProductionPlanner"]
+    }
+  ]
+}

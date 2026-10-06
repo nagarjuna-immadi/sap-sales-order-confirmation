@@ -66,30 +66,71 @@ Choices that §7 and the list above leave open:
 
 ## 1.3 Orchestrator: `srv/agents/feasibility-case-orchestrator/orchestrator.js`
 
-- [ ] `executeAction(req, action, input)`: one transaction that locks the case (`forUpdate`), checks the ETag (`version`), calls `case-rules`, updates status and `waitingForRole`, writes **one** audit row, and commits. No audit, no status change (rule 6).
-- [ ] Rule violations go through `req.error(400 | 403, …)` with the rule's `code`. A refused action also writes an `AuditLog` row with `outcome = REFUSED` in its own transaction, so the timeline shows it (scenario 5). The case itself does not change.
-- [ ] `openCase(...)` and system transitions (`NEW → AUTO_CONFIRMED`, `NEW → WITH_SUPPLY_PLANNING`) for A2, and `updateLane(...)` for a delivery priority change (audit row, no status change).
-- [ ] `attachRecommendation(...)` for A2–A5: writes a `Recommendation`, never the status.
-- [ ] After commit, emit `case.statusChanged { caseId, crId, from, to, actor }` on an in-process event bus. Subscribers (phase 2) must not block or fail the action.
-- [ ] `AuditLog` is append-only: `@readonly` in every service, and a `before('UPDATE' | 'DELETE')` handler that refuses.
+- [x] `executeAction(req, action, input)`: one transaction that locks the case (`forUpdate`), checks the ETag (`version`), calls `case-rules`, updates status and `waitingForRole`, writes **one** audit row, and commits. No audit, no status change (rule 6).
+- [x] Rule violations go through `req.error(400 | 403, …)` with the rule's `code`. A refused action also writes an `AuditLog` row with `outcome = REFUSED` in its own transaction, so the timeline shows it (scenario 5). The case itself does not change.
+- [x] `openCase(...)` and system transitions (`NEW → AUTO_CONFIRMED`, `NEW → WITH_SUPPLY_PLANNING`) for A2, and `updateLane(...)` for a delivery priority change (audit row, no status change).
+- [x] `attachRecommendation(...)` for A2–A5: writes a `Recommendation`, never the status.
+- [x] After commit, emit `case.statusChanged { caseId, crId, from, to, actor }` on an in-process event bus. Subscribers (phase 2) must not block or fail the action.
+- [x] `AuditLog` is append-only: `@readonly` in every service (1.4: not exposed at all; the `CaseTimeline` view is `@readonly`), and a `before('UPDATE' | 'DELETE')` handler that refuses.
+
+### Orchestrator result (done 2026-10-06)
+
+Choices that the list above leaves open, and what 1.4 has to provide:
+
+- **Transaction:** `executeAction` runs in the request's transaction, so CAP commits or rolls back everything together. SQLite ignores `forUpdate`, so the case update also requires the version that was read (`where version = …`); if another action got there first it is a 412, and the CR insert or update rolls back with it.
+- **ETag:** CAP already checks `If-Match` on bound actions of entities with `@odata.etag` (428 without it, 412 when stale), before the lock. `executeAction` checks it again under the lock and requires it (428 `ETAG_REQUIRED`). **For 1.4:** the `CapacityRequests` projection in `ProductionService` needs the parent case's `version` as its `@odata.etag`, because the production actions are bound to the CR and the ETag is the case version.
+- **Keys:** `executeAction` reads the target key from the bound action. **For 1.4:** keep the keys named `caseId` (case projections) and `crId` (CR projection). A production action locks the CR's parent case.
+- **Refused actions** get their `REFUSED` row through `cds.spawn`, after the request transaction ends: the in-memory SQLite of `cds watch` has one connection, so a second transaction alongside the first would wait forever. `at` is set to the time of the refusal, so the timeline keeps the order. A missing case or CR (404) and a stale ETag (412, a double click) are not audited: they are not rule violations.
+- **Active CR:** the CR the production action is bound to; otherwise the case's latest CR. `requestProductionCheck` creates the next `CR-nnnn` (status `OPEN`, quantity from the case, `needByDate` from the input).
+- **Input** of `executeAction`: `comment`, `reason`, `optionId`, plus optional `recommendationId` (stored on the audit row; `accepted` is set when `optionId` equals the recommended option, or from `recommendationAccepted`), `confirmedDate`/`confirmedQty` (set on the case) and `needByDate`. It returns `{ caseId, crId, from, to, actor, action, version }`.
+- **System steps:** `openCase(data)` (one case per item: a second call returns the existing case with `created: false`; lane from `mapLane`; audit row `openCase`, `NEW`), `systemTransition(caseId, 'autoConfirm' | 'routeToSupplyPlanning')` and `updateLane(caseId, deliveryPriority)`. They join the caller's transaction or open their own, write the actor as the agent (`SALES_ORDER_INTAKE_AGENT`) with role `system`, and throw on a refusal (a system step that breaks the rules is a bug).
+- **Event bus:** `onCaseEvent('case.statusChanged', listener)`. Events go out on the transaction's `succeeded`, so nothing is emitted on rollback. Each listener runs detached with its own error log. `openCase` emits `from: null → NEW`. `updateLane` emits nothing (no status change).
+- **Append-only:** `guardAuditLog` refuses `UPDATE`, `DELETE` and `UPSERT` on `AuditLog` at the database service (405 `AUDIT_APPEND_ONLY`). It is registered when the module loads. **For 1.4:** the services import the orchestrator, which registers the guard, and declare `AuditLog` and the timeline `@readonly`.
+- **IDs:** `max(caseId)` / `max(crId)` + 1. Fine for one demo user at a time up to `FC-9999`; a pilot needs a sequence.
+
 
 ## 1.4 Case services (`srv/*.cds` + `.js`)
 
 One service per app, all delegating to `orchestrator.executeAction()`. Keep them narrow, as in the TM project.
 
-- [ ] `SupplyPlanningService` (`@requires: 'SupplyPlanner'`, `/odata/v4/supply`):
+- [x] `SupplyPlanningService` (`@requires: 'SupplyPlanner'`, `/odata/v4/supply`):
   - `Cases`: worklist of cases waiting for or handled by Supply Planning, sorted by `laneRank`, then `requestedDate`.
   - Bound actions: `confirmFromStock(comment)`, `approveStockTransfer(comment)`, `approveReallocation(comment)`, `requestProductionCheck(comment)` (creates the CR), `reject(reason)`, `confirmDateToSales(comment)`.
-- [ ] `ProductionService` (`@requires: 'ProductionPlanner'`, `/odata/v4/production`):
+- [x] `ProductionService` (`@requires: 'ProductionPlanner'`, `/odata/v4/production`):
   - `CapacityRequests` with the parent case header (read-only).
   - Bound actions: `chooseOption(optionId, comment)`, `chooseOverrideOption(optionId, reason)`, `rejectProduction(reason)`.
-- [ ] `SalesService` (`@requires: 'Sales'`, `/odata/v4/sales`):
+- [x] `SalesService` (`@requires: 'Sales'`, `/odata/v4/sales`):
   - `Cases` for the user's orders, grouped by sales order; includes `AUTO_CONFIRMED` items.
   - Bound actions: `checkFeasibility()` (calls A2 in phase 2), `confirmToCustomer(comment)`, `close(comment)`.
-- [ ] Every action needs the ETag. A stale ETag (second click, other browser) returns 412.
-- [ ] `CaseTimeline` view over `AuditLog` per case **including its child CRs**, with a step label (*Intake → Supply check → Production check → Supply decision → Customer confirmation*) and the time since the previous step. Read-only in all three services.
-- [ ] `srv/lib/case-access.js` with `canRead(user, caseRow)`, used by the services' `@restrict` handlers and later by the Order Assistant tools (rule 8).
-- [ ] Generate `xs-security.json` (`cds add xsuaa`) with the scopes and role templates `Sales`, `SupplyPlanner` and `ProductionPlanner`, and the role collections `OrderConf_Sales`, `OrderConf_SupplyPlanner` and `OrderConf_ProductionPlanner`.
+- [x] Every action needs the ETag. A stale ETag (second click, other browser) returns 412.
+- [x] `CaseTimeline` view over `AuditLog` per case **including its child CRs**, with a step label (*Intake → Supply check → Production check → Supply decision → Customer confirmation*) and the time since the previous step. Read-only in all three services.
+- [x] `srv/lib/case-access.js` with `canRead(user, caseRow)`, used by the services' `@restrict` handlers and later by the Order Assistant tools (rule 8).
+- [x] Generate `xs-security.json` (`cds add xsuaa`) with the scopes and role templates `Sales`, `SupplyPlanner` and `ProductionPlanner`, and the role collections `OrderConf_Sales`, `OrderConf_SupplyPlanner` and `OrderConf_ProductionPlanner`.
 - [ ] Check by hand through the CAP index page (`http://localhost:4004`): open a case by hand (until phase 2), walk the scenario 1 status path as `supplychain_user` and `production_user`, and confirm to customer as `sales_user`. Also try the forbidden steps: wrong user (403), reject without a reason (400), confirm to customer in `WITH_PRODUCTION` and `WITH_SUPPLY_PLANNING` (refused, visible in the timeline; scenario 5).
+
+### Case services result (done 2026-10-06, hand check open)
+
+- **Files:** `srv/supply-service.cds|js`, `srv/production-service.cds|js`, `srv/sales-service.cds|js`, all built on `srv/lib/case-service.js` (read scope, default order, timeline durations, actions → `executeAction`). Each action returns its entity again, so Fiori elements gets the new status and ETag.
+- **Read scope (rule 8):** `srv/lib/case-access.js` has the rule once: Sales sees every case (the demo has no owner on the case; the pilot narrows it to the user's orders), Supply Planning every case that is not `NEW` or `AUTO_CONFIRMED`, Production every case with a CR. `canRead` (pure) checks one case, and `scopeOf` gives the same rule as a CQL condition. Each service applies its own role's scope to cases, CRs, supply results, recommendations and the timeline. An action on a case outside the scope gets 404 before the orchestrator runs.
+- **Wrong user:** a user without the service's role is stopped by `@requires` (403, no audit row: the request never reaches a case). The audited 403 of rule 1 (`NOT_WAITING_FOR_ROLE`) happens to a user who has the service's role while the case waits for another one, e.g. `demo_user`.
+- **Reasons** are not `@mandatory` in CDS: CAP would refuse an empty reason before the handler, without the audit row. The orchestrator checks them (rule 4). The apps can still show the field as required (phases 3–5).
+- **ETag:** `Cases` inherits `version` (`@odata.etag`). `ProductionService.CapacityRequests` is a `select … mixin` with `parentCase.version as caseVersion` as its `@odata.etag`, plus the parent case header fields and a `timeline` association. CAP answers 428 without `If-Match` and 412 for an old version.
+- **Default order** when the client sends no `$orderby`: Supply `laneRank`, `requestedDate`; Production the same for CRs and cases; Sales `salesOrder`, `item`; the timeline `at`.
+- **AuditLog** is not exposed in any service. The `CaseTimeline` view (`db/schema.cds`, association `timeline` on the case) is `@readonly` in all three. Step label from the status the action started in (see the view's comment); `previousAt` uses `lag()` per case and outcome, and `durationSeconds`/`durationText` are filled in JS (`srv/lib/case-timeline.js`), because SQLite and HANA have no common date difference. Refused rows have no duration.
+- **`checkFeasibility`** is declared and answers 501 until Sales Order Intake exists (phase 2).
+- **Opening a case by hand:** `srv/demo-service.cds|js` (`@requires: 'authenticated-user'`), the start of phase 2.4's `DemoService`, with one unbound action `openCase(salesOrder, item)`. It reads the order from the mocked `API_SALES_ORDER_SRV`, opens the case and routes it to Supply Planning (no ATP or penalty check yet). Phase 2 moves the read into the sales order adapter and replaces this with `simulateNewOrder`.
+- **Fiori preview:** `srv/preview-annotations.cds` has just enough UI for the index page's Fiori preview (lists, object pages with the timeline, action buttons). The case apps of phases 3–5 replace it.
+- **`xs-security.json`:** `cds add xsuaa` (scopes and role templates, `auth: xsuaa` in the `[production]` profile), plus the role collections `OrderConf_Sales`, `OrderConf_SupplyPlanner` and `OrderConf_ProductionPlanner`. `xsappname` and `tenant-mode` come with the MTA in phase 6.
+
+**Hand check, scenario 1** (`npm run watch`, log in with the user name and an empty password):
+
+1. Open the case as `demo_user` (the index page cannot call unbound actions):
+   `curl -u demo_user: -X POST http://localhost:4004/odata/v4/demo/openCase -H 'Content-Type: application/json' -d '{"salesOrder":"SO-5005"}'`
+2. `supplychain_user`: Fiori preview of `SupplyPlanningService` → `Cases` → FC-0001 → *Reject* with an empty reason (400, refused row in the timeline), then *Request Production Check* (CR-0001).
+3. `sales_user`: preview of `SalesService` → FC-0001 → *Confirm to Customer* (400, case is `WITH_PRODUCTION`; refused row).
+4. `production_user`: preview of `ProductionService` → `CapacityRequests` → CR-0001 → *Reject* with an empty reason (400), then *Choose Option* `O-ALT` (no options are stored yet before phase 2, so any ID is accepted).
+5. `supplychain_user`: *Confirm Date to Sales*. `sales_user`: *Confirm to Customer* → `CONFIRMED_TO_CUSTOMER`.
+6. The timeline on any of the three object pages shows the path with steps, refusals and durations. A second click on an old page gets 412.
+
 
 **Exit criteria:** under `cds watch`, the scenario 1 status path works through the CAP index page with the three users, every forbidden step is refused with an audit row, and the timeline shows the path with durations.

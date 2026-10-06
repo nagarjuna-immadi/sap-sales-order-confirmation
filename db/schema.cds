@@ -102,6 +102,8 @@ entity OrderFeasibilityCase : managed {
                            on recommendations.parentCase = $self;
       auditLog         : Association to many AuditLog
                            on auditLog.parentCase = $self;
+      timeline         : Association to many CaseTimeline
+                           on timeline.parentCase = $self;
 }
 
 // Child of a case; it cannot exist without one (rule 5).
@@ -176,6 +178,54 @@ entity AuditLog : cuid {
   } default 'DONE';
   refusalCode            : String(40); // case-rules code when REFUSED
 }
+
+// Case timeline (§7 A1): the audit log of a case and its CRs, with the step
+// of the flow each row belongs to. previousAt is the time of the previous row
+// with the same outcome, so a refused attempt does not cut a step in two; the
+// services turn it into durationSeconds and durationText (srv/lib/case-timeline.js).
+// The step follows the status the action started from:
+//   1 Intake                 NEW (and lane changes)
+//   2 Supply check           WITH_SUPPLY_PLANNING
+//   3 Production check       WITH_PRODUCTION
+//   4 Supply decision        PRODUCTION_CONFIRMED, PRODUCTION_REJECTED
+//   5 Customer confirmation  SUPPLY_CONFIRMED, REJECTED
+view CaseTimeline as
+  select from AuditLog {
+    key ID,
+        parentCase,
+        parentCase.caseId as caseId,
+        capacityRequest,
+        case
+          when action = 'openCase' or action = 'updateLane' or fromStatus = 'NEW' then 1
+          when fromStatus = 'WITH_SUPPLY_PLANNING' then 2
+          when fromStatus = 'WITH_PRODUCTION' then 3
+          when fromStatus = 'PRODUCTION_CONFIRMED' or fromStatus = 'PRODUCTION_REJECTED' then 4
+          else 5
+        end as stepNo : Integer,
+        case
+          when action = 'openCase' or action = 'updateLane' or fromStatus = 'NEW' then 'Intake'
+          when fromStatus = 'WITH_SUPPLY_PLANNING' then 'Supply check'
+          when fromStatus = 'WITH_PRODUCTION' then 'Production check'
+          when fromStatus = 'PRODUCTION_CONFIRMED' or fromStatus = 'PRODUCTION_REJECTED' then 'Supply decision'
+          else 'Customer confirmation'
+        end as step : String(30),
+        action,
+        actor,
+        role,
+        at,
+        lag(at) over (partition by parentCase.caseId, outcome order by at) as previousAt : Timestamp,
+        fromStatus,
+        toStatus,
+        comment,
+        reason,
+        payload,
+        recommendation,
+        recommendationAccepted,
+        outcome,
+        refusalCode,
+        virtual null as durationSeconds : Integer,
+        virtual null as durationText : String(20),
+  };
 
 // Communication agent notifications (phase 2), shown in each case app's header.
 entity Notification : cuid, managed {

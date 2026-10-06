@@ -63,6 +63,9 @@
         "kind": "odata-v2",
         "model": "srv/external/API_WORK_CENTERS",
         "max_get_url_length": 8192
+      },
+      "[production]": {
+        "auth": "xsuaa"
       }
     }
   }
