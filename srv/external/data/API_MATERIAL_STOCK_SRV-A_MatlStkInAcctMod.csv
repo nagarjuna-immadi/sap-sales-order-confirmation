@@ -1,0 +1,7 @@
+Material,Plant,StorageLocation,Batch,Supplier,Customer,WBSElementInternalID,SDDocument,SDDocumentItem,InventorySpecialStockType,InventoryStockType,MaterialBaseUnit,MatlWrhsStkQtyInMatlBaseUnit
+FG-100,1000,0001,"","","","","","","",01,PC,0
+SFG-200,1000,0001,"","","","","","","",01,PC,0
+RAW-1,1000,0001,"","","","","","","",01,PC,150
+RAW-2,1000,0001,"","","","","","","",01,PC,20
+FG-300,1000,0001,"","","","","","","",01,PC,20
+FG-300,1100,0001,"","","","","","","",01,PC,200

@@ -1,0 +1,4 @@
+WorkCenterInternalID,WorkCenterTypeCode,WorkCenter,WorkCenterDesc,Plant,WorkCenterCategoryCode,WorkCenterUsage,CapacityInternalID,ValidityStartDate,ValidityEndDate
+10000001,A,WC-MACH-01,Machining,1000,0001,009,20000001,2025-10-06,9999-12-31
+10000002,A,WC-ASSY-01,Assembly line 1 (primary for FG-100),1000,0001,009,20000002,2025-10-06,9999-12-31
+10000003,A,WC-ASSY-02,Assembly line 2 (alternative version),1000,0001,009,20000003,2025-10-06,9999-12-31

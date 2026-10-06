@@ -20,4 +20,11 @@ export default [
       'no-restricted-imports': 'off',
     },
   },
+  // Command-line scripts report on the console.
+  {
+    files: ['scripts/**'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
 ]

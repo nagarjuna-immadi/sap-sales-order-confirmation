@@ -1,0 +1,7 @@
+Product,Plant,MRPType,MRPResponsible,ProcurementType,AvailabilityCheckType,BaseUnit
+FG-100,1000,PD,001,E,02,PC
+SFG-200,1000,PD,001,E,02,PC
+RAW-1,1000,PD,001,F,02,PC
+RAW-2,1000,PD,001,F,02,PC
+FG-300,1000,PD,001,E,02,PC
+FG-300,1100,PD,001,E,02,PC

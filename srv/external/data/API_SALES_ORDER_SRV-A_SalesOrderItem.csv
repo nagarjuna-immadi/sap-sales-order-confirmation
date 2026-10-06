@@ -1,0 +1,6 @@
+SalesOrder,SalesOrderItem,SalesOrderItemCategory,SalesOrderItemText,Material,RequestedQuantity,RequestedQuantityUnit,OrderQuantityUnit,TransactionCurrency,NetAmount,ProductionPlant,DeliveryPriority,ConfdDelivQtyInOrderQtyUnit
+SO-5001,10,TAN,Gearbox Assembly,FG-100,100,PC,PC,EUR,125000,1000,03,100
+SO-5004,10,TAN,Gearbox Assembly,FG-100,100,PC,PC,EUR,125000,1000,03,100
+SO-5005,10,TAN,Gearbox Assembly,FG-100,100,PC,PC,EUR,125000,1000,01,0
+SO-5006,10,TAN,Pump Unit,FG-300,50,PC,PC,EUR,24000,1000,02,0
+SO-5007,10,TAN,Pump Unit,FG-300,10,PC,PC,EUR,4800,1000,03,0

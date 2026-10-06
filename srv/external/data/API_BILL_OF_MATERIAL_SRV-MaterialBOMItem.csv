@@ -1,0 +1,4 @@
+BillOfMaterial,BillOfMaterialCategory,BillOfMaterialVariant,BillOfMaterialVersion,BillOfMaterialItemNodeNumber,HeaderChangeDocument,Material,Plant,BillOfMaterialComponent,ComponentDescription,BillOfMaterialItemCategory,BillOfMaterialItemNumber,BillOfMaterialItemQuantity,BillOfMaterialItemUnit,ComponentScrapInPercent,ValidityStartDate,ValidityEndDate
+00000001,M,1,"",1,"",FG-100,1000,SFG-200,Gear Housing,L,0010,1,PC,0,2025-10-06,9999-12-31
+00000002,M,1,"",1,"",SFG-200,1000,RAW-1,Aluminium Casting,L,0010,1.05,PC,0,2025-10-06,9999-12-31
+00000002,M,1,"",2,"",SFG-200,1000,RAW-2,Bearing Set,L,0020,0.05,PC,0,2025-10-06,9999-12-31

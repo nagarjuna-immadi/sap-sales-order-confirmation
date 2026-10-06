@@ -11,6 +11,7 @@ The project is being scaffolded (phase 0 of `development-plan/`). The source of 
 - `npm install`: install dependencies.
 - `npm run watch`: local dev server (`cds watch`) on mock data and SQLite, at `http://localhost:4004`.
 - `npm run watch-hybrid`: local server against bound BTP services (`cds watch --profile hybrid`; the binding is set up by the user in phase 6).
+- `node scripts/gen-mock-data.js [--base YYYY-MM-DD]`: regenerate the S/4 mock CSVs in `srv/external/data/` (blueprint §8; dates relative to the base date, default today).
 - `npm start`: production start (`cds-serve`), used by Cloud Foundry.
 - `npm run lint`: ESLint, including the rule that allows `@anthropic-ai/sdk` imports only in `srv/lib/llm/`.
 - `npm run check:wording`: fails if "copilot" appears in `app/`, `srv/` or `db/`.

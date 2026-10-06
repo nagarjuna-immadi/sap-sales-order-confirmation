@@ -1,0 +1,3 @@
+BillOfMaterial,BillOfMaterialCategory,BillOfMaterialVariant,BillOfMaterialVersion,EngineeringChangeDocument,Material,Plant,BillOfMaterialVariantUsage,BOMHeaderText,BillOfMaterialStatus,IsMarkedForDeletion,BOMHeaderBaseUnit,BOMHeaderQuantityInBaseUnit
+00000001,M,1,"","",FG-100,1000,1,Gearbox Assembly,01,false,PC,1
+00000002,M,1,"","",SFG-200,1000,1,Gear Housing,01,false,PC,1

@@ -1,0 +1,7 @@
+Product,Plant,MRPType,MRPResponsible,LotSizingProcedure,FixedLotSizeQuantity,MinimumLotSizeQuantity,MaximumLotSizeQuantity,LotSizeRoundingQuantity,ProcurementType,InHouseProductionTime,PlannedDeliveryDurationInDays,SafetyStockQuantity,AvailabilityCheckType,BaseUnit
+FG-100,1000,PD,001,EX,0,0,0,0,E,2,0,0,02,PC
+SFG-200,1000,PD,001,EX,0,0,0,0,E,1,0,0,02,PC
+RAW-1,1000,PD,001,EX,0,0,0,0,F,0,10,0,02,PC
+RAW-2,1000,PD,001,EX,0,0,0,0,F,0,7,0,02,PC
+FG-300,1000,PD,001,EX,0,0,0,0,E,2,0,0,02,PC
+FG-300,1100,PD,001,EX,0,0,0,0,E,2,0,0,02,PC

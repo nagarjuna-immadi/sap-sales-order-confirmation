@@ -1,0 +1,4 @@
+CapacityInternalID,Capacity,CapacityCategoryCode,CapacityActiveVersion,CapacityIsFinite,CapacityNumberOfCapacities,CapacityPlanUtilizationPercent,CapOverloadThresholdInPercent,Plant,FactoryCalendar,CapacityStartTime,CapacityEndTime,CapacityQuantityUnit
+20000001,WC-MACH-01,001,01,false,1,100,100,1000,01,21600,79200,H
+20000002,WC-ASSY-01,001,01,false,1,100,100,1000,01,21600,79200,H
+20000003,WC-ASSY-02,001,01,false,1,100,100,1000,01,21600,79200,H
