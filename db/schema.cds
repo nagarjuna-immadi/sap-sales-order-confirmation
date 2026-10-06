@@ -143,6 +143,12 @@ entity Recommendation : cuid, managed {
   modelId           : String(60); // null when llmUsed = false
   promptVersion     : String(60);
   llmUsed           : Boolean default false;
+  fallbackReason    : String(20) enum { // why the template text was kept; null when llmUsed
+    LLM_UNAVAILABLE;
+    SCHEMA;
+    NUMBER_CHECK;
+  };
+  agentTaskId       : String(36); // cap.agent.Tasks row of the run (tokens, tool calls)
   accepted          : Boolean; // null until a human decided
 }
 
@@ -184,46 +190,6 @@ entity Notification : cuid, managed {
   isRead          : Boolean default false;
 }
 
-// --- Order Assistant (phase 8) ------------------------------------------------
-
-// Owner is createdBy; only the owner may read. Cleared on app restart.
-entity ChatConversation : cuid, managed {
-  contextCaseId : String(10);
-  title         : String(255);
-  messages      : Composition of many ChatMessage
-                    on messages.conversation = $self;
-}
-
-entity ChatMessage : cuid, managed {
-  conversation    : Association to ChatConversation not null;
-  seq             : Integer;
-  question        : LargeString;
-  answerText      : LargeString;
-  cards           : Json;
-  links           : Json;
-  toolCalls       : Json; // [{ name, input }]
-  verified        : Boolean; // number check passed
-  fallbackUsed    : Boolean default false;
-}
-
-// --- LLM calls (phase 7) ------------------------------------------------------
-
-// Never the key or unmasked customer data. Model and tokens of Order Assistant
-// turns are here too (agent ORDER_ASSISTANT), not on ChatMessage.
-entity LlmCallLog : cuid {
-  at              : Timestamp @cds.on.insert: $now;
-  agent           : String(40); // an Agent value or ORDER_ASSISTANT
-  caseId          : String(10);
-  modelId         : String(60);
-  promptVersion   : String(60);
-  inputTokens     : Integer;
-  outputTokens    : Integer;
-  cacheReadTokens : Integer;
-  latencyMs       : Integer;
-  stopReason      : String(40);
-  fallbackUsed    : Boolean default false;
-}
-
 // --- Configuration ------------------------------------------------------------
 
 // Delivery priority (item level, customer customizing) → lane (§7 A2).
@@ -234,11 +200,10 @@ entity DeliveryPriorityLane {
 }
 
 entity PlanningParameters {
-  key plant                    : String(4);
-      frozenHorizonDays        : Integer; // D+0 … D+n are frozen
-      excessThresholdDays      : Integer; // leftover or stock above this many days of supply = excess
-      slowMovingAfterDays      : Integer; // no movement for this many days = slow-moving
-      maxToolCallsPerQuestion  : Integer; // Order Assistant tool loop
+  key plant               : String(4);
+      frozenHorizonDays   : Integer; // D+0 … D+n are frozen
+      excessThresholdDays : Integer; // leftover or stock above this many days of supply = excess
+      slowMovingAfterDays : Integer; // no movement for this many days = slow-moving
 }
 
 // Production Capacity Balancing score weights (§7 A4), lower score is better.

@@ -7,8 +7,8 @@ This is the variant of `blueprint-with-aicore.md` for a **SAP BTP trial account*
 | Topic | `blueprint-with-aicore.md` | This variant |
 |---|---|---|
 | BTP account | Enterprise / pay-as-you-go | **BTP trial** (Cloud Foundry) |
-| LLM access | SAP AI Core + Generative AI Hub (SAP Cloud SDK for AI) | **Anthropic Claude API called directly from the CAP app** (`@anthropic-ai/sdk`) |
-| Masking, content filtering, output validation | Generative AI Hub orchestration modules | **Implemented in the CAP app** (§5.2) |
+| LLM access | SAP AI Core + Generative AI Hub (SAP Cloud SDK for AI) | **Anthropic Claude API called directly from the CAP app** through the CAP agent plugin `@cap-js/agents` (`kind: anthropic`), for the agents and the Order Assistant |
+| Masking, content filtering, output validation | Generative AI Hub orchestration modules | **In the CAP app**: the plugin's masking and content filter, plus our own output checks (§5.2) |
 | Grounding documents | HANA Cloud vector engine | Contract clause text stored on the customer record and passed into the prompt (small, demo-sized) |
 | Conversational entry point | Joule / Joule Studio (later phase) | **Order Assistant**, a simple chat Fiori app (§6.2) |
 | Events | SAP Event Mesh | Simulated (Event Mesh is not available on trial) |
@@ -160,13 +160,13 @@ Later options, not in scope now: Advanced ATP (Backorder Processing with *Win / 
 │  Feasibility (Sales)    Workbench (SCP)           Workbench (Production)        (chat, all roles, read-only)            │
 │  └─ links to standard apps: Manage Sales Orders · Monitor Material Coverage · Manage Work Center Capacity                │
 └───────────────┬────────────────────────────────────────────────────────────────────┬─────────────────────────▲────────────┘
-                │ OData V4 (actions: Submit / Confirm / Reject / Choose option)       │ OData V4 action ask()   │ notifications
+                │ OData V4 (actions: Submit / Confirm / Reject / Choose option)       │ A2A (status stream)     │ notifications
                 ▼                                                                    ▼                         │
 ┌──────────────────────────── CAP application (Node.js) on Cloud Foundry (trial) ──────────────────────────────────────────────┐
 │  A1 Case Orchestrator (state machine, business rules, authorization, audit log, case timeline)                             │
-│  A2 Order Intake · A3 Supply & Inventory · A4 Capacity & Load Balancing · A5 Communication                               │
-│  Order Assistant service (chat, read-only tools, uses A1 authorization)                                                   │
-│  LLM client (anthropic | mock) · masking · output validation · prompt templates                                           │
+│  A2 Order Intake · A3 Supply & Inventory · A4 Capacity & Load Balancing · A5 Communication (CAP agents)                  │
+│  Order Assistant (@cap-js/agents, A2A, read-only tools, uses A1 authorization)                                            │
+│  @cap-js/agents (anthropic | llm-mock) · masking · number check · template fallback · personas                            │
 │  Tool layer: deterministic functions (ATP, BOM, stock, capacity, simulate) ── Adapters (mock | s4)                        │
 └──────┬─────────────────────────┬─────────────────────────────────┬───────────────────────────────┬──────────────────────────┘
        │ persistence             │ HTTPS (LLM calls)               │ simulated events              │ S/4 APIs
@@ -242,12 +242,12 @@ What the CAL system can and cannot do for this demo:
 
 | Topic | Decision |
 |---|---|
-| SDK | Official Anthropic TypeScript/JavaScript SDK, `@anthropic-ai/sdk`, in the CAP Node.js app. No hand-written HTTP calls. |
+| Library | The CAP agent plugin `@cap-js/agents` with `kind: anthropic`, for A2–A5 and the Order Assistant, as in the TM project. No `@anthropic-ai/sdk` in our code and no hand-written HTTP calls. |
 | Endpoint | `https://api.anthropic.com` (outbound HTTPS from Cloud Foundry; no Cloud Connector needed) |
-| API key, deployed | A **user-provided service** (e.g. `anthropic-api`, created with `cf create-user-provided-service`) bound to the CAP app. The LLM client reads the key from the binding at start. Rotating the key = update the service + restage. |
+| API key, deployed | A **user-provided service** (e.g. `anthropic-api`, created with `cf create-user-provided-service`) bound to the CAP app. The agent plugin reads the key from the binding at start. Rotating the key = update the service + restage. |
 | API key, local | `.env` / `default-env.json`, listed in `.gitignore`. **Never commit the key**, never put it in `mta.yaml` or `manifest.yml`. |
 | Spend control | Separate Anthropic Console workspace for this demo, with a monthly spend limit. Usage per call is logged (§5.2). |
-| Models | Configurable per agent in `cds.requires.llm` (§5.2). Default: `claude-opus-5-5`. Cheaper options (`claude-sonnet-5-5`, `claude-haiku-4-5`) are a configuration change, decided after measuring quality on the demo scenarios. |
+| Models | One model in `cds.requires.llm`; an agent that needs another one gets its own `cds.requires` entry and `@agent.llm` (§5.2). Default: `claude-opus-5-5`. Cheaper options (`claude-sonnet-5-5`, `claude-haiku-4-5`) are a configuration change, decided after measuring quality on the demo scenarios. |
 | Data leaving BTP | Prompts go to Anthropic, outside SAP BTP. Customer names and prices are masked before the call (§5.2). Only demo data is used on trial. **Get the data-privacy officer's approval before any real S/4 data is sent** (§10). |
 
 ---
@@ -256,17 +256,17 @@ What the CAL system can and cannot do for this demo:
 
 ### 5.1 Agent anatomy
 
-Every agent (A2–A5) follows the same pattern. That makes them testable and lets the demo run even if the LLM is unavailable.
+Every agent (A2–A5) follows the same pattern. Each is a CAP agent (`@cap-js/agents`) for internal use: CAP code calls it, no user chats with it. That makes them testable and lets the demo run even if the LLM is unavailable.
 
 ```
  Trigger (event / user opens case)
      ▼
  Tools: deterministic CAP functions (read S/4 or mock data, calculate, simulate)  ← all numbers come from here
      ▼
- Reasoning: LLM client → Claude Messages API
-     • versioned prompt template; the tool results are the only facts
-     • masking of customer names / prices before the call, unmasking after
-     • structured JSON output (output_config.format with a JSON schema), validated again in CAP
+ Reasoning: the agent's CAP agent service → Claude (via @cap-js/agents)
+     • versioned persona (AGENTS.md); read-only functions over the tools; their results are the only facts
+     • masking of customer names before the call (plugin); no prices in function results
+     • structured result through emit_data_part, validated in CAP; number check; template text on any failure
      ▼
  Recommendation record on the case (labelled "Suggested by agent", with rationale)
      ▼
@@ -278,31 +278,32 @@ Rules that apply to all agents:
 - **Numbers, dates and quantities come only from tools**, never from LLM text. Output is checked: every number in the narrative must appear in the tool result. If not, the template text is used instead.
 - **Every recommendation is stored**: inputs snapshot, output, model ID and prompt version, so we can later measure how often people accept suggestions.
 
-### 5.2 LLM client layer (replaces the Generative AI Hub orchestration)
+### 5.2 Agent layer (replaces the Generative AI Hub orchestration)
 
-On trial there is no orchestration service, so the CAP app has one small **LLM client module** that all agents and the Order Assistant call. Agents never import the Anthropic SDK directly.
+On trial there is no orchestration service. All Claude calls go through the CAP agent plugin `@cap-js/agents`, as in the TM project: A2–A5 are internal agent services in `srv/agents/<agent>/`, the Order Assistant is an A2A agent for users (§6.2). Our code never imports an LLM SDK.
 
 | Concern | How it is handled |
 |---|---|
-| **Modes** | `anthropic` (real calls) and `mock` (deterministic template text, no network). The offline demo uses `mock`. Same switch pattern as the data adapters. |
-| **Model and effort per agent** | Config, e.g. `cds.requires.llm.agents.A3 = { model, effort, maxTokens }`. Short drafts (A2 summary, A5 messages) run at low effort; A3/A4 explanations and the chat at medium. |
-| **Structured output** | Each agent defines a JSON schema for its output and sends it as `output_config.format`. CAP validates the parsed result again before storing it. Invalid → template text. |
-| **Masking** | Before the call: customer names, customer IDs and prices are replaced by tokens (`<CUSTOMER_1>`, `<PRICE_1>`). After the call: tokens are replaced back. Material, plant and order IDs stay (needed for the reasoning, not personal data). The masking map never leaves CAP. |
-| **Content safety** | Check `stop_reason` before reading content. On `refusal` or `max_tokens`, use the template text and log it. Server-side model fallback (`fallbacks: "default"`) is enabled on the request. |
-| **Number check** | Every number and date in the generated text must appear in the tool result snapshot (§5.1). Failures fall back to the template and are logged. |
-| **Prompt injection** | User-entered text (comments, reject reasons, chat questions) is passed as clearly delimited data, never appended to the system prompt. The LLM has no write tools anywhere, so injected text can't trigger an action. |
-| **Prompt caching** | System prompts and tool definitions are fixed per version and placed first, so repeated calls reuse the cache. |
-| **Timeouts and retries** | SDK retries (429, 5xx, network) with a short timeout. If the LLM fails, the agent stores the recommendation with template text and the flag "LLM unavailable". The case flow never waits on the LLM. |
-| **Logging** | Per call: agent, case ID, model ID, prompt version, input/output tokens, latency, fallback used yes/no. No API key, no unmasked customer data in logs. |
+| **Agent shape** | One `@agent` service per agent with `@requires: 'internal-user'` (no business user can call it), `@agent.connect: 'none'`, read-only functions over the tools and **no actions**. Persona in `AGENTS.md` and `skills/` next to the service; doc comments are the tool descriptions. |
+| **Calling** | The agent's trigger stores the template recommendation, then runs the agent after the commit (`srv.chat`). The case flow never waits on the LLM. |
+| **Modes** | `anthropic` and `llm-mock` (`cds.requires.llm.kind`). With `llm-mock`, A2–A5 skip the call and keep the template text, so the offline demo needs no key. |
+| **Models** | One model in `cds.requires.llm`; an agent that needs another one gets its own entry and `@agent.llm`. Measured in phase 9 of the development plan. |
+| **Structured output** | The persona asks for the result through the plugin's `emit_data_part` tool, in a documented shape. CAP validates it against a JSON schema before storing it. Invalid or missing → template text. |
+| **Masking** | The plugin's masking (`cds.agents.masking`, `@PersonalData` on customer name and ID): customer names and IDs are pseudonymized before Claude sees them and resolved afterwards. The plugin masks text fields only, so function results contain **no prices**. Material, plant and order IDs stay (needed for the reasoning, not personal data). |
+| **Number check** | Every number, date and ID in the generated text must appear in the results of that run's function calls (§5.1). Failures fall back to the template and are logged. |
+| **Prompt injection** | User-entered text (comments, reject reasons, clause text, chat questions) reaches Claude only as function results or as the user's message, never in the persona. No agent has a write tool, so injected text can't trigger an action. |
+| **Prompt caching and versions** | Personas are fixed per version (`version` in the `AGENTS.md` front matter, bumped on every change and stored with each recommendation). |
+| **Failures** | A failed or timed-out run, a refusal or a cut-off answer → template text with the flag "LLM unavailable". The plugin's circuit breaker and quotas cap retries and spend. |
+| **Logging** | No log of our own. The plugin keeps one row per agent run (agent, state, tokens, tool calls, timing). Each recommendation stores model ID, persona version, whether the LLM text was used, why not (`LLM_UNAVAILABLE`, `SCHEMA`, `NUMBER_CHECK`) and the run's task ID. Cost per model comes from the Anthropic Console. No API key, no unmasked customer data in logs. |
 
-**Switching back to SAP AI Core later.** Generative AI Hub also offers Anthropic Claude models. If the pilot account has AI Core, add a third LLM client mode (`aicore`, via SAP Cloud SDK for AI). Agents, prompts, schemas and checks stay the same.
+**Switching back to SAP AI Core later.** The plugin also has an AI Core model kind, and Generative AI Hub offers Anthropic Claude models. If the pilot account has AI Core, only `cds.requires.llm` changes. Agents, personas and checks stay the same.
 
 ### 5.3 Order Assistant instead of Joule
 
 | | `blueprint-with-aicore.md` | This variant |
 |---|---|---|
 | Chat front end | Joule (needs Joule / SAP Build licensing, not on trial) | **Order Assistant**: SAPUI5 chat app in Work Zone (§6.2) |
-| Chat back end | Joule agent with skills calling the CAP tools | CAP service `OrderAssistantService` → Claude with tool use over **read-only** CAP tools |
+| Chat back end | Joule agent with skills calling the CAP tools | CAP service `OrderAssistantService` on `@cap-js/agents` (A2A) → Claude with tool use over **read-only** CAP tools |
 | Tools | Same CAP functions | Same CAP functions, plus case read functions from A1 |
 
 The tool layer is still built once as CAP functions, so a Joule front end can be added later on the same tools without changing the agents.
@@ -345,25 +346,30 @@ Each case app also has an **"Ask about this case"** button that opens the Order 
 - *"Compare the capacity options for CR-0001."*
 - *"Which cases have penalty risk this week?"*
 
-**Back end.** CAP service `OrderAssistantService` with one action `ask(conversationId, caseId?, message)` that returns `{ answerText, cards[], links[] }`.
-- Claude is called with **tool use**. The tool loop runs in CAP with a maximum number of tool calls per question (e.g. 6).
-- Tools (all **read-only**, all strict JSON schemas, all run with the user's identity and role):
+**Back end.** CAP service `OrderAssistantService` built with the CAP agent plugin `@cap-js/agents` and served over **A2A** at `/a2a/order-assistant`, as the TM Assistant in the TM dispatch cockpit project. It is an agent only in the plugin's sense: it is not one of A1–A5, makes no recommendations and has no actions.
+- Persona in `AGENTS.md` and `skills/` next to the service. Doc comments on the service, entities and functions are what Claude reads.
+- `@agent.connect: 'none'`: only its own tools, never the other services. The tools are read-only projections (the plugin's query tool) and functions. **No actions**, so nothing can pause for approval and nothing can change.
+- Claude is called with **tool use**; the plugin runs the tool loop, with a recursion limit and per-user quotas (`cds.agents`).
+- **Progress, not tokens.** Token streaming is off (`cds.agents.streaming: false`). The app shows the progress steps the plugin streams (*"Querying Cases…"*) and shows the answer once it is complete and checked.
+- Tools (all **read-only**, all run with the user's identity and role):
 
 | Tool | Returns |
 |---|---|
-| `listCases(filter)` | Cases the user may see, filtered by lane, status, waiting-for role, penalty risk, date range |
+| `Cases` (query tool) | Cases the user may see, filtered by lane, status, waiting-for role, penalty risk, date range |
 | `getCase(caseId)` | Case header, status, waiting for, latest recommendations and the decision trail from the audit log |
-| `getCaseTimeline(caseId)` | Timeline steps with time per step |
+| `CaseTimeline` (query tool) | Timeline steps with time per step |
 | `getSupplyPicture(caseId)` | A3 tool result: material tree, stock per plant, receipts, excess flags |
 | `getCapacityOptions(crId)` | A4 tool result: options, load before/after, scores, frozen-horizon flags |
 | `getSalesOrder(so)` | Order item, delivery priority, requested date (through the data adapter) |
 
 - **No write tools.** The assistant cannot confirm, reject, choose options or change anything. When the user asks it to act (*"confirm FC-0001"*), it answers with the deep link to the app and the action to press there.
-- **Conversation storage.** `ChatConversation` and `ChatMessage` entities per user (question, answer, tool calls made, data cards and links). Model ID and tokens are in the LLM call log. Only the owner can read them. Demo retention: cleared on app restart.
+- **Conversation storage.** Kept by the plugin per conversation (A2A `contextId`), no entities of our own. Tokens per run are in the plugin's task table. Demo retention: cleared on app restart.
 
 **Guardrails**
-- Same number check as the agents: every number, date and ID in the answer text must appear in the tool results of that turn. If not, the text is replaced by *"I couldn't verify this answer. See the data below."* and only the cards are shown.
-- Same masking as §5.2. Same "LLM unavailable" fallback: the app shows the cards for the case ID in the question, without generated text.
+- **Data cards and links** are built in CAP: the tool functions return them as A2A data parts next to the facts, and the plugin sends them to the app as data artifacts. They never come from LLM text.
+- Same number check as the agents, in a CAP middleware added to the plugin's chain: every number, date and ID in the answer text must appear in the tool results of that turn. If not, the text is replaced by *"I couldn't verify this answer. See the data below."* and only the cards are shown. Because tokens are not streamed, an unchecked answer is never on screen.
+- Masking through the plugin (`cds.agents.masking`, `@PersonalData` on customer name and ID in the assistant's projections). The plugin masks text fields only, so the assistant's tools return no prices.
+- LLM unavailable: the plugin reports the task as failed; the app shows an error and, when opened from a case, the link to that case app.
 - Out-of-scope questions (not about cases, orders, supply or capacity) get a short "I can only answer questions about order feasibility cases" reply.
 - Never called "copilot" in the UI, texts or code. The name is **Order Assistant**.
 
@@ -650,8 +656,8 @@ All dates are relative to the demo day (D). Plant 1000 is the main plant; plant 
 | Phase | Scope | Data | Outcome |
 |---|---|---|---|
 | **0 · Prerequisites** (1 wk) | BTP trial account (Cloud Foundry), Work Zone standard edition subscription, role collections. Anthropic Console account, API key in a dedicated workspace with a spend limit. Business Accelerator Hub login (EDMX download). S/4HANA CAL instance with the §4.2 OData services activated, a read-only technical user and a BTP destination. Delivery priority customizing values | – | Ready environment |
-| **1 · Demo** (4–6 wks) | A1–A5 in CAP, LLM client (`anthropic` + `mock`), 3 case apps + Order Assistant, Work Zone site, scenarios 1–6, "live data" view against the S/4HANA CAL system, simulated S/4 events | `mock` for scenarios, `s4` against the CAL system for live reads (§4.3) | Clickable end-to-end demo for the business |
-| **2 · Pilot** (6–8 wks) | Move to a **paid BTP subaccount** (trial is not for productive data). S/4HANA Private Cloud via destination + Cloud Connector. Activate the OData services. Enterprise Event Enablement → Event Mesh. Custom CDS service for capacity load. HANA Cloud. LLM: Claude API (after privacy approval) or AI Core `aicore` mode. One plant, HIGH lane only | `s4` read-only | Measured lead time vs baseline |
+| **1 · Demo** (4–6 wks) | A1–A5 in CAP (A2–A5 as CAP agents, `anthropic` + `llm-mock`), 3 case apps + Order Assistant, Work Zone site, scenarios 1–6, "live data" view against the S/4HANA CAL system, simulated S/4 events | `mock` for scenarios, `s4` against the CAL system for live reads (§4.3) | Clickable end-to-end demo for the business |
+| **2 · Pilot** (6–8 wks) | Move to a **paid BTP subaccount** (trial is not for productive data). S/4HANA Private Cloud via destination + Cloud Connector. Activate the OData services. Enterprise Event Enablement → Event Mesh. Custom CDS service for capacity load. HANA Cloud. LLM: Claude API (after privacy approval) or AI Core through the plugin's AI Core kind. One plant, HIGH lane only | `s4` read-only | Measured lead time vs baseline |
 | **3 · Rollout** | All lanes and plants. Controlled write-back (stock transfer proposals, planned order changes via approved APIs, ATP re-check). Teams / email channels. Optional Joule front end on the same tools | S/4 read + controlled write | Production use |
 
 **Baseline now.** To prove value, capture today's numbers before the pilot: average confirmation lead time per priority, penalty cost per quarter, excess-stock value and work center overload days.

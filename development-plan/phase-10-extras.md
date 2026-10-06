@@ -10,7 +10,7 @@ These steps need a real S/4HANA Private Cloud system, a paid BTP subaccount, or 
 - [ ] **HANA Cloud** (if phase 6 stayed on SQLite): `cds add hana`, retention for audit log and cases.
 - [ ] **Intent-based navigation** to *Manage Sales Orders*, *Monitor Material Coverage* and *Manage Work Center Capacity*, replacing the placeholders from phase 5.
 - [ ] **Write-back proposals** behind a profile flag (off by default), refused against `S4_CAL` (its technical user is display-only): approved stock transfer → STO proposal, chosen capacity option → task or planned order change through an approved API. The order is then re-confirmed by the standard ATP check (§4.3). Each call writes an audit row with the S/4 document number.
-- [ ] **AI Core mode:** an `aicore` provider in `srv/lib/llm/` (SAP Cloud SDK for AI), if the paid account has AI Core (§5.2). Agents, prompts and checks stay the same.
+- [ ] **AI Core mode:** switch `cds.requires.llm` to the plugin's AI Core model kind, if the paid account has AI Core (§5.2). Agents, personas and checks stay the same.
 - [ ] **MCP server for local development:** expose the Order Assistant's read-only tools through `@cap-js/mcp` (as in the TM project), so Claude Code can query cases during development. Read-only, not routed through the approuter, never a path to an action.
 - [ ] **Idempotency keys on actions:** an optional `idempotencyKey` per action, stored with the first response so a retry returns it instead of a 412 (blueprint §7 A1 rule 7). Useful once real users retry over unreliable networks; the demo relies on the ETag.
 - [ ] **More channels for A5:** email, Microsoft Teams, My Inbox / SAP Task Center (§7 A5).

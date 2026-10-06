@@ -1,10 +1,10 @@
 import cds from '@sap/cds/eslint.config.mjs'
 
-// Agents never import the Anthropic SDK directly: all Claude calls go through
-// the one LLM client module in srv/lib/llm/ (phase 7).
+// No code imports the Anthropic SDK: all Claude calls go through the CAP agent
+// plugin @cap-js/agents (phase 7).
 const anthropicSdk = {
   group: ['@anthropic-ai/sdk', '@anthropic-ai/sdk/*'],
-  message: 'Import the LLM client from srv/lib/llm/ instead of the Anthropic SDK.',
+  message: 'Call Claude through an @agent service (@cap-js/agents), not the Anthropic SDK.',
 }
 
 export default [
@@ -12,12 +12,6 @@ export default [
   {
     rules: {
       'no-restricted-imports': ['error', { patterns: [anthropicSdk] }],
-    },
-  },
-  {
-    files: ['srv/lib/llm/**'],
-    rules: {
-      'no-restricted-imports': 'off',
     },
   },
   // Command-line scripts report on the console.

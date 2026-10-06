@@ -25,9 +25,9 @@
 ## 9.3 Model and effort per agent (open decision 6)
 
 - [ ] Agree the measurement budget with the user first; every run is billed.
-- [ ] Run the scenario inputs for each agent prompt with `claude-opus-5-5`, `claude-sonnet-5-5` and `claude-haiku-4-5` (Haiku without `effort`).
-- [ ] Compare from `LlmCallLog`: schema-valid rate, number-check pass rate, fallback rate, latency, tokens and cost per case, plus a 1–5 team rating of the texts.
-- [ ] Set model and effort per agent in `cds.requires.llm` and record the result in the blueprint (§4.4, §10.7).
+- [ ] Run the scenario inputs for each agent prompt with `claude-opus-5-5`, `claude-sonnet-5-5` and `claude-haiku-4-5-20251001`.
+- [ ] Compare: schema-valid, number-check and fallback rates from `Recommendation.fallbackReason`; latency and tokens per case from `cap.agent.Tasks` (through `agentTaskId`); cost and cache reads per model from the Anthropic Console usage page; plus a 1–5 team rating of the texts.
+- [ ] Set the model in `cds.requires.llm`, and per agent through `@agent.llm` where it differs, and record the result in the blueprint (§4.4, §10.7).
 
 ## 9.4 Security check
 

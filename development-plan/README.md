@@ -15,7 +15,7 @@ The plan follows the same build order as `sap-cap-tm-dispatch-cockpit`: first a 
 | 4 | [Fiori app 2, Production Capacity Workbench](phase-4-production-workbench.md) | A production check requested by the supply planner shows up for the production planner and can be decided. |
 | 5 | [Fiori app 3, Sales Order Feasibility](phase-5-sales-feasibility.md) | Sales sees its orders and confirms to the customer; scenarios 1–5 work across all three apps locally. |
 | 6 | [Hybrid mode and BTP deployment](phase-6-deployment.md) | The apps run on BTP trial in Work Zone; the Live data dialog reads the S/4HANA CAL system. |
-| 7 | [LLM client and agent reasoning](phase-7-llm-agents.md) | A2–A5 get their Claude steps (summaries, explanations, drafts) through one LLM client module, with the template texts as fallback. |
+| 7 | [A2–A5 as CAP agents](phase-7-llm-agents.md) | A2–A5 become CAP agents on `@cap-js/agents` and get their Claude steps (summaries, explanations, drafts), with the template texts as fallback. |
 | 8 | [Order Assistant](phase-8-order-assistant.md) | The read-only chat app in Work Zone answers questions about cases with data cards and deep links (scenario 6). |
 | 9 | [Demo readiness](phase-9-demo-readiness.md) | All six §8.3 scenarios run in the cloud, with a demo reset and a runbook. |
 | 10 | [Extras (optional, real S/4)](phase-10-extras.md) | `s4` adapters, real events, write-back proposals, HANA, MCP server for local development. |
@@ -24,7 +24,7 @@ The plan follows the same build order as `sap-cap-tm-dispatch-cockpit`: first a 
 
 - **Work on `main`.** A phase counts as done when its exit criteria pass. Tick off each checkbox in the phase file as it is done.
 - **No unit tests (this is a demo).** No jest, no `cds.test`, no `*.test.js` and no `.http` files. Everything is verified by hand under `cds watch`, through the CAP server index page (`http://localhost:4004`, with its Fiori preview) and, from phase 3 on, the apps.
-- **The mock profile always works.** `cds watch` with no credentials and no Anthropic key must keep serving the full app after every phase. From phase 7 on, the LLM `mock` mode returns the template texts.
+- **The mock profile always works.** `cds watch` with no credentials and no Anthropic key must keep serving the full app after every phase. From phase 7 on, `cds.requires.llm` is `llm-mock` there, and A2–A5 use their template texts without calling the agent.
 - **S/4 stays read-only.** Agents recommend, people decide in Fiori, and nothing writes to S/4HANA. The CAL system is writable, but its technical user is display-only. Write-back is a phase 10 extra.
 - **A1 is the only writer of case status.** Every action writes an audit row in the same transaction. Reject and frozen-horizon override need a reason.
 - **Numbers come from tools.** Quantities, dates, loads and scores come from deterministic functions, never from LLM text.
@@ -42,7 +42,7 @@ All checks are manual. There are no unit tests.
 | --- | --- | --- | --- |
 | Case rules | CAP index page | `http://localhost:4004` | Scenario 1 status path, forbidden steps: wrong user, missing reason, confirm to customer in a non-allowed status |
 | Tools and agents | CAP index page | `http://localhost:4004` | Scenarios 1–5 with the §8.3 golden values: BOM, supply ladder, O-ALT / O-MOVE loads, earliest date D+7 |
-| LLM guards | `cds watch --profile hybrid` + `LlmCallLog` | – | Masking, number check, fallback to template text (forced failures) |
+| LLM guards | `cds watch --profile hybrid` + `Recommendation.fallbackReason` | – | Masking, number check, fallback to template text (forced failures) |
 | Order Assistant | Order Assistant app | Work Zone site | Scenario 6 questions, a case the user may not see, an action request |
 | UI | Manual, per phase exit | – | The flows listed in each exit criterion |
 
@@ -54,8 +54,8 @@ All checks are manual. There are no unit tests.
 | Link between S/4 and the app | Freight order ID | Sales order + item → case `FC-nnnn` |
 | Local rules | `award-rules.js` | `case-rules.js` (A1 state machine) + pure tool functions (A3/A4) |
 | Apps | 2 Fiori elements apps + 1 analytics extra | 3 Fiori elements case apps, no analytics (§6) |
-| Chat | TM Assistant over `@cap-js/agents` (A2A, HITL actions) | Order Assistant, **read-only**, `OrderAssistantService` + Claude tool use (§6.2) |
-| LLM access | `@cap-js/agents` with `kind: anthropic` | One LLM client module on `@anthropic-ai/sdk` (§4.4, §5.2); see open decision 1 |
+| Chat | TM Assistant over `@cap-js/agents` (A2A, HITL actions, token streaming) | Order Assistant on the same plugin and A2A, but **read-only** (no actions, no approvals) and with progress steps instead of token streaming, so only checked answers are shown (§6.2) |
+| LLM access | `@cap-js/agents` with `kind: anthropic` | The same for A2–A5 and the Order Assistant (open decision 1). A2–A5 are internal agents called from CAP code (`srv.chat`), not chat agents for users |
 | Persistence on trial | HANA Cloud | SQLite reseeded at start by default (§4.1); see open decision 2 |
 | Agent writes | Actions with human approval in chat | None. All actions only in the Fiori apps |
 
@@ -63,7 +63,7 @@ All checks are manual. There are no unit tests.
 
 | # | Decision | Decide in |
 | --- | --- | --- |
-| 1 | LLM integration: the blueprint's own LLM client module on `@anthropic-ai/sdk` (default in this plan), or `@cap-js/agents` with `kind: anthropic` as in the TM project. The plugin fits a chat agent with approvals; here the agents make single structured calls and the Order Assistant has no actions, so the plain SDK is the simpler fit. Changing this needs a blueprint update first | Phase 7.0 |
+| 1 | LLM integration. **Decided 2026-10-06:** everything on `@cap-js/agents` with `kind: anthropic`, as in the TM project; no `@anthropic-ai/sdk`. A2–A5 are internal CAP agents (`@requires: 'internal-user'`, read-only functions, called with `srv.chat`, template fallback). The Order Assistant is a read-only A2A agent with progress steps instead of token streaming. The plugin points this depends on are checked in the phase 7.0 and 8.0 spikes | Done (spikes in 7.0 and 8.0) |
 | 2 | Persistence on trial: SQLite reseeded at every start (blueprint default, a restart resets the demo) or HANA Cloud trial as in the TM project (survives restarts, stops every night) | Phase 6 |
 | 3 | Behaviour if a §4.2 API cannot be activated in the CAL system or has no usable data there. Default: that API stays mock-only on BTP and the Live data dialog shows the `mock` badge for it. (The Hub sandbox is not used: blueprint §4.3) | Phase 0.8 |
 | 4 | Delivery priority keys for HIGH / MEDIUM / NORMAL (§10.2). Default `01` / `02` / `03`+blank | Phase 1 |

@@ -52,7 +52,7 @@ The only function imports the app may call are the GET ones (ATP, `ExplodeBOM`).
 - [x] Add `.gitignore` first: `.env`, `default-env.json`, `.cdsrc-private.json`, `node_modules/`, `gen/`, `mta_archives/`, `*.mtar`, `*.sqlite`.
 - [x] Run `cds init` in place, as an ES module (`"type": "module"`), then add `@sap/cds`, `@cap-js/sqlite`, `@sap/xssec`, and (dev) `@sap/cds-dk`.
 - [x] `package.json` scripts: `start`, `watch` (`cds watch`), `watch-hybrid` (`cds watch --profile hybrid`).
-- [x] Add an ESLint rule (`no-restricted-imports`) so `@anthropic-ai/sdk` can only be imported in `srv/lib/llm/` (phase 7).
+- [x] Add an ESLint rule (`no-restricted-imports`) for `@anthropic-ai/sdk`. Changed 2026-10-06: the SDK is not allowed anywhere, because all Claude calls go through `@cap-js/agents` (phase 7).
 - [x] Add a grep check that fails on the word "copilot" in `app/`, `srv/` and `db/` (`npm run check:wording`; run by hand, no CI).
 - [x] Put the run commands into `CLAUDE.md`.
 

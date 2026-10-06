@@ -31,7 +31,7 @@ The blueprint's adapters (§4.3) map onto CAP profiles, as in the TM project: th
 
 ## 2.3 Agents without LLM: `srv/agents/<agent>/`
 
-Each agent: trigger → tools → template text → `orchestrator.attachRecommendation()`. **Agents never change a status**; only A1 does.
+A2–A5 sit next to A1 (`srv/agents/feasibility-case-orchestrator/`, phase 1). Each agent: trigger → tools → template text → `orchestrator.attachRecommendation()`. **Agents never change a status**; only A1 does.
 
 - [ ] **A2 Order Intake** (`srv/agents/sales-order-intake/`): per item, map the lane, check the penalty clause (non-HIGH item with a clause → *suggest* raising the priority), run ATP. NORMAL and fully confirmed on time → A1 `AUTO_CONFIRMED`; otherwise A1 opens the case in `WITH_SUPPLY_PLANNING`. Template summary for now. The penalty rule is read from a structured field on `CustomerContract` until phase 7 extracts it from the clause text.
 - [ ] **A3 Supply** (`srv/agents/supply-inventory/`): on `WITH_SUPPLY_PLANNING` and when a CR is answered, build and store the supply picture and the ranked options. Template explanation and production-check question.

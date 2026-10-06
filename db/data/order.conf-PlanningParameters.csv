@@ -1,2 +1,2 @@
-plant,frozenHorizonDays,excessThresholdDays,slowMovingAfterDays,maxToolCallsPerQuestion
-1000,3,90,90,6
+plant,frozenHorizonDays,excessThresholdDays,slowMovingAfterDays
+1000,3,90,90
