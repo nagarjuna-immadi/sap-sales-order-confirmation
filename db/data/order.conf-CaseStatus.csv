@@ -1,0 +1,11 @@
+code,name,criticality
+NEW,New,0
+AUTO_CONFIRMED,Auto-confirmed,3
+WITH_SUPPLY_PLANNING,With Supply Planning,2
+WITH_PRODUCTION,With Production,2
+PRODUCTION_CONFIRMED,Production confirmed,3
+PRODUCTION_REJECTED,Production rejected,1
+SUPPLY_CONFIRMED,Supply confirmed,3
+REJECTED,Rejected,1
+CONFIRMED_TO_CUSTOMER,Confirmed to customer,3
+CLOSED,Closed,0

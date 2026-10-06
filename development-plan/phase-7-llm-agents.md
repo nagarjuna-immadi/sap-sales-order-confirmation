@@ -19,7 +19,7 @@
   - `[development]`: `{ "mode": "mock" }`, so `cds watch` needs no key and returns the template texts.
   - `[hybrid]`: `{ "mode": "anthropic" }`, key from `ANTHROPIC_API_KEY` in the git-ignored `.env`.
   - `[production]`: `{ "mode": "anthropic", "vcap": { "name": "sap-sales-order-confirmation-llm" } }`. The `apiKey` comes from a user-provided service (7.4), never from the repo or the MTA.
-  - Per agent: `agents.A2 = { model, effort, maxTokens }` (A2 and A5 at `low` effort, A3 and A4 at `medium`).
+  - Per agent: `agents.SALES_ORDER_INTAKE_AGENT = { model, effort, maxTokens }` (keys are the `Agent` values from `db/schema.cds`) (A2 and A5 at `low` effort, A3 and A4 at `medium`).
 - [ ] Request details (checked against the current Claude API):
   - SDK client with `timeout` in **milliseconds** (e.g. 60000) and `maxRetries` 2 (retries 408/409/429/5xx and connection errors).
   - `output_config.effort` set explicitly: the default on `claude-opus-5-5` is `medium`, and thinking cannot be turned off there. **`claude-haiku-4-5` does not accept `effort`**, so the provider leaves it out for that model.
@@ -33,16 +33,16 @@
 - [ ] User-entered text (comments, reasons, clause text) goes into the user message as delimited data, never into the system prompt.
 - [ ] LLM failure after retries → template text with `llmUsed = false` and the flag "LLM unavailable". The case flow never waits on the LLM.
 - [ ] `LlmCallLog` per call: agent, case ID, model ID, prompt version, input / output / cache-read tokens, latency, stop reason, fallback used. Never the key or unmasked customer data.
-- [ ] Prompt templates in `srv/lib/llm/prompts/<agent>-<name>.v1.js` with `{ id, version, system, buildUser, schema, fallbackTemplate }`. Bump the version on every text change; the version is stored with each recommendation (§5.1).
+- [ ] Prompt templates in `srv/lib/llm/prompts/<agent>-<name>.v1.js` (`<agent>` as in the `srv/agents/` folder names: `sales-order-intake`, `supply-inventory`, `production-capacity-balancing`, `communication`) with `{ id, version, system, buildUser, schema, fallbackTemplate }`. Bump the version on every text change; the version is stored with each recommendation (§5.1).
 
 ## 7.2 Agent LLM steps
 
 Swap the phase 2 template call for `llm.generate()`; the template stays as the fallback. Recommendations, rankings and scores still come from the tools.
 
-- [ ] **A2** (`a2-intake.v1`): 2–3 line case summary for the planner, and the penalty rule `{ rate, unit, basis }` extracted from the clause text. The rate must literally appear in the clause, otherwise "no penalty rule verified". `calculatePenalty` (tool) computes the amount. No clause → "no penalty clause found".
-- [ ] **A3** (`a3-explain.v1`): why the recommended option ranks first, plus the draft message to Sales or the production-check question. The LLM never chooses or reorders options.
-- [ ] **A4** (`a4-compare.v1`): compare the top options in 3–4 sentences and draft the planner's comment. Scores and the recommended option are inputs, never outputs.
-- [ ] **A5** (`a5-customer.v1`): customer confirmation or delay draft in the customer's language and tone from `CustomerContract`, with dates, quantities, IDs and reasons checked after generation. Notification texts stay templates.
+- [ ] **A2** (`sales-order-intake-summary.v1`): 2–3 line case summary for the planner, and the penalty rule `{ rate, unit, basis }` extracted from the clause text. The rate must literally appear in the clause, otherwise "no penalty rule verified". `calculatePenalty` (tool) computes the amount. No clause → "no penalty clause found".
+- [ ] **A3** (`supply-inventory-explain.v1`): why the recommended option ranks first, plus the draft message to Sales or the production-check question. The LLM never chooses or reorders options.
+- [ ] **A4** (`production-capacity-balancing-compare.v1`): compare the top options in 3–4 sentences and draft the planner's comment. Scores and the recommended option are inputs, never outputs.
+- [ ] **A5** (`communication-customer.v1`): customer confirmation or delay draft in the customer's language and tone from `CustomerContract`, with dates, quantities, IDs and reasons checked after generation. Notification texts stay templates.
 - [ ] UI: show "Suggested by agent" and, when `llmUsed = false`, a small "template text" indicator (phases 3–5 annotations).
 
 ## 7.3 Local verification

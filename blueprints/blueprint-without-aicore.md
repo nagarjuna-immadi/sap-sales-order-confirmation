@@ -268,7 +268,7 @@ Every agent (A2–A5) follows the same pattern. That makes them testable and let
      • masking of customer names / prices before the call, unmasking after
      • structured JSON output (output_config.format with a JSON schema), validated again in CAP
      ▼
- Recommendation record on the case (labelled "Suggested by agent", with rationale + confidence)
+ Recommendation record on the case (labelled "Suggested by agent", with rationale)
      ▼
  Human action in Fiori (Confirm / Reject / Choose option) → A1 Case Orchestrator
 ```
@@ -352,14 +352,14 @@ Each case app also has an **"Ask about this case"** button that opens the Order 
 | Tool | Returns |
 |---|---|
 | `listCases(filter)` | Cases the user may see, filtered by lane, status, waiting-for role, penalty risk, date range |
-| `getCase(caseId)` | Case header, status, waiting for, latest recommendations and decisions |
+| `getCase(caseId)` | Case header, status, waiting for, latest recommendations and the decision trail from the audit log |
 | `getCaseTimeline(caseId)` | Timeline steps with time per step |
 | `getSupplyPicture(caseId)` | A3 tool result: material tree, stock per plant, receipts, excess flags |
 | `getCapacityOptions(crId)` | A4 tool result: options, load before/after, scores, frozen-horizon flags |
 | `getSalesOrder(so)` | Order item, delivery priority, requested date (through the data adapter) |
 
 - **No write tools.** The assistant cannot confirm, reject, choose options or change anything. When the user asks it to act (*"confirm FC-0001"*), it answers with the deep link to the app and the action to press there.
-- **Conversation storage.** `ChatConversation` and `ChatMessage` entities per user (question, answer, tool calls made, model ID, tokens). Only the owner can read them. Demo retention: cleared on app restart.
+- **Conversation storage.** `ChatConversation` and `ChatMessage` entities per user (question, answer, tool calls made, data cards and links). Model ID and tokens are in the LLM call log. Only the owner can read them. Demo retention: cleared on app restart.
 
 **Guardrails**
 - Same number check as the agents: every number, date and ID in the answer text must appear in the tool results of that turn. If not, the text is replaced by *"I couldn't verify this answer. See the data below."* and only the cards are shown.
@@ -401,7 +401,6 @@ OrderFeasibilityCase  FC-nnnn
   penaltyRisk (amount/flag), status, waitingForRole
   supplyResult        (snapshot from A3)
   recommendation[]    (from A2/A3/A4)
-  decision[]          (human decisions)
   capacityRequests[]  → CapacityRequest CR-nnnn (parentCase REQUIRED)
                           options[], chosenOption, status, decidedBy/At, reason
   confirmedDate, confirmedQty, version
@@ -429,10 +428,10 @@ OrderFeasibilityCase  FC-nnnn
 4. Every *Reject* and every *frozen-horizon override* requires a reason. *Confirm* takes an optional comment.
 5. A `CapacityRequest` cannot exist without a parent case.
 6. Every action writes an audit entry **in the same transaction**. No audit, no status change.
-7. Optimistic locking (`version`) and an idempotency key on each action.
+7. Optimistic locking (`version`) on each action: a second click or a stale browser sends an old version and is refused. An idempotency key per action is a pilot topic (retries over unreliable networks), not needed in the demo.
 8. Read access (case apps and Order Assistant tools) uses the same role checks. The Order Assistant has no path to any action.
 
-**Audit log.** Append-only table: case/CR, action, actor, role, timestamp, previous → new status, comment/reason, payload, and the agent recommendation shown with whether it was accepted. There is no update or delete.
+**Audit log.** Append-only table: case/CR, action, actor, role, timestamp, previous → new status, comment/reason, payload (e.g. the chosen option), and the agent recommendation shown with whether it was accepted. There is no update or delete. It is also the decision trail: there is no separate decision table.
 
 **Case timeline.** A read-only view of the audit log per case, across all its child CRs: *Intake → Supply check → Production check → Supply decision → Customer confirmation*, with the time each step took. It is shown as a section on the object page of all three case apps, and is available to the Order Assistant through `getCaseTimeline`.
 

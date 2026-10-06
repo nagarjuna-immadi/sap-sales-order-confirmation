@@ -29,14 +29,14 @@ The blueprint's adapters (§4.3) map onto CAP profiles, as in the TM project: th
   - Scenario 2: stock transfer of 30 from plant 1100 (excess, 8 months of supply).
   - Scenario 4 (WC-ASSY-02 down): no option before D+6 without moving frozen orders; earliest date **D+7**.
 
-## 2.3 Agents without LLM: `srv/agents/<id>/`
+## 2.3 Agents without LLM: `srv/agents/<agent>/`
 
 Each agent: trigger → tools → template text → `orchestrator.attachRecommendation()`. **Agents never change a status**; only A1 does.
 
-- [ ] **A2 Order Intake** (`srv/agents/a2-intake/`): per item, map the lane, check the penalty clause (non-HIGH item with a clause → *suggest* raising the priority), run ATP. NORMAL and fully confirmed on time → A1 `AUTO_CONFIRMED`; otherwise A1 opens the case in `WITH_SUPPLY_PLANNING`. Template summary for now. The penalty rule is read from a structured field on `CustomerContract` until phase 7 extracts it from the clause text.
-- [ ] **A3 Supply** (`srv/agents/a3-supply/`): on `WITH_SUPPLY_PLANNING` and when a CR is answered, build and store the supply picture and the ranked options. Template explanation and production-check question.
-- [ ] **A4 Capacity** (`srv/agents/a4-capacity/`): on CR created, generate, simulate and score the options, and store them on the CR. Template comparison.
-- [ ] **A5 Communication** (`srv/agents/a5-communication/`): on every status change, write `Notification` rows per the §7 A5 routing table (role, text, deep link as a semantic-object intent). None for `AUTO_CONFIRMED`. Template customer draft on `SUPPLY_CONFIRMED` (confirmation) and `REJECTED` (delay with the earliest date), stored as `customerDraft`. A5 never sends anything to a customer.
+- [ ] **A2 Order Intake** (`srv/agents/sales-order-intake/`): per item, map the lane, check the penalty clause (non-HIGH item with a clause → *suggest* raising the priority), run ATP. NORMAL and fully confirmed on time → A1 `AUTO_CONFIRMED`; otherwise A1 opens the case in `WITH_SUPPLY_PLANNING`. Template summary for now. The penalty rule is read from a structured field on `CustomerContract` until phase 7 extracts it from the clause text.
+- [ ] **A3 Supply** (`srv/agents/supply-inventory/`): on `WITH_SUPPLY_PLANNING` and when a CR is answered, build and store the supply picture and the ranked options. Template explanation and production-check question.
+- [ ] **A4 Capacity** (`srv/agents/production-capacity-balancing/`): on CR created, generate, simulate and score the options, and store them on the CR. Template comparison.
+- [ ] **A5 Communication** (`srv/agents/communication/`): on every status change, write `Notification` rows per the §7 A5 routing table (role, text, deep link as a semantic-object intent). None for `AUTO_CONFIRMED`. Template customer draft on `SUPPLY_CONFIRMED` (confirmation) and `REJECTED` (delay with the earliest date), stored as `customerDraft`. A5 never sends anything to a customer.
 - [ ] Wire the subscribers to the `case.statusChanged` bus from phase 1. They run after the commit; a failure is logged and never rolls back the action.
 
 ## 2.4 Simulated S/4 events: `DemoService`

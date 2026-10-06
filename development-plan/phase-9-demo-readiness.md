@@ -18,7 +18,7 @@
 
 - [ ] Anthropic key removed or API down: every scenario still completes with template texts and the "LLM unavailable" flag.
 - [ ] CAL system suspended or down: the scripted scenarios are unaffected (mocks); the Live data dialog shows a clear error.
-- [ ] Double click on an action: the idempotency key prevents a second transition.
+- [ ] Double click on an action: the second call carries the old ETag, gets a 412 and makes no second transition.
 - [ ] Two browsers on the same case: the stale one gets a "case changed, refresh" message (412).
 - [ ] App restart: the demo data is reset (SQLite) or still there (HANA); the runbook says which.
 

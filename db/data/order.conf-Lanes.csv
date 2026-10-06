@@ -1,0 +1,4 @@
+code,name,criticality
+HIGH,High,1
+MEDIUM,Medium,2
+NORMAL,Normal,3

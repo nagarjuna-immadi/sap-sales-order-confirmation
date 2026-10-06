@@ -1,0 +1,4 @@
+code,name,criticality
+OPEN,Open,2
+PRODUCTION_CONFIRMED,Production confirmed,3
+PRODUCTION_REJECTED,Production rejected,1

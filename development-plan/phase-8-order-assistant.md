@@ -13,7 +13,7 @@ Difference to TM Assistant in the TM project: no `@cap-js/agents`, no A2A, no ap
 - [ ] `MyConversations` / `MyMessages`: read-only projections on `ChatConversation` / `ChatMessage` filtered to the owner.
 - [ ] Read-only tools in `srv/lib/assistant-tools.js`, each with a strict JSON schema (`strict: true`, `additionalProperties: false`), each checking `canRead(user, case)` first (unauthorized → "not found"):
   - `listCases(filter)`: lane, status, waiting-for role, penalty risk, date range
-  - `getCase(caseId)`: header, status, waiting for, latest recommendations and decisions
+  - `getCase(caseId)`: header, status, waiting for, latest recommendations and the decision trail from `AuditLog`
   - `getCaseTimeline(caseId)`: the `CaseTimeline` view
   - `getSupplyPicture(caseId)`: the stored A3 snapshot
   - `getCapacityOptions(crId)`: the stored A4 options, load before/after, scores, override flags
@@ -26,7 +26,7 @@ Difference to TM Assistant in the TM project: no `@cap-js/agents`, no A2A, no ap
   - out-of-scope question → *"I can only answer questions about order feasibility cases."*
   - LLM unavailable → no text, only the cards for the case ID found in the question
   - action request ("Confirm FC-0001 to the customer") → explains it can't act, gives the current status from `getCase`, links to the case app; no status change and no audit row
-- [ ] Store each turn in `ChatMessage` (question, answer, tool calls, model ID, tokens). Cleared on app restart (demo retention).
+- [ ] Store each turn in `ChatMessage` (question, answer, tool calls, cards, links, `verified`). Model ID and tokens go to `LlmCallLog` (agent `ORDER_ASSISTANT`). Cleared on app restart (demo retention).
 - [ ] Check by hand in the Order Assistant app: the three scenario 6 questions as `sales_user` and `production_user`, a question about a case the user may not see, and an action request.
 
 ## 8.2 Chat UI: Order Assistant (`app/order-assistant/`)

@@ -1,0 +1,6 @@
+code,name,descr
+CASE_SUMMARY,Case summary,"Sales Order Intake: summary, lane and penalty risk"
+PRIORITY_RAISE,Raise delivery priority,Sales Order Intake: customer has a penalty clause but the item is not HIGH
+SUPPLY_OPTIONS,Supply options,Supply & Inventory: ranked supply options (decision ladder)
+CAPACITY_OPTIONS,Capacity options,Production Capacity Balancing: scored capacity options
+CUSTOMER_DRAFT,Customer message draft,Communication: confirmation or delay draft

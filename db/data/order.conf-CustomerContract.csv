@@ -1,0 +1,4 @@
+customer_ID,clauseText,language,tone,penaltyRate,penaltyPer,penaltyBasis
+C-1001,"Late delivery penalty: 2% of order value per day late.",EN,formal,2,DAY,ORDER_VALUE
+C-1002,,EN,neutral,,,
+C-1003,,EN,friendly,,,
