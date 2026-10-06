@@ -7,6 +7,7 @@ import Button from "sap/m/Button";
 import List from "sap/m/List";
 import StandardListItem from "sap/m/StandardListItem";
 import MessageToast from "sap/m/MessageToast";
+import { URLHelper } from "sap/m/library";
 import Sorter from "sap/ui/model/Sorter";
 import UI5Event from "sap/ui/base/Event";
 
@@ -15,11 +16,13 @@ import UI5Event from "sap/ui/base/Event";
  * - Notifications: the Communication agent's notifications for the supply
  *   planner, each with its deep link (a semantic-object intent such as
  *   #FeasibilityCase-plan?caseId=FC-0001).
- * - Ask about this case: placeholder until the Order Assistant (phase 7).
+ * - Ask about this case: opens the Order Assistant (OrderAssistant-ask) with the
+ *   case as context (development plan 7.2).
  */
 
 // Inside the launchpad: the shell's navigation service resolves the intent.
 interface ShellNavigation {
+	isNavigationSupported(targets: { target: { shellHash: string } }[]): Promise<{ supported: boolean }[]>;
 	navigate(target: { target: { shellHash: string } }): Promise<void>;
 }
 interface ShellContainer {
@@ -90,8 +93,36 @@ export function openNotifications(this: ExtensionAPI): void {
 	dialog.open();
 }
 
-/** Placeholder: the Order Assistant comes in phase 7 and opens with the case ID. */
+/**
+ * Opens the Order Assistant (OrderAssistant-ask) with the given startup parameters:
+ * through the launchpad when it knows the intent, locally in the Order Assistant's
+ * sandbox launchpad (each sandbox launchpad knows only its own app).
+ */
+async function openAssistant(api: ExtensionAPI, params: Record<string, string | undefined>): Promise<void> {
+	const query = Object.entries(params)
+		.filter(([, value]) => value)
+		.map(([name, value]) => `${name}=${encodeURIComponent(value as string)}`)
+		.join("&");
+	const shellHash = `OrderAssistant-ask?${query}`;
+	const container = sap.ui.require("sap/ushell/Container") as ShellContainer | undefined;
+	if (container) {
+		const navigation = await container.getServiceAsync("Navigation");
+		const [check] = await navigation.isNavigationSupported([{ target: { shellHash } }]);
+		if (check?.supported) {
+			await navigation.navigate({ target: { shellHash } });
+			return;
+		}
+	}
+	// locally (sandbox launchpad or index.html, never deployed): the Order Assistant's sandbox
+	if (/\/(?:test\/flp|index)\.html$/.test(window.location.pathname)) {
+		URLHelper.redirect(`${window.location.origin}/order.conf.orderassistant/test/flp.html#${shellHash}`, false);
+		return;
+	}
+	MessageToast.show(bundleOf(api).getText("openInLaunchpad", [`#${shellHash}`]) ?? "");
+}
+
+/** Opens the Order Assistant with this case as context. */
 export async function askAboutCase(this: ExtensionAPI, context: Context): Promise<void> {
 	const caseId = (await context.requestProperty("caseId")) as string;
-	MessageToast.show(bundleOf(this).getText("assistantNotAvailable", [caseId]) ?? "");
+	await openAssistant(this, { caseId, source: "FeasibilityCase-plan" });
 }

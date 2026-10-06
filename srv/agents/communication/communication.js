@@ -21,6 +21,7 @@ import { getCaseFacts, getCapacityRequest, latestRecommendation } from '../../li
 import { getCustomer } from '../../lib/tools/order-intake.js'
 import { getProduct } from '../../lib/s4/product.js'
 import { refineRecommendation } from '../../lib/agent-call.js'
+import { INTENTS } from '../../lib/deep-links.js'
 
 const { SELECT, INSERT } = cds.ql
 
@@ -41,14 +42,6 @@ const OUTPUT_SCHEMA = {
 
 /** The stored draft text (also copied to the case for the Sales app). */
 const render = draft => `Subject: ${draft.subject}\n\n${draft.body}`
-
-// Semantic-object intents of the three case apps, one inbound per app
-// (manifest crossNavigation, development plan 4).
-export const INTENTS = Object.freeze({
-  supply: caseId => `#FeasibilityCase-plan?caseId=${caseId}`,
-  production: crId => `#CapacityRequest-decide?crId=${crId}`,
-  sales: caseId => `#FeasibilityCase-track?caseId=${caseId}`,
-})
 
 // --- Notifications ------------------------------------------------------------------------
 

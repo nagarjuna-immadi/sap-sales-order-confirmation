@@ -1,0 +1,87 @@
+<mvc:View
+	controllerName="order.conf.orderassistant.controller.App"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns="sap.m"
+	xmlns:f="sap.f"
+	displayBlock="true"
+	height="100%">
+	<f:DynamicPage id="page" fitContent="true" toggleHeaderOnTitleClick="false" class="sapUiNoContentPadding oaPage">
+		<f:title>
+			<f:DynamicPageTitle>
+				<f:heading>
+					<HBox alignItems="Center" renderType="Bare">
+						<Avatar
+							src="sap-icon://ai"
+							displayShape="Square"
+							displaySize="XS"
+							decorative="true"
+							class="oaMark sapUiSmallMarginEnd" />
+						<Title text="{i18n>appTitle}" wrapping="true" />
+					</HBox>
+				</f:heading>
+				<f:actions>
+					<Button
+						id="newConversation"
+						text="{i18n>newConversation}"
+						icon="sap-icon://add"
+						type="Transparent"
+						visible="{chat>/available}"
+						enabled="{= !${chat>/busy} }"
+						press=".onNewConversation" />
+				</f:actions>
+			</f:DynamicPageTitle>
+		</f:title>
+		<f:content>
+			<FlexBox direction="Column" height="100%" class="oaChat">
+				<!-- opened from a case app: the case is the context of every message -->
+				<MessageStrip
+					visible="{= !!${chat>/caseId} &amp;&amp; ${chat>/available} }"
+					text="{chat>/caseContext}"
+					type="Information"
+					showIcon="true"
+					class="oaContext" />
+				<ScrollContainer id="scroller" vertical="true" horizontal="false" height="100%" class="oaScroller">
+					<layoutData>
+						<FlexItemData growFactor="1" minHeight="0" />
+					</layoutData>
+					<BusyIndicator visible="{chat>/loading}" text="{i18n>loading}" class="sapUiLargeMargin" />
+					<IllustratedMessage
+						visible="{= !${chat>/loading} &amp;&amp; !${chat>/available} }"
+						illustrationType="sapIllus-NoActivities"
+						title="{i18n>noAgentTitle}"
+						description="{i18n>noAgentText}" />
+					<!-- questions, answers and data cards are added here by the controller -->
+					<VBox id="conversation" visible="{chat>/available}" class="oaConversation" />
+				</ScrollContainer>
+				<HBox visible="{chat>/busy}" alignItems="Center" class="oaStatus">
+					<BusyIndicator size="1rem" class="sapUiTinyMarginEnd" />
+					<Text text="{chat>/busyText}" maxLines="1" />
+				</HBox>
+				<HBox visible="{chat>/available}" alignItems="End" class="oaComposer">
+					<TextArea
+						id="input"
+						value="{chat>/input}"
+						valueLiveUpdate="true"
+						rows="1"
+						growing="true"
+						growingMaxLines="6"
+						width="100%"
+						placeholder="{i18n>inputPlaceholder}"
+						enabled="{= !${chat>/busy} }">
+						<layoutData>
+							<FlexItemData growFactor="1" />
+						</layoutData>
+					</TextArea>
+					<Button
+						id="send"
+						class="sapUiSmallMarginBegin"
+						type="{= ${chat>/busy} ? 'Default' : 'Emphasized' }"
+						icon="{= ${chat>/busy} ? 'sap-icon://stop' : 'sap-icon://paper-plane' }"
+						text="{= ${chat>/busy} ? ${i18n>stop} : ${i18n>send} }"
+						enabled="{= ${chat>/busy} || ${chat>/input}.trim().length > 0 }"
+						press=".onSendPress" />
+				</HBox>
+			</FlexBox>
+		</f:content>
+	</f:DynamicPage>
+</mvc:View>

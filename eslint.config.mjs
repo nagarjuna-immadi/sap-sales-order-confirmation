@@ -16,6 +16,26 @@ export default [
       'no-restricted-imports': ['error', { patterns: [anthropicSdk] }],
     },
   },
+  // The Order Assistant is read-only and has no path to any action (phase 7):
+  // nothing from another agent's folder, in particular not the orchestrator.
+  // Shared code is in srv/lib/.
+  {
+    files: ['srv/agents/order-assistant/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            anthropicSdk,
+            {
+              regex: '^\\.\\./(?!\\.\\./)|/agents/(?!order-assistant/)',
+              message: 'The Order Assistant must not import from another agent folder; move shared code to srv/lib/.',
+            },
+          ],
+        },
+      ],
+    },
+  },
   // Command-line scripts report on the console.
   {
     files: ['scripts/**'],

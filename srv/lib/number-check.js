@@ -7,6 +7,8 @@
 // - Dates are compared as ISO dates. Besides 2026-10-11 the text may write
 //   11.10.2026, 11 October 2026, 11. Oktober 2026 or October 11, 2026 (the
 //   customer drafts are in the customer's language); facts are ISO.
+// - Times are compared as HH:MM, so 16:45 matches a fact 2026-10-06T16:45:22Z
+//   (the Order Assistant's "waiting since 16:45"). Facts are UTC.
 // - IDs are upper-case tokens with a hyphen: FC-0001, CR-0002, SO-5004,
 //   FG-100, O-ALT, S-PRODUCE, C-1001. They must appear as they are.
 // - Numbers are compared by value, so 100, 100.000 and 1,000 / 1.000 match
@@ -26,12 +28,15 @@ const iso = (y, m, d) => (m >= 1 && m <= 12 && d >= 1 && d <= 31 ? `${y}-${pad(m
 
 // Each pattern turns a match into an ISO date (null: not a valid date).
 const DATE_PATTERNS = [
-  [/\b(\d{4})-(\d{2})-(\d{2})\b/g, m => iso(+m[1], +m[2], +m[3])],
+  // also the date of an ISO timestamp (2026-10-11T16:45:22Z)
+  [/\b(\d{4})-(\d{2})-(\d{2})(?!\d)/g, m => iso(+m[1], +m[2], +m[3])],
   [/\b(\d{1,2})\.(\d{1,2})\.(\d{4})\b/g, m => iso(+m[3], +m[2], +m[1])],
   [new RegExp(`\\b(\\d{1,2})\\.?\\s+(${MONTH})\\s+(\\d{4})\\b`, 'giu'), m => iso(+m[3], MONTHS[m[2].toLowerCase()], +m[1])],
   [new RegExp(`\\b(${MONTH})\\s+(\\d{1,2})(?:st|nd|rd|th)?,?\\s+(\\d{4})\\b`, 'giu'), m => iso(+m[3], MONTHS[m[1].toLowerCase()], +m[2])],
 ]
 
+// 16:45, 9:05, 16:45:22, 16:45:22.158 (also inside an ISO timestamp)
+const TIME = /(?<!\d)([01]?\d|2[0-3]):([0-5]\d)(?::[0-5]\d(?:\.\d+)?)?(?!\d)/g
 const ID = /\b[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+\b/g
 const NUMBER = /(?<![\w])\d+(?:[.,]\d+)*(?![\w])/g
 
@@ -60,8 +65,8 @@ function leaves(value, out = []) {
 }
 
 /**
- * Splits a text into the dates, IDs and numbers it mentions:
- * { dates: [{ token, iso }], ids: [token], numbers: [token] }.
+ * Splits a text into the dates, times, IDs and numbers it mentions:
+ * { dates: [{ token, iso }], times: [{ token, hhmm }], ids: [token], numbers: [token] }.
  */
 export function tokensOf(text) {
   let rest = String(text ?? '')
@@ -74,13 +79,18 @@ export function tokensOf(text) {
       rest = blank(rest, m.index, m[0].length)
     }
   }
+  const times = []
+  for (const m of [...rest.matchAll(TIME)]) {
+    times.push({ token: m[0], hhmm: `${pad(+m[1])}:${m[2]}` })
+    rest = blank(rest, m.index, m[0].length)
+  }
   const ids = []
   for (const m of [...rest.matchAll(ID)]) {
     ids.push(m[0])
     rest = blank(rest, m.index, m[0].length)
   }
   const numbers = [...rest.matchAll(NUMBER)].map(m => m[0])
-  return { dates, ids, numbers }
+  return { dates, times, ids, numbers }
 }
 
 /** The numeric values written in a text, e.g. the rate in a contract clause. */
@@ -88,33 +98,36 @@ export function numbersIn(text) {
   return new Set(tokensOf(text).numbers.flatMap(readings))
 }
 
-/** The dates, IDs and numbers the facts contain, for checkText. */
+/** The dates, times, IDs and numbers the facts contain, for checkText. */
 export function factsOf(facts) {
   const dates = new Set()
+  const times = new Set()
   const ids = new Set()
   const numbers = new Set()
   for (const leaf of leaves(facts)) {
     const t = tokensOf(leaf)
     t.dates.forEach(d => dates.add(d.iso))
+    t.times.forEach(time => times.add(time.hhmm))
     t.ids.forEach(id => ids.add(id))
     // TOON writes table rows comma-separated (…,30,100), so each part counts on its own too
     t.numbers.flatMap(n => [n, ...n.split(',')]).flatMap(readings).forEach(n => numbers.add(n))
     // an ID's or a date's own digits may be quoted on their own (order 5004, day 11)
     for (const token of [...t.ids, ...t.dates.map(d => d.token)]) for (const n of token.match(/\d+/g) ?? []) numbers.add(Number(n))
   }
-  return { dates, ids, numbers }
+  return { dates, times, ids, numbers }
 }
 
 /**
  * Checks a text against the facts of a run. facts: any value (tool results
  * as objects or text). Returns { ok, unknown: [token] }: unknown are the
- * dates, IDs and numbers of the text that are not in the facts.
+ * dates, times, IDs and numbers of the text that are not in the facts.
  */
 export function checkText(text, facts) {
   const known = facts?.dates instanceof Set ? facts : factsOf(facts)
-  const { dates, ids, numbers } = tokensOf(text)
+  const { dates, times, ids, numbers } = tokensOf(text)
   const unknown = [
     ...dates.filter(d => !known.dates.has(d.iso)).map(d => d.token),
+    ...times.filter(time => !known.times?.has(time.hhmm)).map(time => time.token),
     ...ids.filter(id => !known.ids.has(id)),
     ...numbers.filter(n => !readings(n).some(v => known.numbers.has(v))),
   ]

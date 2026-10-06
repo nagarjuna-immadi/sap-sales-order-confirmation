@@ -24,6 +24,7 @@
     "watch-supply-workbench": "cds watch --open order.conf.supplyworkbench/index.html?sap-ui-xx-viewCache=false --livereload false",
     "watch-production-workbench": "cds watch --open order.conf.productionworkbench/index.html?sap-ui-xx-viewCache=false --livereload false",
     "watch-sales-feasibility": "cds watch --open order.conf.salesfeasibility/index.html?sap-ui-xx-viewCache=false --livereload false",
+    "watch-order-assistant": "cds watch --open order.conf.orderassistant/index.html?sap-ui-xx-viewCache=false --livereload false",
     "lint": "eslint .",
     "check:wording": "git grep -niI --untracked copilot -- app srv db; test $? -eq 1"
   },
@@ -101,15 +102,19 @@
       "masking": true,
       "connect": "none",
       "emitDataParts": true,
+      "recursionLimit": 60,
       "quotas": {
         "maxConcurrentTasks": 10,
+        "maxConcurrentTasksPerUser": 2,
         "maxTasksPerHour": 200,
-        "maxTasksPerHourPerUser": 200,
+        "maxTasksPerHourPerUser": 60,
         "maxToolCallsPerTask": 20,
         "maxLLMInvocationsPerTask": 12,
         "maxLLMTokensPerTask": 100000,
         "maxLLMTokensPerDay": 3000000,
-        "maxExecutionTimePerTask": "2min"
+        "maxExecutionTimePerTask": "2min",
+        "maxIncomingMessageLength": 2000,
+        "maxLLMCallTimeout": "60s"
       }
     }
   },
@@ -119,6 +124,7 @@
   "sapux": [
     "app/supply-workbench",
     "app/production-workbench",
-    "app/sales-feasibility"
+    "app/sales-feasibility",
+    "app/order-assistant"
   ]
 }

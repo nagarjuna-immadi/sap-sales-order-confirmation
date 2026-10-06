@@ -22,6 +22,16 @@ export function actionFlags(status, actions) {
 }
 
 /**
+ * The user actions the case-rules status table allows in `status`, with the
+ * role that may take each: [{ action, role, to }]. System steps are left out.
+ */
+export function allowedActions(status) {
+  return Object.entries(TRANSITIONS)
+    .filter(([, t]) => t.role !== 'system' && t.from.includes(status))
+    .map(([action, t]) => ({ action, role: t.role, to: t.to }))
+}
+
+/**
  * Who wrote a recommendation's text (plan 6.2): the agent through Claude, or
  * the template (llm-mock, a failed check, or while the agent is still running).
  */

@@ -1,0 +1,227 @@
+/* Order Assistant chat layout: the messages scroll, the status line and the input stay at the bottom. */
+
+/*
+ * The title row and the chat column share one gutter and one centered 60rem column, so the
+ * heading lines up with the input and "New Conversation" with the send button. DynamicPage's
+ * own title and content paddings differ per breakpoint, so both are set here.
+ */
+.oaPage {
+	--oaGutter: 2rem;
+	--oaColumn: 60rem;
+}
+
+.oaPage.sapFDynamicPage-Std-Phone {
+	--oaGutter: 1rem;
+}
+
+.oaPage.sapFDynamicPage .sapFDynamicPageTitleWrapper > .sapFDynamicPageTitle {
+	padding-left: var(--oaGutter);
+	padding-right: var(--oaGutter);
+}
+
+.oaPage .sapFDynamicPageTitle .sapFDynamicPageTitleMain {
+	width: 100%;
+	max-width: var(--oaColumn);
+	margin: 0 auto;
+	box-sizing: border-box;
+}
+
+.oaPage .sapFDynamicPageTitle .sapFDynamicPageTitleActionsBar.sapMTB {
+	padding-right: 0;
+}
+
+.oaPage.sapFDynamicPage .sapFDynamicPageContent,
+.oaPage.sapFDynamicPage .sapFDynamicPageContentFitContainer {
+	padding: 0;
+}
+
+/* AI mark in front of the heading */
+.oaMark.sapFAvatar {
+	flex-shrink: 0;
+	border: none;
+	border-radius: 0.5rem;
+	background: linear-gradient(135deg, #5d36ff 0%, #a100c2 60%, #e8175d 100%);
+	color: #ffffff;
+}
+
+.oaMark.sapFAvatar .sapUiIcon,
+.oaMark.sapFAvatar .sapFAvatarIcon {
+	color: #ffffff;
+}
+
+.oaChat {
+	padding: 0 var(--oaGutter);
+	box-sizing: border-box;
+}
+
+.oaContext,
+.oaConversation,
+.oaStatus,
+.oaComposer {
+	max-width: var(--oaColumn);
+	width: 100%;
+	margin-left: auto;
+	margin-right: auto;
+	box-sizing: border-box;
+}
+
+.oaContext {
+	margin-top: 0.75rem;
+	flex-shrink: 0;
+}
+
+.oaScroller {
+	min-height: 0;
+}
+
+.oaConversation {
+	padding: 1rem 0;
+}
+
+.oaStatus {
+	padding: 0.25rem 0;
+	color: var(--sapContent_LabelColor);
+}
+
+.oaComposer {
+	padding: 0.5rem 0 1rem;
+}
+
+/* Messages */
+
+.oaBubble {
+	max-width: 85%;
+	margin: 0.375rem 0;
+	padding: 0.5rem 0.875rem;
+	border-radius: var(--sapElement_BorderCornerRadius, 0.75rem);
+	box-sizing: border-box;
+}
+
+.oaQuestion {
+	background: var(--sapInformationBackgroundColor);
+	color: var(--sapTextColor);
+	white-space: pre-wrap;
+}
+
+.oaAnswer {
+	width: 85%;
+	background: var(--sapTile_Background);
+	border: 1px solid var(--sapTile_BorderColor);
+	color: var(--sapTextColor);
+}
+
+.oaFailure {
+	width: 85%;
+	padding: 0;
+}
+
+.oaAiLabel {
+	margin-bottom: 0.25rem;
+	color: var(--sapContent_LabelColor);
+	font-size: var(--sapFontSmallSize);
+}
+
+.oaAiLabel .sapMText {
+	color: inherit;
+	font-size: inherit;
+}
+
+.oaInfo {
+	margin: 0.375rem 0;
+	color: var(--sapContent_LabelColor);
+	font-style: italic;
+}
+
+.oaWelcome {
+	padding: 1rem 0;
+	color: var(--sapContent_LabelColor);
+}
+
+.oaSuggestion .sapMBtnInner {
+	height: auto;
+	white-space: normal;
+	text-align: start;
+}
+
+.oaSuggestion .sapMBtnContent {
+	white-space: normal;
+	line-height: 1.25rem;
+	padding: 0.25rem 0;
+}
+
+/* Data cards, built in CAP */
+
+.oaCard {
+	margin-top: 0.75rem;
+	padding: 0.5rem 0.75rem;
+	border: 1px solid var(--sapList_BorderColor);
+	border-radius: var(--sapElement_BorderCornerRadius, 0.5rem);
+	background: var(--sapList_Background);
+}
+
+.oaCardSubtitle {
+	color: var(--sapContent_LabelColor);
+}
+
+.oaTable {
+	margin-top: 0.25rem;
+}
+
+.oaLinks {
+	margin-top: 0.5rem;
+}
+
+/* Markdown answers */
+
+.oaMarkdown {
+	font-family: var(--sapFontFamily);
+	font-size: var(--sapFontSize);
+	line-height: 1.5;
+	overflow-x: auto;
+}
+
+.oaMarkdown > :first-child {
+	margin-top: 0;
+}
+
+.oaMarkdown > :last-child {
+	margin-bottom: 0;
+}
+
+.oaMarkdown p,
+.oaMarkdown ul,
+.oaMarkdown ol {
+	margin: 0.375rem 0;
+}
+
+.oaMarkdown h1,
+.oaMarkdown h2,
+.oaMarkdown h3,
+.oaMarkdown h4 {
+	font-size: var(--sapFontHeader5Size);
+	margin: 0.75rem 0 0.375rem;
+}
+
+.oaMarkdown code {
+	font-family: var(--sapFontFamilyMono, monospace);
+	background: var(--sapNeutralBackgroundColor);
+	padding: 0 0.25rem;
+	border-radius: 0.25rem;
+}
+
+.oaMarkdown table {
+	border-collapse: collapse;
+	margin: 0.5rem 0;
+}
+
+.oaMarkdown th,
+.oaMarkdown td {
+	border: 1px solid var(--sapList_BorderColor);
+	padding: 0.25rem 0.5rem;
+	text-align: start;
+	vertical-align: top;
+}
+
+.oaMarkdown a {
+	color: var(--sapLinkColor);
+}
