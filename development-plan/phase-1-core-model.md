@@ -125,7 +125,7 @@ One service per app, all delegating to `orchestrator.executeAction()`. Keep them
 **Hand check, scenario 1** (`npm run watch`, log in with the user name and an empty password):
 
 1. Open the case as `demo_user` (the index page cannot call unbound actions):
-   `curl -u demo_user: -X POST http://localhost:4004/odata/v4/demo/openCase -H 'Content-Type: application/json' -d '{"salesOrder":"SO-5005"}'`
+   `curl -u demo_user: -X POST http://localhost:4004/odata/v4/demo/simulateNewOrder -H 'Content-Type: application/json' -d '{"salesOrder":"SO-5005"}'` (since phase 2.4; `openCase` was removed)
 2. `supplychain_user`: Fiori preview of `SupplyPlanningService` → `Cases` → FC-0001 → *Reject* with an empty reason (400, refused row in the timeline), then *Request Production Check* (CR-0001).
 3. `sales_user`: preview of `SalesService` → FC-0001 → *Confirm to Customer* (400, case is `WITH_PRODUCTION`; refused row).
 4. `production_user`: preview of `ProductionService` → `CapacityRequests` → CR-0001 → *Reject* with an empty reason (400), then *Choose Option* `O-ALT` (no options are stored yet before phase 2, so any ID is accepted).

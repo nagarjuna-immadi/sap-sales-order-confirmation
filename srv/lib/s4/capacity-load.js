@@ -1,12 +1,14 @@
 // Capacity load per work center and day (blueprint §4.2, development plan 2.1).
 //
 // No standard released API in §4.2, so this reads the local CapacityLoad mock
-// (§8.2, pieces per day) in every profile. Its fields mirror
+// (§8.2, pieces per day) in every profile, with the active demo scenario
+// applied (demo-scenario.js). Its fields mirror
 // A_WorkCenterCapPerBucket, which may replace it in the pilot (open decision 7).
 
 import cds from '@sap/cds'
 import { num } from './connection.js'
 import { offsetOf, dateOf } from '../demo-clock.js'
+import { applyScenario } from '../demo-scenario.js'
 
 const { SELECT } = cds.ql
 
@@ -22,7 +24,7 @@ export async function getLoad({ plant, workCenters, from, to }) {
   const where = { plant, dayOffset: { between: offsetOf(from), and: offsetOf(to) } }
   if (workCenters?.length) where.workCenter = { in: workCenters }
   const rows = await SELECT.from(LOAD).where(where).orderBy('workCenter', 'dayOffset')
-  return rows.map(row => ({
+  const result = rows.map(row => ({
     plant: row.plant,
     workCenter: row.workCenter,
     date: dateOf(row.dayOffset),
@@ -35,4 +37,5 @@ export async function getLoad({ plant, workCenters, from, to }) {
     orders: row.orders ? row.orders.split(/[,\s]+/).filter(Boolean) : [],
     source: 'mock',
   }))
+  return applyScenario(result) // demo scenario 4 (plan 2.4)
 }

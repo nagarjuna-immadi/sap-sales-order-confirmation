@@ -114,14 +114,32 @@ Checked end to end on `cds serve all --with-mocks --in-memory` with curl as the 
 
 ## 2.4 Simulated S/4 events: `DemoService`
 
-- [ ] `srv/demo-service.cds` (`@requires: 'authenticated-user'`, demo only): `simulateS4Event(payload)` accepts a CloudEvents payload in the *SalesOrder Created / Changed* format noted in phase 0.1 and calls A2, which reads the order through `sales-order.js` (the event carries no items or priority). Shortcut: `simulateNewOrder(salesOrder)` for SO-5005, SO-5006 and SO-5007. Remove the phase 1 `openCase` action.
-- [ ] `simulatePriorityChange(salesOrder, item, deliveryPriority)`: the *Changed* payload has no `DeliveryPriority`, so this first updates the mocked `A_SalesOrderItem` (refused when the sales order service is `s4`), then posts a `Changed` event. A2 re-evaluates the lane, and A1 updates it with an audit row. An upgrade to HIGH moves the case to the top of the worklists. Phase 5's *Simulate priority change* button calls it.
-- [ ] `setScenario('default' | 'sc4-assy02-down')`: switches the mock override for scenario 4 (WC-ASSY-02 capacity 0 in `CapacityLoad`). Set it **before** the production check is requested: A4 computes the options when the CR is created.
-- [ ] `resetDemo()`: reseeds the database (cases, CRs, audit, notifications, recommendations, mock S/4 rows changed by `simulatePriorityChange`), sets the scenario back to `default`, and so resets the IDs to FC-0001 / CR-0001.
-- [ ] The index page cannot call unbound actions (phase 1.4), so `DemoService` is called with curl, e.g.:
+- [x] `srv/demo-service.cds` (`@requires: 'authenticated-user'`, demo only): `simulateS4Event(payload)` accepts a CloudEvents payload in the *SalesOrder Created / Changed* format noted in phase 0.1 and calls A2, which reads the order through `sales-order.js` (the event carries no items or priority). Shortcut: `simulateNewOrder(salesOrder)` for SO-5005, SO-5006 and SO-5007. Remove the phase 1 `openCase` action.
+- [x] `simulatePriorityChange(salesOrder, item, deliveryPriority)`: the *Changed* payload has no `DeliveryPriority`, so this first updates the mocked `A_SalesOrderItem` (refused when the sales order service is `s4`), then posts a `Changed` event. A2 re-evaluates the lane, and A1 updates it with an audit row. An upgrade to HIGH moves the case to the top of the worklists. Phase 5's *Simulate priority change* button calls it.
+- [x] `setScenario('default' | 'sc4-assy02-down')`: switches the mock override for scenario 4 (WC-ASSY-02 capacity 0 in `CapacityLoad`). Set it **before** the production check is requested: A4 computes the options when the CR is created.
+- [x] `resetDemo()`: reseeds the database (cases, CRs, audit, notifications, recommendations, mock S/4 rows changed by `simulatePriorityChange`), sets the scenario back to `default`, and so resets the IDs to FC-0001 / CR-0001.
+- [x] The index page cannot call unbound actions (phase 1.4), so `DemoService` is called with curl, e.g.:
   - `curl -u demo_user: -X POST http://localhost:4004/odata/v4/demo/simulateNewOrder -H 'Content-Type: application/json' -d '{"salesOrder":"SO-5005"}'`
   - `curl -u demo_user: -X POST http://localhost:4004/odata/v4/demo/setScenario -H 'Content-Type: application/json' -d '{"scenario":"sc4-assy02-down"}'`
   - `curl -u demo_user: -X POST http://localhost:4004/odata/v4/demo/resetDemo -H 'Content-Type: application/json' -d '{}'`
 - [ ] Walk scenarios 1–5 by hand: events with curl, then the case actions through the CAP index page with the three users.
+
+### DemoService result (done 2026-10-06, hand walk open)
+
+Checked with curl on `cds serve all --with-mocks --in-memory` (`DEMO_TODAY=2026-10-06`): scenario 4 gives O-MOVE only (score 253), then after the production rejection A3's earliest date D+7 and a delay draft with that date; scenario 5's confirm to customer in `WITH_PRODUCTION` is refused and in the timeline; SO-5006 `02` → `01` moves FC-0002 from MEDIUM to HIGH with an `updateLane` audit row; `resetDemo` leaves no case, priority `02` back on SO-5006, scenario `default`, and the next SO-5005 is FC-0001 / CR-0001 with 133 / 261.5 again. Choices the list above leaves open:
+
+- **Actions:** `simulateS4Event(payload)` takes the CloudEvents envelope as `payload` (`id`, `specversion` `1.0`, `source`, `type` required; only `SalesOrder.Created.v1` and `.Changed.v1`). Both types run Sales Order Intake for every item of the order: items without a case get one, items with a case are re-evaluated. `simulateNewOrder` and `simulatePriorityChange` build that envelope themselves. All three return one `IntakeResult` per item (`caseId`, `created`, `lane`, `status`, `laneChanged`).
+- **Scenario switch:** `srv/lib/demo-scenario.js`, applied in `capacity-load.js` when the load is read; the stored `CapacityLoad` rows never change. It lives in process memory, so a restart or `resetDemo` goes back to `default`.
+- **Reset:** redeploys the model and all seed data (including the S/4 mocks) into the in-memory SQLite database in a background transaction (one connection), then clears the master-data cache. Refused with 501 on any other database (phase 6, open decision 2).
+- **`openCase` is gone;** the phase 1 hand check now uses `simulateNewOrder`.
+
+**Hand walk** (`npm run watch`, users log in with an empty password):
+
+1. `curl -u demo_user: -X POST http://localhost:4004/odata/v4/demo/simulateNewOrder -H 'Content-Type: application/json' -d '{"salesOrder":"SO-5005"}'`; then as `supplychain_user` in the Fiori preview of `SupplyPlanningService`: FC-0001's `Recommendations` (`S-PRODUCE`), `SupplyResults` and `Notifications`; *Request Production Check*.
+2. `production_user`, `ProductionService` → `CapacityRequests` → CR-0001: `options` with O-ALT 133 and O-MOVE 261.5; *Choose Option* `O-ALT`.
+3. `supplychain_user`: *Confirm Date to Sales* (2026-10-11 = D+5 is filled in). `sales_user`: `customerDraft` on FC-0001, *Confirm to Customer*.
+4. Scenarios 2 and 3: `simulateNewOrder` for SO-5006 (*Approve Stock Transfer*) and SO-5007 (`AUTO_CONFIRMED`, no notification).
+5. Scenario 4: `resetDemo`, then `setScenario` `sc4-assy02-down`, SO-5005 again, *Request Production Check*, *Reject Production* with a reason, *Reject* with a reason; `sales_user` sees the delay draft with 2026-10-13 (D+7).
+6. Scenario 5: on a case in `WITH_PRODUCTION`, `sales_user` *Confirm to Customer* → 400, refused row in the timeline.
 
 **Exit criteria:** under `cds watch`, simulating SO-5005, SO-5006 and SO-5007 with curl gives exactly the §8.3 outcomes, visible through the CAP index page; the golden values in 2.2 match, including the scores; notifications appear for the right roles; and scenario 4 ends with D+7 and a delay draft.
