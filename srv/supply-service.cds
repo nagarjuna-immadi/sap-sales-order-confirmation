@@ -45,6 +45,10 @@ service SupplyPlanningService {
   @readonly
   entity CaseTimeline     as projection on db.CaseTimeline;
 
+  // Communication agent notifications for this role (phase 2.3; header list in the apps)
+  @readonly
+  entity Notifications    as projection on db.Notification;
+
   @readonly
   entity Customers        as projection on db.Customers excluding { contract };
 }

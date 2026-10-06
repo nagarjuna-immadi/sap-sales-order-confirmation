@@ -16,10 +16,9 @@ service DemoService {
   }
 
   /**
-   * Opens a case for a sales order item from the S/4 mock (e.g. SO-5005 / 10)
-   * and sends it to Supply Planning. No ATP and no penalty check yet: that is
-   * Sales Order Intake in phase 2. Opening the same item again returns the
-   * existing case.
+   * Runs Sales Order Intake for a sales order item from the S/4 mock (e.g.
+   * SO-5005 / 10): lane, penalty, ATP, then auto-confirm or Supply Planning.
+   * The same item again re-evaluates the existing case (no status change).
    */
   action openCase(salesOrder : String(10), item : String(6)) returns OpenedCase;
 }

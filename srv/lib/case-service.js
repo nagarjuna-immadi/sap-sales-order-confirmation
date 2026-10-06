@@ -69,6 +69,20 @@ export function registerCaseHandlers(srv, { role, actions, order = {} }) {
     })
   }
 
+  // Communication agent notifications: only those for this service's role
+  if (entities.Notifications) {
+    srv.before('READ', entities.Notifications, req => {
+      req.query.where({ recipientRole: role })
+      // default order unless the client sorts by more than the key (CAP adds the key for paging)
+      const select = req.query.SELECT
+      const clientOrder = select.orderBy?.some(o => o.ref?.at(-1) !== 'ID')
+      if (order.Notifications && !clientOrder && !select.one) {
+        select.orderBy = []
+        req.query.orderBy(...order.Notifications, 'ID')
+      }
+    })
+  }
+
   if (entities.CaseTimeline) {
     // CAP drops virtual columns from the query: remember which ones were asked for
     const durations = new WeakMap()

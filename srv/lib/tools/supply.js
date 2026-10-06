@@ -41,11 +41,15 @@ export function getStock(material) {
   return readStock(material)
 }
 
-/** Open receipts not pegged to a sales order: [{ order, type, material, plant, qty, date, source }]. */
-export async function getOpenReceipts(material, plant) {
+/**
+ * Open receipts free for this order: not pegged, or pegged to `ownSalesOrder`
+ * (an order's own receipts are its supply).
+ * [{ order, type, material, plant, qty, date, source }]
+ */
+export async function getOpenReceipts(material, plant, ownSalesOrder) {
   const receipts = await getReceipts(material, plant)
   return receipts
-    .filter(r => !r.pegged)
+    .filter(r => !r.pegged || (ownSalesOrder && r.salesOrder === ownSalesOrder))
     .map(r => ({ order: r.order, type: r.type, material: r.material, plant: r.plant, qty: r.qty, date: r.endDate, source: r.source }))
 }
 
@@ -180,7 +184,7 @@ async function materialTree(material, plant, quantity) {
 export async function earliestDeliveryDate(c, { load } = {}) {
   const params = await getPlanningParameters(c.plant)
   const tree = c.tree ?? (await materialTree(c.material, c.plant, c.quantity))
-  const receipts = c.openReceipts ?? (await getOpenReceipts(c.material, c.plant))
+  const receipts = c.openReceipts ?? (await getOpenReceipts(c.material, c.plant, c.salesOrder))
   const root = tree[0]
   const toProduce = qty(Math.max(0, root.shortfallQty - sum(receipts.filter(r => r.material === c.material), 'qty')))
   const lastReceipt = receipts.filter(r => r.material === c.material).map(r => offsetOf(r.date)).sort((a, b) => b - a)[0]
@@ -214,7 +218,7 @@ export async function buildSupplyPicture(c, { load } = {}) {
 
   const stockRows = (await Promise.all(materials.map(m => readStock(m)))).flat()
   const stockPerPlant = stockRows.map(({ material, plant, unrestrictedQty, unit }) => ({ material, plant, unrestrictedQty, unit }))
-  const openReceipts = (await Promise.all(materials.map(m => getOpenReceipts(m, c.plant)))).flat()
+  const openReceipts = (await Promise.all(materials.map(m => getOpenReceipts(m, c.plant, c.salesOrder)))).flat()
   const excessFlags = await getSlowMovers(c.material, params)
   const reallocationCandidates = await findReallocationCandidates({ ...c, quantity, needByDate })
 
