@@ -49,13 +49,13 @@ Checked against the CSV mocks with `DEMO_TODAY=2026-10-06`: every module returns
 
 ## 2.2 Tools: `srv/lib/tools/` (pure or read-only, no LLM)
 
-- [ ] A2: `getSalesOrder`, `getCustomer` (with clause text), `runAvailabilityCheck`, `calculatePenalty(rule, orderValue, daysLate)`. At intake `daysLate` is 1, so `penaltyAmount` is the amount per day late.
-- [ ] A3: `explodeBom`, `getStock(material)`, `getOpenReceipts`, `getSlowMovers` (days since last movement, months of supply), `simulateLeftover(material, need, lotSizePolicy)`, `findReallocationCandidates(material, needDate)`, `earliestDeliveryDate(case)`, `buildSupplyPicture(case)`.
+- [x] A2: `getSalesOrder`, `getCustomer` (with clause text), `runAvailabilityCheck`, `calculatePenalty(rule, orderValue, daysLate)`. At intake `daysLate` is 1, so `penaltyAmount` is the amount per day late.
+- [x] A3: `explodeBom`, `getStock(material)`, `getOpenReceipts`, `getSlowMovers` (days since last movement, months of supply), `simulateLeftover(material, need, lotSizePolicy)`, `findReallocationCandidates(material, needDate)`, `earliestDeliveryDate(case)`, `buildSupplyPicture(case)`.
   - `getOpenReceipts` returns only receipts **not pegged** to a sales order. SO-5001's and SO-5004's production orders are pegged, so FG-100 has no open receipt.
   - `findReallocationCandidates`: stock or receipts pegged to an order in a lower lane, **only if** that order stays covered by its own date from the remaining unpegged stock and receipts, without new production. SO-5001 and SO-5004 are therefore no candidates.
   - `earliestDeliveryDate(case)`: earliest production finish using free capacity only (no order moved), with the A4 simulation rules below, plus `shippingLeadDays`. Uses the A4 tools. If nothing fits in the `CapacityLoad` window (D+1 … D+5), it returns no date and says so.
-- [ ] A3 decision ladder `rankSupplyOptions(picture, case)`: the first option that meets the date is recommended, and all feasible options are returned (rank 1 local stock / receipt, 2 local stock plus stock transfer for the rest, preferring excess, 3 reallocation, 4 produce with leftover, 5 reject with `earliestDeliveryDate`). Add the excess-inventory warning for rank 4 when the leftover is above `excessThresholdDays` of supply (§7 A3).
-- [ ] A4: `getWorkCenters(material, plant)` (primary and alternative versions from `ProductionRouting`), `getLoad`, `getScheduledOrders`, `generateOptions(cr)`, `simulate(option)`, `score(option)`.
+- [x] A3 decision ladder `rankSupplyOptions(picture, case)`: the first option that meets the date is recommended, and all feasible options are returned (rank 1 local stock / receipt, 2 local stock plus stock transfer for the rest, preferring excess, 3 reallocation, 4 produce with leftover, 5 reject with `earliestDeliveryDate`). Add the excess-inventory warning for rank 4 when the leftover is above `excessThresholdDays` of supply (§7 A3).
+- [x] A4: `getWorkCenters(material, plant)` (primary and alternative versions from `ProductionRouting`), `getLoad`, `getScheduledOrders`, `generateOptions(cr)`, `simulate(option)`, `score(option)`.
   - **Simulation:** operations run in routing sequence; an operation starts the day after the previous one ends and fills free capacity (`remainingCapacity`) from its first day. New orders may use free capacity inside the frozen horizon.
   - **O-ALT:** the alternative version on free capacity. **O-MOVE:** primary version; the lower-lane order on the day the assembly needs is moved, whole, to the first day after the frozen horizon. No O-SPLIT or O-OVERTIME in the demo (2.0).
   - **Feasibility** (§7 A4): infeasible if the CR's `needByDate` is missed or a moved order misses its own date. An overload above 100% is **not** infeasible; it raises the score. `needsOverride` if an order inside the frozen horizon moves.
@@ -74,6 +74,18 @@ Checked against the CSV mocks with `DEMO_TODAY=2026-10-06`: every module returns
   - Scenario 2: 20 from plant 1000 plus a stock transfer of 30 from plant 1100 (slow-moving, 120 days without movement; excess, 8 months of supply). No production.
   - Scenario 3: ATP 20 ≥ 10 in plant 1000 → `AUTO_CONFIRMED`.
   - Scenario 4 (WC-ASSY-02 capacity 0): A4 has no O-ALT; O-MOVE is the only option (`needsOverride`, peak 160, spread 56, score 253). After the planner rejects, A3's earliest production finish without moving any order is D+5 (WC-ASSY-01 free 10 + 40 + 50 on D+3 … D+5), so the earliest delivery is **D+7**. (The planner's reason in §8.3, *"No capacity before D+6 without moving frozen orders"*, is free text, not a computed value.)
+
+### Tools result (done 2026-10-06, hand check open)
+
+All golden values above come out exactly in a throwaway script against the mocks (`DEMO_TODAY=2026-10-06`, scenario 4 with WC-ASSY-02's capacity set to 0 in the passed-in load). The hand check through the CAP index page waits for 2.3, which stores the results on cases, CRs and supply results. Choices the list above leaves open:
+
+- **Files:** `srv/lib/tools/order-intake.js` (A2), `supply.js` (A3), `capacity.js` (A4), `config.js` (planning parameters, scoring weights, lane mapping and ranks, `PLANNING_WINDOW` D+1 … D+5).
+- **A2:** `runAvailabilityCheck` gives `confirmedInFull` when the full quantity is available and `availableDate + shippingLeadDays ≤ requestedDate` (SO-5007: D+2 ≤ D+7). `calculatePenalty` supports the demo's rule (percent of order value per day) and returns null for any other basis rather than a guess. `penaltyRuleText(rule)` gives "2% of order value per day late".
+- **A3 material tree** is netted: a component is needed only for the parent's shortfall, so FG-100 stock would reduce SFG-200's need. `toProduceQty` is the root shortfall minus unpegged receipts due by `needByDate`.
+- **A3 ladder:** option IDs `S-LOCAL`, `S-TRANSFER`, `S-REALLOCATE`, `S-PRODUCE`, `S-REJECT`, each with the Supply Planning action that carries it out (`confirmFromStock` … `reject`). Ranks 2–4 appear only when local supply is short. Rank 4 is feasible when every component without a BOM is covered (FG-300 has no BOM, so scenario 2 cannot produce). Rank 5 is always there, with the earliest date. Stock transfers count as on time (no transport lead time in the demo).
+- **Earliest date:** stock and unpegged receipts first, the rest from production on free capacity over all production versions, plus `shippingLeadDays`. Scenario 1 (normal load): D+5, via O-ALT's path.
+- **A4:** `generateOptions(cr, { load })` leaves out options that do not fit in the window at all (scenario 4: no O-ALT) and an O-MOVE that moves nothing. Infeasible options that fit stay in the list with `infeasibleReason`. Each option carries `slots`, `movedOrders`, `metrics`, `score`, and `loadBefore` / `loadAfter` rows for the phase 4 chart. A moved order goes to `max(frozenHorizonDays + 1, day + 1)`; orders of a lower lane move first, latest due date first. `simulate` and `score` are pure.
+- **The `load` parameter** of `generateOptions` and `buildSupplyPicture` replaces the stored load; `setScenario` (2.4) can use the stored mock instead.
 
 ## 2.3 Agents without LLM: `srv/agents/<agent>/`
 
