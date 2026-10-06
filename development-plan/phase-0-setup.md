@@ -105,13 +105,13 @@ The users are under the `[development]` profile, so `cds watch` and `npm run wat
 
 ## 0.6 Smoke check
 
-- [ ] Under `cds watch`, open the CAP index page (`http://localhost:4004`) and read the mocked sales orders through a temporary service and check that SO-5005 has delivery priority `01`.
+- [x] Under `cds watch`, open the CAP index page (`http://localhost:4004`) and read the mocked sales orders from `API_SALES_ORDER_SRV` (no extra service needed: `cds watch` serves the mocks). Check that SO-5005 item `10` in `A_SalesOrderItem` has delivery priority `01` (the field is on the item, not on `A_SalesOrder`). Done 2026-10-06.
 
 ## 0.7 Accounts and keys (manual)
 
-- [ ] BTP trial account with Cloud Foundry, BAS (or local VS Code with `@sap/cds-dk`), and the SAP Build Work Zone, standard edition subscription.
-- [ ] api.sap.com login (for the EDMX downloads; no API key needed).
-- [ ] Anthropic Console account, a workspace only for this project with a monthly spend limit, and an API key (§4.4). Needed from phase 7.
+- [x] BTP trial account with Cloud Foundry, BAS (or local VS Code with `@sap/cds-dk`), and the SAP Build Work Zone, standard edition subscription.
+- [x] api.sap.com login (for the EDMX downloads; no API key needed).
+- [x] Anthropic Console account, a workspace only for this project with a monthly spend limit, and an API key (§4.4). Needed from phase 7.
 
 ## 0.8 S/4HANA CAL system (manual, from about 2026-10-08/09)
 
