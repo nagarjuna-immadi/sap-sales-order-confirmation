@@ -16,16 +16,17 @@ The plan follows the same build order as `sap-cap-tm-dispatch-cockpit`: first a 
 | 5 | [Fiori app 3, Sales Order Feasibility](phase-5-sales-feasibility.md) | Sales sees its orders and confirms to the customer; scenarios 1–5 work across all three apps locally. |
 | 6 | [A2–A5 as CAP agents](phase-6-llm-agents.md) | A2–A5 become CAP agents on `@cap-js/agents` and get their Claude steps (summaries, explanations, drafts), with the template texts as fallback. |
 | 7 | [Order Assistant](phase-7-order-assistant.md) | The read-only chat app answers questions about cases with data cards and deep links (scenario 6). |
-| 8 | [Hybrid mode and BTP deployment](phase-8-deployment.md) | All four apps run on BTP trial in Work Zone; the Live data dialog reads the S/4HANA CAL system. |
-| 9 | [Demo readiness](phase-9-demo-readiness.md) | All six §8.3 scenarios run in the cloud, with a demo reset and a runbook. |
-| 10 | [Extras (optional, real S/4)](phase-10-extras.md) | `s4` adapters, real events, write-back proposals, HANA, MCP server for local development. |
+| 8 | [S/4HANA CAL system](phase-8-cal-setup.md) | The eight OData services are active in the CAL system and readable by a display-only technical user; open decisions 3 and 8 are decided. |
+| 9 | [Hybrid mode and BTP deployment](phase-9-deployment.md) | All four apps run on BTP trial in Work Zone; the Live data dialog reads the S/4HANA CAL system. |
+| 10 | [Demo readiness](phase-10-demo-readiness.md) | All six §8.3 scenarios run in the cloud, with a demo reset and a runbook. |
+| 11 | [Extras (optional, real S/4)](phase-11-extras.md) | `s4` adapters, real events, write-back proposals, HANA, MCP server for local development. |
 
 ## Ground rules
 
 - **Work on `main`.** A phase counts as done when its exit criteria pass. Tick off each checkbox in the phase file as it is done.
 - **No unit tests (this is a demo).** No jest, no `cds.test`, no `*.test.js` and no `.http` files. Everything is verified by hand under `cds watch`, through the CAP server index page (`http://localhost:4004`, with its Fiori preview) and, from phase 3 on, the apps.
 - **The mock profile always works.** `cds watch` with no credentials and no Anthropic key must keep serving the full app after every phase. From phase 6 on, `cds.requires.llm` is `llm-mock` there, and A2–A5 use their template texts without calling the agent.
-- **S/4 stays read-only.** Agents recommend, people decide in Fiori, and nothing writes to S/4HANA. The CAL system is writable, but its technical user is display-only. Write-back is a phase 10 extra.
+- **S/4 stays read-only.** Agents recommend, people decide in Fiori, and nothing writes to S/4HANA. The CAL system is writable, but its technical user is display-only. Write-back is a phase 11 extra.
 - **A1 is the only writer of case status.** Every action writes an audit row in the same transaction. Reject and frozen-horizon override need a reason.
 - **Numbers come from tools.** Quantities, dates, loads and scores come from deterministic functions, never from LLM text.
 - **Field names:** the blueprint uses API names but not property names. After `cds import`, use the real EDMX names everywhere (see the table in [phase 0](phase-0-setup.md#real-s4-names)).
@@ -64,11 +65,11 @@ All checks are manual. There are no unit tests.
 | # | Decision | Decide in |
 | --- | --- | --- |
 | 1 | LLM integration. **Decided 2026-10-06:** everything on `@cap-js/agents` with `kind: anthropic`, as in the TM project; no `@anthropic-ai/sdk`. A2–A5 are internal CAP agents (`@requires: 'internal-user'`, read-only functions, called with `srv.chat`, template fallback). The Order Assistant is a read-only A2A agent with progress steps instead of token streaming. The plugin points this depends on are checked in the phase 6.0 and 7.0 spikes | Done (spikes in 6.0 and 7.0) |
-| 2 | Persistence on trial: SQLite reseeded at every start (blueprint default, a restart resets the demo) or HANA Cloud trial as in the TM project (survives restarts, stops every night) | Phase 8 |
-| 3 | Behaviour if a §4.2 API cannot be activated in the CAL system or has no usable data there. Default: that API stays mock-only on BTP and the Live data dialog shows the `mock` badge for it. (The Hub sandbox is not used: blueprint §4.3) | Phase 0.8 |
+| 2 | Persistence on trial: SQLite reseeded at every start (blueprint default, a restart resets the demo) or HANA Cloud trial as in the TM project (survives restarts, stops every night) | Phase 9 |
+| 3 | Behaviour if a §4.2 API cannot be activated in the CAL system or has no usable data there. Default: that API stays mock-only on BTP and the Live data dialog shows the `mock` badge for it. (The Hub sandbox is not used: blueprint §4.3) | Phase 8 |
 | 4 | Delivery priority keys for HIGH / MEDIUM / NORMAL (§10.2). Default `01` / `02` / `03`+blank | Phase 1 |
 | 5 | Frozen horizon length and who may override it (§10.4). **Decided 2026-10-06** for the demo: 3 days, Production Planner (phase 2.0) | Done |
-| 6 | Models and effort per agent (§10.7). Default `claude-opus-5-5`; cheaper options measured in phase 9 | Phase 6, 9 |
-| 7 | Capacity load per day: §4.2 assumes no standard API, but `API_WORK_CENTERS` has the capacity evaluation `A_WorkCenterCapPerBucket` (load per work center and bucket, in time units). It can be tested in the CAL system (phase 0.8). Default: the demo keeps the local `CapacityLoad` mock (scripted §8 values in pieces per day) with field names that mirror the API; the pilot tries the API before building a custom CDS view (phase 10). Mentioning it in §4.2 needs a blueprint update first | Phase 10 |
-| 8 | How BTP reaches the CAL system (blueprint §10.9): internet destination with basic auth if the Gateway port is reachable from outside, otherwise a Cloud Connector. Default: internet destination | Phase 0.8 |
-| 9 | Create the §8 story in the CAL system too (blueprint §10.10), or use CAL only for live reads of its standard data. Default: live reads only; the scripted scenarios stay on mocks | Phase 9 |
+| 6 | Models and effort per agent (§10.7). Default `claude-opus-5-5`; cheaper options measured in phase 10 | Phase 6, 10 |
+| 7 | Capacity load per day: §4.2 assumes no standard API, but `API_WORK_CENTERS` has the capacity evaluation `A_WorkCenterCapPerBucket` (load per work center and bucket, in time units). It can be tested in the CAL system (phase 8). Default: the demo keeps the local `CapacityLoad` mock (scripted §8 values in pieces per day) with field names that mirror the API; the pilot tries the API before building a custom CDS view (phase 11). Mentioning it in §4.2 needs a blueprint update first | Phase 11 |
+| 8 | How BTP reaches the CAL system (blueprint §10.9): internet destination with basic auth if the Gateway port is reachable from outside, otherwise a Cloud Connector. Default: internet destination | Phase 8 |
+| 9 | Create the §8 story in the CAL system too (blueprint §10.10), or use CAL only for live reads of its standard data. Default: live reads only; the scripted scenarios stay on mocks | Phase 10 |

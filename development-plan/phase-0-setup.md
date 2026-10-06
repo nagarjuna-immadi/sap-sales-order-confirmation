@@ -6,13 +6,13 @@
 
 ## 0.1 Download the API metadata from the Hub (manual)
 
-For each API in §4.2: `API_SALES_ORDER_SRV`, `API_PRODUCT_AVAILY_INFO_BASIC`, `API_MATERIAL_STOCK_SRV`, `API_BILL_OF_MATERIAL_SRV`, `API_PRODUCT_SRV`, `API_PLANNED_ORDERS`, `API_PRODUCTION_ORDER_2_SRV`, `API_WORK_CENTERS` (all from the S/4HANA **private cloud / on-premise** package). The Hub supplies the EDMX only; its sandbox (*Try Out*) is not used (blueprint §4.3), because it is not offered for `API_SALES_ORDER_SRV` (0001, checked 2026-10-06) or `API_WORK_CENTERS` (2025FPS01). Live reads come from the S/4HANA CAL system ([0.8](#08-s4hana-cal-system-manual-from-about-2026-10-0809)). The EDMX results are in the [EDMX check](#edmx-check-done-2026-10-06) table below.
+For each API in §4.2: `API_SALES_ORDER_SRV`, `API_PRODUCT_AVAILY_INFO_BASIC`, `API_MATERIAL_STOCK_SRV`, `API_BILL_OF_MATERIAL_SRV`, `API_PRODUCT_SRV`, `API_PLANNED_ORDERS`, `API_PRODUCTION_ORDER_2_SRV`, `API_WORK_CENTERS` (all from the S/4HANA **private cloud / on-premise** package). The Hub supplies the EDMX only; its sandbox (*Try Out*) is not used (blueprint §4.3), because it is not offered for `API_SALES_ORDER_SRV` (0001, checked 2026-10-06) or `API_WORK_CENTERS` (2025FPS01). Live reads come from the S/4HANA CAL system ([phase 8](phase-8-cal-setup.md)). The EDMX results are in the [EDMX check](#edmx-check-done-2026-10-06) table below.
 
 - [x] Note the OData version: all eight are **V2** (`Edmx Version="1.0"`, `DataServiceVersion="2.0"`, checked in the EDMX files).
 - [x] Confirm the state on api.sap.com (the EDMX does not carry it): all eight are **ACTIVE** (checked 2026-10-06).
 - [x] Download the EDMX to `srv/external/` (all 8, see the table below).
 - [x] Rename each file to its EDMX namespace (`OP_API_SALES_ORDER_SRV_0001.edmx` → `API_SALES_ORDER_SRV.edmx`) **before** `cds import`, so that the `.cds` file, the service name, the `cds.requires` key and the CSV file prefix are all the same name. The Hub adds the `OP_` prefix and the `_000n` version suffix; drop both. Note that the planned orders namespace has no `_SRV`. Done 2026-10-06: `srv/external/` now holds `<namespace>.edmx`.
-- [x] **Capacity load per day:** the plan assumed there is no API for it (§4.2), but `API_WORK_CENTERS` has the capacity evaluation `A_WorkCenterCapPerBucket` (available capacity, requirement, remaining capacity and utilization per work center and bucket). It can be tried in the CAL system (0.8). Until then, capacity load stays mock-only, and the API is a pilot candidate (phase 10). See [open decision 7](README.md#open-decisions).
+- [x] **Capacity load per day:** the plan assumed there is no API for it (§4.2), but `API_WORK_CENTERS` has the capacity evaluation `A_WorkCenterCapPerBucket` (available capacity, requirement, remaining capacity and utilization per work center and bucket). It can be tried in the CAL system (phase 8). Until then, capacity load stays mock-only, and the API is a pilot candidate (phase 11). See [open decision 7](README.md#open-decisions).
 - [x] Note the sales order business event specification (*SalesOrder Created / Changed*) payload, for the "Simulate S/4 event" button in phase 2. Done 2026-10-06, see [Sales order event check](#sales-order-event-check-done-2026-10-06).
 
 ### Sales order event check (done 2026-10-06)
@@ -32,18 +32,18 @@ Hub event object *Sales Order Events* 1.0.0 (not *Sales Order Without Charge Eve
 
 All eight files are OData **V2** (`edmx:Edmx Version="1.0"`), so every service is `kind: odata-v2`.
 
-| Downloaded from the Hub as | Namespace (= file name in `srv/external/`) | Hub version | Entity sets we read | Function imports | Active in CAL |
-| --- | --- | --- | --- | --- | --- |
-| `OP_API_SALES_ORDER_SRV_0001.edmx` | `API_SALES_ORDER_SRV` | 0001 | `A_SalesOrder`, `A_SalesOrderItem`, `A_SalesOrderScheduleLine` | 2 write (approval release / reject) | open |
-| `OP_API_PRODUCT_AVAILY_INFO_BASIC_0001.edmx` | `API_PRODUCT_AVAILY_INFO_BASIC` | 0001 | none (functions only) | 3 **read** (GET): `DetermineAvailabilityOf`, `DetermineAvailabilityAt`, `CalculateAvailabilityTimeseries` | open |
-| `OP_API_MATERIAL_STOCK_SRV.edmx` | `API_MATERIAL_STOCK_SRV` | – | `A_MatlStkInAcctMod` (`A_MaterialStock` is only material + unit) | none | open |
-| `OP_API_BILL_OF_MATERIAL_SRV_0002.edmx` | `API_BILL_OF_MATERIAL_SRV` | 0002 | `MaterialBOM`, `MaterialBOMItem` (no `A_` prefix) | 1 read (GET): `ExplodeBOM`; 5 write | open |
-| `OP_API_PRODUCT_SRV_0001.edmx` | `API_PRODUCT_SRV` | 0001 | `A_Product`, `A_ProductDescription`, `A_ProductPlant`, `A_ProductSupplyPlanning` | none | open |
-| `OP_API_PLANNED_ORDERS_SRV_0001.edmx` | `API_PLANNED_ORDERS` | 0001 | `A_PlannedOrder`, `A_PlannedOrderCapacity` | 2 write (scheduling) | open |
-| `OP_API_PRODUCTION_ORDER_2_SRV_0001.edmx` | `API_PRODUCTION_ORDER_2_SRV` | 0001 | `A_ProductionOrder_2`, `A_ProductionOrderOperation_2` | 11 write (release, convert, close, …) | open |
-| `OP_API_WORK_CENTERS_0001.edmx` | `API_WORK_CENTERS` | 0001 | `A_WorkCenters`, `A_WorkCenterCapacity`, `A_WorkCenterCapacityInterval`, `A_WorkCenterCapPerBucket` (parameterized) | none | open |
+| Downloaded from the Hub as | Namespace (= file name in `srv/external/`) | Hub version | Entity sets we read | Function imports |
+| --- | --- | --- | --- | --- |
+| `OP_API_SALES_ORDER_SRV_0001.edmx` | `API_SALES_ORDER_SRV` | 0001 | `A_SalesOrder`, `A_SalesOrderItem`, `A_SalesOrderScheduleLine` | 2 write (approval release / reject) |
+| `OP_API_PRODUCT_AVAILY_INFO_BASIC_0001.edmx` | `API_PRODUCT_AVAILY_INFO_BASIC` | 0001 | none (functions only) | 3 **read** (GET): `DetermineAvailabilityOf`, `DetermineAvailabilityAt`, `CalculateAvailabilityTimeseries` |
+| `OP_API_MATERIAL_STOCK_SRV.edmx` | `API_MATERIAL_STOCK_SRV` | – | `A_MatlStkInAcctMod` (`A_MaterialStock` is only material + unit) | none |
+| `OP_API_BILL_OF_MATERIAL_SRV_0002.edmx` | `API_BILL_OF_MATERIAL_SRV` | 0002 | `MaterialBOM`, `MaterialBOMItem` (no `A_` prefix) | 1 read (GET): `ExplodeBOM`; 5 write |
+| `OP_API_PRODUCT_SRV_0001.edmx` | `API_PRODUCT_SRV` | 0001 | `A_Product`, `A_ProductDescription`, `A_ProductPlant`, `A_ProductSupplyPlanning` | none |
+| `OP_API_PLANNED_ORDERS_SRV_0001.edmx` | `API_PLANNED_ORDERS` | 0001 | `A_PlannedOrder`, `A_PlannedOrderCapacity` | 2 write (scheduling) |
+| `OP_API_PRODUCTION_ORDER_2_SRV_0001.edmx` | `API_PRODUCTION_ORDER_2_SRV` | 0001 | `A_ProductionOrder_2`, `A_ProductionOrderOperation_2` | 11 write (release, convert, close, …) |
+| `OP_API_WORK_CENTERS_0001.edmx` | `API_WORK_CENTERS` | 0001 | `A_WorkCenters`, `A_WorkCenterCapacity`, `A_WorkCenterCapacityInterval`, `A_WorkCenterCapPerBucket` (parameterized) | none |
 
-**Gateway service name and path:** the namespace is also the Gateway service name in S/4 (the CAL system and the Private Cloud), and every EDMX holds its own path: `/sap/opu/odata/sap/<namespace>`. The Hub only adds `OP_` (on-premise package) and the version to the file name. One exception: the BOM service is version 2, so its path is `/sap/opu/odata/sap/API_BILL_OF_MATERIAL_SRV;v=0002` (without `;v=0002` the Gateway serves version 1). Phase 8 uses these paths in the credentials.
+**Gateway service name and path:** the namespace is also the Gateway service name in S/4 (the CAL system and the Private Cloud), and every EDMX holds its own path: `/sap/opu/odata/sap/<namespace>`. The Hub only adds `OP_` (on-premise package) and the version to the file name. One exception: the BOM service is version 2, so its path is `/sap/opu/odata/sap/API_BILL_OF_MATERIAL_SRV;v=0002` (without `;v=0002` the Gateway serves version 1). Phase 9 uses these paths in the credentials.
 
 The only function imports the app may call are the GET ones (ATP, `ExplodeBOM`). The write function imports stay in the imported model but are never called (S/4 stays read-only).
 
@@ -59,8 +59,8 @@ The only function imports the app may call are the GET ones (ATP, `ExplodeBOM`).
 ## 0.3 Import the S/4 services
 
 - [x] Run `cds import srv/external/<API>.edmx --as cds` for each API from 0.1 (after the renaming). Done 2026-10-06 with `@sap/cds-dk` 10.1: `srv/external/<namespace>.cds` next to each EDMX. `API_PRODUCT_AVAILY_INFO_BASIC` reports "There are no entities in the OData model", which is expected (functions only).
-- [x] In `package.json` → `cds.requires`, add each API (`kind: odata-v2`, `model: srv/external/<API>`). No credentials yet; the `[hybrid]` and `[production]` entries come in phase 8. `cds import` wrote all eight entries itself.
-- [x] Check how the importer maps the V2 dates: `Edm.DateTime` with `sap:display-format="Date"` (requested and confirmed delivery dates, order dates) should become `Date`, the rest `DateTime`. Phase 8 compares this against real payloads from the CAL system. Result: as expected. All `display-format="Date"` properties became `Date` (e.g. `RequestedDeliveryDate`, `ConfirmedDeliveryDate`, `SalesOrderDate`, `PlndOrderPlannedStartDate`); the ATP result's `PeriodStartUTCDateTime` / `PeriodEndUTCDateTime` (no display format) became `DateTime`; `Edm.Time` became `Time`; `Edm.DateTimeOffset` became `Timestamp` (or `DateTime` at precision 0, as in planned orders). The production order's `LastChangeDateTime` is `String(14)` already in SAP's EDMX. We read none of the change stamps.
+- [x] In `package.json` → `cds.requires`, add each API (`kind: odata-v2`, `model: srv/external/<API>`). No credentials yet; the `[hybrid]` and `[production]` entries come in phase 9. `cds import` wrote all eight entries itself.
+- [x] Check how the importer maps the V2 dates: `Edm.DateTime` with `sap:display-format="Date"` (requested and confirmed delivery dates, order dates) should become `Date`, the rest `DateTime`. Phase 9 compares this against real payloads from the CAL system. Result: as expected. All `display-format="Date"` properties became `Date` (e.g. `RequestedDeliveryDate`, `ConfirmedDeliveryDate`, `SalesOrderDate`, `PlndOrderPlannedStartDate`); the ATP result's `PeriodStartUTCDateTime` / `PeriodEndUTCDateTime` (no display format) became `DateTime`; `Edm.Time` became `Time`; `Edm.DateTimeOffset` became `Timestamp` (or `DateTime` at precision 0, as in planned orders). The production order's `LastChangeDateTime` is `String(14)` already in SAP's EDMX. We read none of the change stamps.
 - [x] Check what the importer makes of the parameterized `A_WorkCenterCapPerBucket` / `A_WorkCenterCapOrderPerBucket` (a `…Parameters` entity with a `Set` navigation). The generic CSV mock cannot serve it; see 0.4. Result: two plain entities, no CDS parameters. `A_WorkCenterCapPerBucket` has the three parameters (`P_CapEvalStartDate`, `P_CapEvalEndDate`, `P_CapEvalBucketType`) as keys and a `Set` association; `A_WorkCenterCapPerBucketSet` repeats them as keys (9 keys in all) with a `Parameters` association back. Both associations have no ON condition, so the mock cannot navigate `…(…)/Set`; it could only list the `…Set` entity flat. Same for `A_WorkCenterCapOrderPerBucket`. Capacity load stays in the local mock (phase 1).
 - [x] Set `max_get_url_length: 8192` on each service (lesson from the TM project: CAP's default turns long GETs into `POST $batch`, which the S/4 gateway rejects with `403 x-csrf-token: Required` unless a CSRF token is fetched first). Set in each `cds.requires` entry (CAP's default is 1028); `cds env requires` shows it on all eight.
 - [x] Fix any import errors the compiler reports (as with `not null default null` in the TM project). Note the fix here, so it can be redone after every re-import. Result: none. All eight compile, deploy to SQLite and are mocked by `cds serve all --with-mocks --in-memory` without errors, so nothing needs redoing after a re-import.
@@ -94,7 +94,7 @@ Generated by `node scripts/gen-mock-data.js [--base YYYY-MM-DD]`. Dates are rela
 - **SO-5001 / SO-5004** are production orders (`1000001` released, `1000002` created), each with one operation `0010` on WC-ASSY-01 on D+1 / D+2. There are no planned orders.
 - **Lot size:** `EX` for every product and plant. Procurement: FG and SFG in-house (`E`), RAW external (`F`, 10 and 7 days delivery).
 - **Stock:** one row per material and plant in storage location `0001`, including the 0 rows for FG-100 and SFG-200, so the starting position shows on the index page.
-- **Work centers:** `A_WorkCenters` + `A_WorkCenterCapacity` (capacity in hours, `H`). `A_WorkCenterCapacityInterval` is not filled. The §8 names (`WC-ASSY-01`) are 10 characters, while S/4 `WorkCenter` is `String(8)`; SQLite does not check the length, and the CAL system has its own names (phase 8 maps them).
+- **Work centers:** `A_WorkCenters` + `A_WorkCenterCapacity` (capacity in hours, `H`). `A_WorkCenterCapacityInterval` is not filled. The §8 names (`WC-ASSY-01`) are 10 characters, while S/4 `WorkCenter` is `String(8)`; SQLite does not check the length, and the CAL system has its own names (phase 9 maps them).
 - **No `$expand`:** the imported associations (`to_Item`, `to_ScheduleLine`, `to_ProductionOrderOperation`, `to_BillOfMaterialItem`, …) have no ON condition, like the capacity bucket ones in 0.3. Against the mocks, adapters read each entity flat and filter by the parent key; `$expand` is only possible against the real S/4 service.
 
 ## 0.5 Local users
@@ -112,18 +112,6 @@ The users are under the `[development]` profile, so `cds watch` and `npm run wat
 - [x] BTP trial account with Cloud Foundry, BAS (or local VS Code with `@sap/cds-dk`), and the SAP Build Work Zone, standard edition subscription.
 - [x] api.sap.com login (for the EDMX downloads; no API key needed).
 - [x] Anthropic Console account, a workspace only for this project with a monthly spend limit, and an API key (§4.4). Needed from phase 6.
-
-## 0.8 S/4HANA CAL system (manual, from about 2026-10-08/09)
-
-Not part of the phase 0 exit criteria: phases 1–7 run on mocks. Finish it before phase 8.
-
-- [ ] The CAL instance (fully-activated appliance) is running. Note the host, the HTTPS port of the SAP Gateway, the client number and the release. Suspend the instance when nobody is working on it (it is billed while it runs).
-- [ ] Activate the eight OData services from 0.1 in `/IWFND/MAINT_SERVICE` (search for the namespace name from the table below; for the BOM service activate version `0002`; system alias `LOCAL`). Record the result in the "Active in CAL" column (Yes / No).
-- [ ] Create a technical user with display authorizations only for these services. Its password goes into the password manager, a git-ignored `.env` or the BTP destination, never into git.
-- [ ] Open `…/sap/opu/odata/sap/API_SALES_ORDER_SRV/$metadata?sap-client=<client>` in the browser as that user. Compare each service's `$metadata` with the Hub EDMX (version, `DeliveryPriority` on `A_SalesOrderItem`, the fields in [the real names table](#real-s4-names)). If they differ, download `$metadata` from the CAL system and re-import it (0.3).
-- [ ] Read a few rows of each entity set we use, and note one sales order item, one material + plant and one work center from the appliance's standard data for the phase 8 Live data dialog.
-- [ ] Try `A_WorkCenterCapPerBucket` with daily buckets on that work center (open decision 7).
-- [ ] Decide how BTP reaches the system ([open decision 8](README.md#open-decisions), blueprint §10.9): directly over the internet (destination `ProxyType: Internet`, basic auth) if the Gateway port is reachable from outside, otherwise through a Cloud Connector (`ProxyType: OnPremise`).
 
 **Exit criteria:** `cds watch` serves the mocked sales orders and SO-5005 shows delivery priority `01`.
 
@@ -143,15 +131,15 @@ Read from the downloaded EDMX files on 2026-10-06 and re-checked against the `cd
 | Planned order | `A_PlannedOrder` (+ `A_PlannedOrderCapacity`) | `PlannedOrder` | `Material`, `ProductionPlant`, `ProductionVersion`, `TotalQuantity`, `PlndOrderPlannedStartDate` / `EndDate`, `SalesOrder`, `SalesOrderItem`, `PlannedOrderIsFirm`. Work center only on `A_PlannedOrderCapacity.WorkCenter` (`to_PlannedOrderCapacity`) |
 | Production order | `A_ProductionOrder_2` (+ `A_ProductionOrderOperation_2`) | `ManufacturingOrder` | `Material`, `ProductionPlant`, `ProductionVersion`, `TotalQuantity`, `MfgOrderScheduledStartDate` / `EndDate`, `SalesOrder`, `SalesOrderItem`, `OrderIsReleased`. Work center only on the operation (`WorkCenter`, `OpErlstSchedldExecStrtDte`; `to_ProductionOrderOperation`) |
 | Work center + capacity | `A_WorkCenters`, `A_WorkCenterCapacity`, `A_WorkCenterCapacityInterval` | `WorkCenterInternalID`, `WorkCenterTypeCode`; capacity by `CapacityInternalID` | Readable ID `WorkCenter`, `Plant`, `WorkCenterDesc`, `CapacityInternalID`. Capacity: `CapacityPlanUtilizationPercent`, `CapOverloadThresholdInPercent`, `CapacityQuantityUnit`; available time per interval in `AvailableCapacityIntervalDurn` |
-| Capacity load per bucket | `A_WorkCenterCapPerBucket(P_CapEvalStartDate, P_CapEvalEndDate, P_CapEvalBucketType)/Set` | 9 fields (parameters, `Plant`, `WorkCenter`, `CapacityInternalID`, `ShiftName`, `CapacityEvaluationTimePeriod`, `CapEvalBucketType`) | `WorkCenterAvailableCapacity`, `WorkCenterCapRqmtInCapUnit`, `WrkCtrRmngCapInCapUnit`, `WorkCenterTotUtilznInTmePerd`, `WorkCenterCapacityUnit`. Per order and operation: `A_WorkCenterCapOrderPerBucket(…)/Set`. Check it in the CAL system (0.8) |
+| Capacity load per bucket | `A_WorkCenterCapPerBucket(P_CapEvalStartDate, P_CapEvalEndDate, P_CapEvalBucketType)/Set` | 9 fields (parameters, `Plant`, `WorkCenter`, `CapacityInternalID`, `ShiftName`, `CapacityEvaluationTimePeriod`, `CapEvalBucketType`) | `WorkCenterAvailableCapacity`, `WorkCenterCapRqmtInCapUnit`, `WrkCtrRmngCapInCapUnit`, `WorkCenterTotUtilznInTmePerd`, `WorkCenterCapacityUnit`. Per order and operation: `A_WorkCenterCapOrderPerBucket(…)/Set`. Check it in the CAL system (phase 8) |
 
 **Consequences for later phases:**
 
-- All services are `odata-v2`: phase 2 and phase 8 handle V2 dates (`/Date(…)/`) and V2 function import calls (`GET …/DetermineAvailabilityOf?Material='FG-100'&…`).
+- All services are `odata-v2`: phase 2 and phase 9 handle V2 dates (`/Date(…)/`) and V2 function import calls (`GET …/DetermineAvailabilityOf?Material='FG-100'&…`).
 - One case per sales order item fits the key `SalesOrder` + `SalesOrderItem`. `DeliveryPriority` is a 2-character code, which matches open decision 4 (`01` / `02` / `03` + blank).
 - The requested date lives on the schedule line (and the header), not on the item. `sales-order.js` reads the item, then its schedule lines (flat, filtered by order and item: the mocks cannot `$expand`, see 0.4), and takes the first schedule line's `RequestedDeliveryDate`.
 - Plant is `ProductionPlant` on the item; ATP is called with `SupplyingPlant` = that plant.
 - Stock and BOM have wide composite keys. Mock CSVs fill every key field, and `stock.js` / `bom.js` filter by material + plant and never read by key.
 - "SO-5001 on WC-ASSY-01" means a planned-order capacity row or a production-order operation, not a header field. `orders.js` reads the header and then the capacity or operation rows (flat, filtered by order: no `$expand` against the mocks).
-- `API_WORK_CENTERS` is read from the CAL system in `[hybrid]` / `[production]` like the other APIs (phase 8). `capacity-load.js` reads the local mock in every profile up to phase 9. Capacity load per day may later come from `A_WorkCenterCapPerBucket` instead of a custom API (open decision 7, phase 10). The phase 1 `CapacityLoad` mock mirrors its field names (available, requirement, remaining, utilization per work center and day), so that reader can be swapped in without changing A4.
+- `API_WORK_CENTERS` is read from the CAL system in `[hybrid]` / `[production]` like the other APIs (phase 9). `capacity-load.js` reads the local mock in every profile up to phase 10. Capacity load per day may later come from `A_WorkCenterCapPerBucket` instead of a custom API (open decision 7, phase 11). The phase 1 `CapacityLoad` mock mirrors its field names (available, requirement, remaining, utilization per work center and day), so that reader can be swapped in without changing A4.
 - Lot size comes from `A_ProductSupplyPlanning.LotSizingProcedure` (+ the lot-size quantities) per product and plant, which is what `simulateLeftover(material, need, lotSizePolicy)` in phase 2 needs. The mock sets FG-100 to `EX`.

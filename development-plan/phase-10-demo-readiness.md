@@ -1,10 +1,10 @@
-# Phase 9: Demo readiness
+# Phase 10: Demo readiness
 
-[← Development plan](README.md) · Previous: [Phase 8](phase-8-deployment.md) · Next: [Phase 10](phase-10-extras.md)
+[← Development plan](README.md) · Previous: [Phase 9](phase-9-deployment.md) · Next: [Phase 11](phase-11-extras.md)
 
 **Goal:** all six §8.3 scenarios run in the cloud, with a demo reset, a measured model choice and a runbook.
 
-## 9.1 Scenarios in the cloud
+## 10.1 Scenarios in the cloud
 
 - [ ] Scenario 1: SO-5005 → FC-0001 HIGH at the top of the supply worklist → production check → CR-0001 → O-ALT → `SUPPLY_CONFIRMED` with draft → `CONFIRMED_TO_CUSTOMER`. Timeline shows all five steps.
 - [ ] Scenario 2: SO-5006 → stock transfer of 30 from plant 1100, no CR → confirmed to customer.
@@ -14,7 +14,7 @@
 - [ ] Scenario 6: the three Order Assistant questions.
 - [ ] Priority change: a `Changed` event from `02` to `01` moves a case into the HIGH lane.
 
-## 9.2 Robustness
+## 10.2 Robustness
 
 - [ ] Anthropic key removed or API down: every scenario still completes with template texts and the "LLM unavailable" flag.
 - [ ] CAL system suspended or down: the scripted scenarios are unaffected (mocks); the Live data dialog shows a clear error.
@@ -22,14 +22,14 @@
 - [ ] Two browsers on the same case: the stale one gets a "case changed, refresh" message (412).
 - [ ] App restart: the demo data is reset (SQLite) or still there (HANA); the runbook says which.
 
-## 9.3 Model and effort per agent (open decision 6)
+## 10.3 Model and effort per agent (open decision 6)
 
 - [ ] Agree the measurement budget with the user first; every run is billed.
 - [ ] Run the scenario inputs for each agent prompt with `claude-opus-5-5`, `claude-sonnet-5-5` and `claude-haiku-4-5-20251001`.
 - [ ] Compare: schema-valid, number-check and fallback rates from `Recommendation.fallbackReason`; latency and tokens per case from `cap.agent.Tasks` (through `agentTaskId`); cost and cache reads per model from the Anthropic Console usage page; plus a 1–5 team rating of the texts.
 - [ ] Set the model in `cds.requires.llm`, and per agent through `@agent.llm` where it differs, and record the result in the blueprint (§4.4, §10.7).
 
-## 9.4 Security check
+## 10.4 Security check
 
 - [ ] No keys in the git history (secret scan).
 - [ ] No unmasked customer names or prices in outgoing LLM requests (check a sample in hybrid mode).
@@ -37,7 +37,7 @@
 - [ ] Each action refused with the wrong role on the deployed app.
 - [ ] `AuditLog` has no UPDATE or DELETE path.
 
-## 9.5 Runbook and rehearsal
+## 10.5 Runbook and rehearsal
 
 - [ ] `docs/demo-runbook.md`: site URL, users and role collections, reset steps, the click path for each scenario with the expected screens, fallback moves (LLM mock mode, restart), trial limits (HANA stops at night, trial expiry).
 - [ ] Two full dry runs with the presenter; note the time per scenario.

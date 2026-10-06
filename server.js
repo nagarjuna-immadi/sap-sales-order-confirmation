@@ -4,7 +4,7 @@
 //   (development plan 2.3).
 // - The app manifests use relative data source URIs (odata/v4/..., and
 //   a2a/order-assistant/ for the Order Assistant), so the apps also run under
-//   the Work Zone managed approuter (phase 8). Locally, cds-plugin-ui5 serves
+//   the Work Zone managed approuter (phase 9). Locally, cds-plugin-ui5 serves
 //   each app under /order.conf.<app>/, so strip that prefix from OData and A2A
 //   calls before CAP routes them (development plan 3, 7.2).
 // - With mocked (basic) auth, the A2A adapter answers 401 as a JSON-RPC error
