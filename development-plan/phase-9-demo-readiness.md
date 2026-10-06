@@ -17,7 +17,7 @@
 ## 9.2 Robustness
 
 - [ ] Anthropic key removed or API down: every scenario still completes with template texts and the "LLM unavailable" flag.
-- [ ] Sandbox down: the scripted scenarios are unaffected (mocks); the Live data dialog shows a clear error.
+- [ ] CAL system suspended or down: the scripted scenarios are unaffected (mocks); the Live data dialog shows a clear error.
 - [ ] Double click on an action: the idempotency key prevents a second transition.
 - [ ] Two browsers on the same case: the stale one gets a "case changed, refresh" message (412).
 - [ ] App restart: the demo data is reset (SQLite) or still there (HANA); the runbook says which.

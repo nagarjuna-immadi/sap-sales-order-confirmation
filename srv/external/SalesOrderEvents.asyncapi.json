@@ -1,0 +1,1985 @@
+{
+    "asyncapi": "2.0.0",
+    "x-sap-catalog-spec-version": "1.0",
+    "info": {
+        "title": "Sales Order Events",
+        "version": "1.0.0",
+        "description": "A sales order is a customer request to the company for delivery of goods or services at a certain time. \n\nThe following events are available for sales order:\n\n * Created\n * Changed\n * Deleted\n * Overall processing status changed\n * Billing block status changed\n * Overall credit check status changed\n * Overall delivery block status changed\n * Delivery status changed\n * Delivery confirmation status changed\n * Rejection status changed\n * Approval status Changed\n\nThe following events are available for sales order item:\n\n * Item created\n * Item changed\n * Item deleted\n * Item overall processing status changed\n * Item delivery block status changed\n * Item billing block status changed\n * Item delivery status changed\n * Item delivery confirmation status changed\n * Item general incompletion status changed\n * Item WBS element changed\n * Item profit center changed\n * Item rejection status changed"
+    },
+    "x-sap-api-type": "EVENT",
+    "x-sap-shortText": "Informs a remote system about created, changed, and deleted sales orders and sales orders without charge.",
+    "x-sap-stateInfo": {
+        "state": "ACTIVE"
+    },
+    "channels": {
+        "ce/sap/s4/beh/salesorder/v1/SalesOrder/ApprovalStsChanged/v1": {
+            "subscribe": {
+                "message": {
+                    "$ref": "#/components/messages/sap_s4_beh_salesorder_v1_SalesOrder_ApprovalStsChanged_v1"
+                }
+            }
+        },
+        "ce/sap/s4/beh/salesorder/v1/SalesOrder/Changed/v1": {
+            "subscribe": {
+                "message": {
+                    "$ref": "#/components/messages/sap_s4_beh_salesorder_v1_SalesOrder_Changed_v1"
+                }
+            }
+        },
+        "ce/sap/s4/beh/salesorder/v1/SalesOrder/Created/v1": {
+            "subscribe": {
+                "message": {
+                    "$ref": "#/components/messages/sap_s4_beh_salesorder_v1_SalesOrder_Created_v1"
+                }
+            }
+        },
+        "ce/sap/s4/beh/salesorder/v1/SalesOrder/Deleted/v1": {
+            "subscribe": {
+                "message": {
+                    "$ref": "#/components/messages/sap_s4_beh_salesorder_v1_SalesOrder_Deleted_v1"
+                }
+            }
+        },
+        "ce/sap/s4/beh/salesorder/v1/SalesOrder/ItemChanged/v1": {
+            "subscribe": {
+                "message": {
+                    "$ref": "#/components/messages/sap_s4_beh_salesorder_v1_SalesOrder_ItemChanged_v1"
+                }
+            }
+        },
+        "ce/sap/s4/beh/salesorder/v1/SalesOrder/ItemCreated/v1": {
+            "subscribe": {
+                "message": {
+                    "$ref": "#/components/messages/sap_s4_beh_salesorder_v1_SalesOrder_ItemCreated_v1"
+                }
+            }
+        },
+        "ce/sap/s4/beh/salesorder/v1/SalesOrder/ItmBillgBlkStsChgd/v1": {
+            "subscribe": {
+                "message": {
+                    "$ref": "#/components/messages/sap_s4_beh_salesorder_v1_SalesOrder_ItmBillgBlkStsChgd_v1"
+                }
+            }
+        },
+        "ce/sap/s4/beh/salesorder/v1/SalesOrder/ItmDelivBlkStsChgd/v1": {
+            "subscribe": {
+                "message": {
+                    "$ref": "#/components/messages/sap_s4_beh_salesorder_v1_SalesOrder_ItmDelivBlkStsChgd_v1"
+                }
+            }
+        },
+        "ce/sap/s4/beh/salesorder/v1/SalesOrder/ItmDelivStsChgd/v1": {
+            "subscribe": {
+                "message": {
+                    "$ref": "#/components/messages/sap_s4_beh_salesorder_v1_SalesOrder_ItmDelivStsChgd_v1"
+                }
+            }
+        },
+        "ce/sap/s4/beh/salesorder/v1/SalesOrder/ItmGenIncplStsChgd/v1": {
+            "subscribe": {
+                "message": {
+                    "$ref": "#/components/messages/sap_s4_beh_salesorder_v1_SalesOrder_ItmGenIncplStsChgd_v1"
+                }
+            }
+        },
+        "ce/sap/s4/beh/salesorder/v1/SalesOrder/ItmPrftCtrChanged/v1": {
+            "subscribe": {
+                "message": {
+                    "$ref": "#/components/messages/sap_s4_beh_salesorder_v1_SalesOrder_ItmPrftCtrChanged_v1"
+                }
+            }
+        },
+        "ce/sap/s4/beh/salesorder/v1/SalesOrder/ItmRjcnStsChgd/v1": {
+            "subscribe": {
+                "message": {
+                    "$ref": "#/components/messages/sap_s4_beh_salesorder_v1_SalesOrder_ItmRjcnStsChgd_v1"
+                }
+            }
+        },
+        "ce/sap/s4/beh/salesorder/v1/SalesOrder/ItmWBSElmntChanged/v1": {
+            "subscribe": {
+                "message": {
+                    "$ref": "#/components/messages/sap_s4_beh_salesorder_v1_SalesOrder_ItmWBSElmntChanged_v1"
+                }
+            }
+        },
+        "ce/sap/s4/beh/salesorder/v1/SalesOrder/ItmDlvConfStsChgd/v1": {
+            "subscribe": {
+                "message": {
+                    "$ref": "#/components/messages/sap_s4_beh_salesorder_v1_SalesOrder_ItmDlvConfStsChgd_v1"
+                }
+            }
+        },
+        "ce/sap/s4/beh/salesorder/v1/SalesOrder/OvrlDlvBlkStsChgd/v1": {
+            "subscribe": {
+                "message": {
+                    "$ref": "#/components/messages/sap_s4_beh_salesorder_v1_SalesOrder_OvrlDlvBlkStsChgd_v1"
+                }
+            }
+        },
+        "ce/sap/s4/beh/salesorder/v1/SalesOrder/ItemDeleted/v1": {
+            "subscribe": {
+                "message": {
+                    "$ref": "#/components/messages/sap_s4_beh_salesorder_v1_SalesOrder_ItemDeleted_v1"
+                }
+            }
+        },
+        "ce/sap/s4/beh/salesorder/v1/SalesOrder/ItmSDProcStsChgd/v1": {
+            "subscribe": {
+                "message": {
+                    "$ref": "#/components/messages/sap_s4_beh_salesorder_v1_SalesOrder_ItmSDProcStsChgd_v1"
+                }
+            }
+        },
+        "ce/sap/s4/beh/salesorder/v1/SalesOrder/OvrlBlgBlkStsChgd/v1": {
+            "subscribe": {
+                "message": {
+                    "$ref": "#/components/messages/sap_s4_beh_salesorder_v1_SalesOrder_OvrlBlgBlkStsChgd_v1"
+                }
+            }
+        },
+        "ce/sap/s4/beh/salesorder/v1/SalesOrder/OvrlDelivStsChgd/v1": {
+            "subscribe": {
+                "message": {
+                    "$ref": "#/components/messages/sap_s4_beh_salesorder_v1_SalesOrder_OvrlDelivStsChgd_v1"
+                }
+            }
+        },
+        "ce/sap/s4/beh/salesorder/v1/SalesOrder/OvrlRjcnStsChgd/v1": {
+            "subscribe": {
+                "message": {
+                    "$ref": "#/components/messages/sap_s4_beh_salesorder_v1_SalesOrder_OvrlRjcnStsChgd_v1"
+                }
+            }
+        },
+        "ce/sap/s4/beh/salesorder/v1/SalesOrder/OvrlSDProcStsChgd/v1": {
+            "subscribe": {
+                "message": {
+                    "$ref": "#/components/messages/sap_s4_beh_salesorder_v1_SalesOrder_OvrlSDProcStsChgd_v1"
+                }
+            }
+        },
+        "ce/sap/s4/beh/salesorder/v1/SalesOrder/OvrlDlvConfStsChgd/v1": {
+            "subscribe": {
+                "message": {
+                    "$ref": "#/components/messages/sap_s4_beh_salesorder_v1_SalesOrder_OvrlDlvConfStsChgd_v1"
+                }
+            }
+        },
+        "ce/sap/s4/beh/salesorder/v1/SalesOrder/TotCrdtChkStsChgd/v1": {
+            "subscribe": {
+                "message": {
+                    "$ref": "#/components/messages/sap_s4_beh_salesorder_v1_SalesOrder_TotCrdtChkStsChgd_v1"
+                }
+            }
+        }
+    },
+    "components": {
+        "messages": {
+            "sap_s4_beh_salesorder_v1_SalesOrder_ApprovalStsChanged_v1": {
+                "name": "sap.s4.beh.salesorder.v1.SalesOrder.ApprovalStsChanged.v1",
+                "summary": "SalesOrder Approval Status Changed",
+                "description": "This event is raised when the approval status of a sales order is changed.",
+                "headers": {
+                    "properties": {
+                        "type": {
+                            "const": "sap.s4.beh.salesorder.v1.SalesOrder.ApprovalStsChanged.v1"
+                        },
+                        "datacontenttype": {
+                            "const": "application/json"
+                        }
+                    }
+                },
+                "payload": {
+                    "$ref": "#/components/schemas/sap_s4_beh_salesorder_v1_SalesOrder_ApprovalStsChanged_v1"
+                },
+                "traits": [
+                    {
+                        "$ref": "#/components/messageTraits/CloudEventContext"
+                    }
+                ]
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_Changed_v1": {
+                "name": "sap.s4.beh.salesorder.v1.SalesOrder.Changed.v1",
+                "summary": "SalesOrder Changed",
+                "description": "This event is raised when a sales order is changed.",
+                "headers": {
+                    "properties": {
+                        "type": {
+                            "const": "sap.s4.beh.salesorder.v1.SalesOrder.Changed.v1"
+                        },
+                        "datacontenttype": {
+                            "const": "application/json"
+                        }
+                    }
+                },
+                "payload": {
+                    "$ref": "#/components/schemas/sap_s4_beh_salesorder_v1_SalesOrder_Changed_v1"
+                },
+                "traits": [
+                    {
+                        "$ref": "#/components/messageTraits/CloudEventContext"
+                    }
+                ]
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_Created_v1": {
+                "name": "sap.s4.beh.salesorder.v1.SalesOrder.Created.v1",
+                "summary": "SalesOrder Created",
+                "description": "This event is raised when a sales order is created.",
+                "headers": {
+                    "properties": {
+                        "type": {
+                            "const": "sap.s4.beh.salesorder.v1.SalesOrder.Created.v1"
+                        },
+                        "datacontenttype": {
+                            "const": "application/json"
+                        }
+                    }
+                },
+                "payload": {
+                    "$ref": "#/components/schemas/sap_s4_beh_salesorder_v1_SalesOrder_Created_v1"
+                },
+                "traits": [
+                    {
+                        "$ref": "#/components/messageTraits/CloudEventContext"
+                    }
+                ]
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_Deleted_v1": {
+                "name": "sap.s4.beh.salesorder.v1.SalesOrder.Deleted.v1",
+                "summary": "SalesOrder Deleted",
+                "description": "This event is raised when a sales order is deleted.",
+                "headers": {
+                    "properties": {
+                        "type": {
+                            "const": "sap.s4.beh.salesorder.v1.SalesOrder.Deleted.v1"
+                        },
+                        "datacontenttype": {
+                            "const": "application/json"
+                        }
+                    }
+                },
+                "payload": {
+                    "$ref": "#/components/schemas/sap_s4_beh_salesorder_v1_SalesOrder_Deleted_v1"
+                },
+                "traits": [
+                    {
+                        "$ref": "#/components/messageTraits/CloudEventContext"
+                    }
+                ]
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_ItemChanged_v1": {
+                "name": "sap.s4.beh.salesorder.v1.SalesOrder.ItemChanged.v1",
+                "summary": "SalesOrder Item Changed",
+                "description": "This event is raised when an item of a sales order is changed.",
+                "headers": {
+                    "properties": {
+                        "type": {
+                            "const": "sap.s4.beh.salesorder.v1.SalesOrder.ItemChanged.v1"
+                        },
+                        "datacontenttype": {
+                            "const": "application/json"
+                        }
+                    }
+                },
+                "payload": {
+                    "$ref": "#/components/schemas/sap_s4_beh_salesorder_v1_SalesOrder_ItemChanged_v1"
+                },
+                "traits": [
+                    {
+                        "$ref": "#/components/messageTraits/CloudEventContext"
+                    }
+                ]
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_ItemCreated_v1": {
+                "name": "sap.s4.beh.salesorder.v1.SalesOrder.ItemCreated.v1",
+                "summary": "SalesOrder Item Created",
+                "description": "This event is raised when an item of a sales order is created.",
+                "headers": {
+                    "properties": {
+                        "type": {
+                            "const": "sap.s4.beh.salesorder.v1.SalesOrder.ItemCreated.v1"
+                        },
+                        "datacontenttype": {
+                            "const": "application/json"
+                        }
+                    }
+                },
+                "payload": {
+                    "$ref": "#/components/schemas/sap_s4_beh_salesorder_v1_SalesOrder_ItemCreated_v1"
+                },
+                "traits": [
+                    {
+                        "$ref": "#/components/messageTraits/CloudEventContext"
+                    }
+                ]
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_ItmBillgBlkStsChgd_v1": {
+                "name": "sap.s4.beh.salesorder.v1.SalesOrder.ItmBillgBlkStsChgd.v1",
+                "summary": "SalesOrder Item Billing Block Status Changed",
+                "description": "This event is raised when the billing block status of a sales order item is changed.",
+                "headers": {
+                    "properties": {
+                        "type": {
+                            "const": "sap.s4.beh.salesorder.v1.SalesOrder.ItmBillgBlkStsChgd.v1"
+                        },
+                        "datacontenttype": {
+                            "const": "application/json"
+                        }
+                    }
+                },
+                "payload": {
+                    "$ref": "#/components/schemas/sap_s4_beh_salesorder_v1_SalesOrder_ItmBillgBlkStsChgd_v1"
+                },
+                "traits": [
+                    {
+                        "$ref": "#/components/messageTraits/CloudEventContext"
+                    }
+                ]
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_ItmDelivBlkStsChgd_v1": {
+                "name": "sap.s4.beh.salesorder.v1.SalesOrder.ItmDelivBlkStsChgd.v1",
+                "summary": "SalesOrder Item Delivery Block Status Changed",
+                "description": "This event is raised when the delivery block status of a sales order item is changed.",
+                "headers": {
+                    "properties": {
+                        "type": {
+                            "const": "sap.s4.beh.salesorder.v1.SalesOrder.ItmDelivBlkStsChgd.v1"
+                        },
+                        "datacontenttype": {
+                            "const": "application/json"
+                        }
+                    }
+                },
+                "payload": {
+                    "$ref": "#/components/schemas/sap_s4_beh_salesorder_v1_SalesOrder_ItmDelivBlkStsChgd_v1"
+                },
+                "traits": [
+                    {
+                        "$ref": "#/components/messageTraits/CloudEventContext"
+                    }
+                ]
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_ItmDelivStsChgd_v1": {
+                "name": "sap.s4.beh.salesorder.v1.SalesOrder.ItmDelivStsChgd.v1",
+                "summary": "SalesOrder Item Delivery Status Changed",
+                "description": "This event is raised when the delivery status of a sales order item is changed.",
+                "headers": {
+                    "properties": {
+                        "type": {
+                            "const": "sap.s4.beh.salesorder.v1.SalesOrder.ItmDelivStsChgd.v1"
+                        },
+                        "datacontenttype": {
+                            "const": "application/json"
+                        }
+                    }
+                },
+                "payload": {
+                    "$ref": "#/components/schemas/sap_s4_beh_salesorder_v1_SalesOrder_ItmDelivStsChgd_v1"
+                },
+                "traits": [
+                    {
+                        "$ref": "#/components/messageTraits/CloudEventContext"
+                    }
+                ]
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_ItmGenIncplStsChgd_v1": {
+                "name": "sap.s4.beh.salesorder.v1.SalesOrder.ItmGenIncplStsChgd.v1",
+                "summary": "SalesOrder Item General Incompletion Status Changed",
+                "description": "This event is raised when the general incompletion status of a sales order item is changed.",
+                "headers": {
+                    "properties": {
+                        "type": {
+                            "const": "sap.s4.beh.salesorder.v1.SalesOrder.ItmGenIncplStsChgd.v1"
+                        },
+                        "datacontenttype": {
+                            "const": "application/json"
+                        }
+                    }
+                },
+                "payload": {
+                    "$ref": "#/components/schemas/sap_s4_beh_salesorder_v1_SalesOrder_ItmGenIncplStsChgd_v1"
+                },
+                "traits": [
+                    {
+                        "$ref": "#/components/messageTraits/CloudEventContext"
+                    }
+                ]
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_ItmPrftCtrChanged_v1": {
+                "name": "sap.s4.beh.salesorder.v1.SalesOrder.ItmPrftCtrChanged.v1",
+                "summary": "SalesOrder Item Profit Center Changed",
+                "description": "This event is raised when the profit center of a sales order item is changed.",
+                "headers": {
+                    "properties": {
+                        "type": {
+                            "const": "sap.s4.beh.salesorder.v1.SalesOrder.ItmPrftCtrChanged.v1"
+                        },
+                        "datacontenttype": {
+                            "const": "application/json"
+                        }
+                    }
+                },
+                "payload": {
+                    "$ref": "#/components/schemas/sap_s4_beh_salesorder_v1_SalesOrder_ItmPrftCtrChanged_v1"
+                },
+                "traits": [
+                    {
+                        "$ref": "#/components/messageTraits/CloudEventContext"
+                    }
+                ]
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_ItmRjcnStsChgd_v1": {
+                "name": "sap.s4.beh.salesorder.v1.SalesOrder.ItmRjcnStsChgd.v1",
+                "summary": "SalesOrder Item Rejection Status Changed",
+                "description": "This event is raised when the rejection status of a sales order item is changed.",
+                "headers": {
+                    "properties": {
+                        "type": {
+                            "const": "sap.s4.beh.salesorder.v1.SalesOrder.ItmRjcnStsChgd.v1"
+                        },
+                        "datacontenttype": {
+                            "const": "application/json"
+                        }
+                    }
+                },
+                "payload": {
+                    "$ref": "#/components/schemas/sap_s4_beh_salesorder_v1_SalesOrder_ItmRjcnStsChgd_v1"
+                },
+                "traits": [
+                    {
+                        "$ref": "#/components/messageTraits/CloudEventContext"
+                    }
+                ]
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_ItmWBSElmntChanged_v1": {
+                "name": "sap.s4.beh.salesorder.v1.SalesOrder.ItmWBSElmntChanged.v1",
+                "summary": "SalesOrder Item WBS Element Changed",
+                "description": "This event is raised when the WBS element of a sales order item is changed.",
+                "headers": {
+                    "properties": {
+                        "type": {
+                            "const": "sap.s4.beh.salesorder.v1.SalesOrder.ItmWBSElmntChanged.v1"
+                        },
+                        "datacontenttype": {
+                            "const": "application/json"
+                        }
+                    }
+                },
+                "payload": {
+                    "$ref": "#/components/schemas/sap_s4_beh_salesorder_v1_SalesOrder_ItmWBSElmntChanged_v1"
+                },
+                "traits": [
+                    {
+                        "$ref": "#/components/messageTraits/CloudEventContext"
+                    }
+                ]
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_ItmDlvConfStsChgd_v1": {
+                "name": "sap.s4.beh.salesorder.v1.SalesOrder.ItmDlvConfStsChgd.v1",
+                "summary": "SalesOrder Item Delivery Confirmation Status Changed",
+                "description": "This event is raised when the delivery confirmation status of a sales order item is changed.",
+                "headers": {
+                    "properties": {
+                        "type": {
+                            "const": "sap.s4.beh.salesorder.v1.SalesOrder.ItmDlvConfStsChgd.v1"
+                        },
+                        "datacontenttype": {
+                            "const": "application/json"
+                        }
+                    }
+                },
+                "payload": {
+                    "$ref": "#/components/schemas/sap_s4_beh_salesorder_v1_SalesOrder_ItmDlvConfStsChgd_v1"
+                },
+                "traits": [
+                    {
+                        "$ref": "#/components/messageTraits/CloudEventContext"
+                    }
+                ]
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_OvrlDlvBlkStsChgd_v1": {
+                "name": "sap.s4.beh.salesorder.v1.SalesOrder.OvrlDlvBlkStsChgd.v1",
+                "summary": "SalesOrder Overall Delivery Block Status Changed ",
+                "description": "This event is raised when the overall delivery block status of a sales order is changed.",
+                "headers": {
+                    "properties": {
+                        "type": {
+                            "const": "sap.s4.beh.salesorder.v1.SalesOrder.OvrlDlvBlkStsChgd.v1"
+                        },
+                        "datacontenttype": {
+                            "const": "application/json"
+                        }
+                    }
+                },
+                "payload": {
+                    "$ref": "#/components/schemas/sap_s4_beh_salesorder_v1_SalesOrder_OvrlDlvBlkStsChgd_v1"
+                },
+                "traits": [
+                    {
+                        "$ref": "#/components/messageTraits/CloudEventContext"
+                    }
+                ]
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_ItemDeleted_v1": {
+                "name": "sap.s4.beh.salesorder.v1.SalesOrder.ItemDeleted.v1",
+                "summary": "SalesOrder Item Deleted",
+                "description": "This event is raised when an item of a sales order is deleted.",
+                "headers": {
+                    "properties": {
+                        "type": {
+                            "const": "sap.s4.beh.salesorder.v1.SalesOrder.ItemDeleted.v1"
+                        },
+                        "datacontenttype": {
+                            "const": "application/json"
+                        }
+                    }
+                },
+                "payload": {
+                    "$ref": "#/components/schemas/sap_s4_beh_salesorder_v1_SalesOrder_ItemDeleted_v1"
+                },
+                "traits": [
+                    {
+                        "$ref": "#/components/messageTraits/CloudEventContext"
+                    }
+                ]
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_ItmSDProcStsChgd_v1": {
+                "name": "sap.s4.beh.salesorder.v1.SalesOrder.ItmSDProcStsChgd.v1",
+                "summary": "SalesOrder Item Overall Processing Status Changed",
+                "description": "This event is raised when the overall processing status of a sales order item is changed.",
+                "headers": {
+                    "properties": {
+                        "type": {
+                            "const": "sap.s4.beh.salesorder.v1.SalesOrder.ItmSDProcStsChgd.v1"
+                        },
+                        "datacontenttype": {
+                            "const": "application/json"
+                        }
+                    }
+                },
+                "payload": {
+                    "$ref": "#/components/schemas/sap_s4_beh_salesorder_v1_SalesOrder_ItmSDProcStsChgd_v1"
+                },
+                "traits": [
+                    {
+                        "$ref": "#/components/messageTraits/CloudEventContext"
+                    }
+                ]
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_OvrlBlgBlkStsChgd_v1": {
+                "name": "sap.s4.beh.salesorder.v1.SalesOrder.OvrlBlgBlkStsChgd.v1",
+                "summary": "SalesOrder Billing Block Status Changed",
+                "description": "This event is raised when the billing block status of a sales order is changed.",
+                "headers": {
+                    "properties": {
+                        "type": {
+                            "const": "sap.s4.beh.salesorder.v1.SalesOrder.OvrlBlgBlkStsChgd.v1"
+                        },
+                        "datacontenttype": {
+                            "const": "application/json"
+                        }
+                    }
+                },
+                "payload": {
+                    "$ref": "#/components/schemas/sap_s4_beh_salesorder_v1_SalesOrder_OvrlBlgBlkStsChgd_v1"
+                },
+                "traits": [
+                    {
+                        "$ref": "#/components/messageTraits/CloudEventContext"
+                    }
+                ]
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_OvrlDelivStsChgd_v1": {
+                "name": "sap.s4.beh.salesorder.v1.SalesOrder.OvrlDelivStsChgd.v1",
+                "summary": "SalesOrder Delivery Status Changed",
+                "description": "This event is raised when the delivery status of a sales order is changed.",
+                "headers": {
+                    "properties": {
+                        "type": {
+                            "const": "sap.s4.beh.salesorder.v1.SalesOrder.OvrlDelivStsChgd.v1"
+                        },
+                        "datacontenttype": {
+                            "const": "application/json"
+                        }
+                    }
+                },
+                "payload": {
+                    "$ref": "#/components/schemas/sap_s4_beh_salesorder_v1_SalesOrder_OvrlDelivStsChgd_v1"
+                },
+                "traits": [
+                    {
+                        "$ref": "#/components/messageTraits/CloudEventContext"
+                    }
+                ]
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_OvrlRjcnStsChgd_v1": {
+                "name": "sap.s4.beh.salesorder.v1.SalesOrder.OvrlRjcnStsChgd.v1",
+                "summary": "SalesOrder Rejection Status Changed",
+                "description": "This event is raised when the rejection status of a sales order is changed.",
+                "headers": {
+                    "properties": {
+                        "type": {
+                            "const": "sap.s4.beh.salesorder.v1.SalesOrder.OvrlRjcnStsChgd.v1"
+                        },
+                        "datacontenttype": {
+                            "const": "application/json"
+                        }
+                    }
+                },
+                "payload": {
+                    "$ref": "#/components/schemas/sap_s4_beh_salesorder_v1_SalesOrder_OvrlRjcnStsChgd_v1"
+                },
+                "traits": [
+                    {
+                        "$ref": "#/components/messageTraits/CloudEventContext"
+                    }
+                ]
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_OvrlSDProcStsChgd_v1": {
+                "name": "sap.s4.beh.salesorder.v1.SalesOrder.OvrlSDProcStsChgd.v1",
+                "summary": "SalesOrder Overall Processing Status Changed",
+                "description": "This event is raised when the overall processing status of a sales order is changed.",
+                "headers": {
+                    "properties": {
+                        "type": {
+                            "const": "sap.s4.beh.salesorder.v1.SalesOrder.OvrlSDProcStsChgd.v1"
+                        },
+                        "datacontenttype": {
+                            "const": "application/json"
+                        }
+                    }
+                },
+                "payload": {
+                    "$ref": "#/components/schemas/sap_s4_beh_salesorder_v1_SalesOrder_OvrlSDProcStsChgd_v1"
+                },
+                "traits": [
+                    {
+                        "$ref": "#/components/messageTraits/CloudEventContext"
+                    }
+                ]
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_OvrlDlvConfStsChgd_v1": {
+                "name": "sap.s4.beh.salesorder.v1.SalesOrder.OvrlDlvConfStsChgd.v1",
+                "summary": "SalesOrder Delivery Confirmation Status Changed",
+                "description": "This event is raised when the delivery confirmation status of a sales order is changed.",
+                "headers": {
+                    "properties": {
+                        "type": {
+                            "const": "sap.s4.beh.salesorder.v1.SalesOrder.OvrlDlvConfStsChgd.v1"
+                        },
+                        "datacontenttype": {
+                            "const": "application/json"
+                        }
+                    }
+                },
+                "payload": {
+                    "$ref": "#/components/schemas/sap_s4_beh_salesorder_v1_SalesOrder_OvrlDlvConfStsChgd_v1"
+                },
+                "traits": [
+                    {
+                        "$ref": "#/components/messageTraits/CloudEventContext"
+                    }
+                ]
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_TotCrdtChkStsChgd_v1": {
+                "name": "sap.s4.beh.salesorder.v1.SalesOrder.TotCrdtChkStsChgd.v1",
+                "summary": "SalesOrder Overall Credit Check Status Changed",
+                "description": "This event is raised when the overall credit check status of a sales order is changed.",
+                "headers": {
+                    "properties": {
+                        "type": {
+                            "const": "sap.s4.beh.salesorder.v1.SalesOrder.TotCrdtChkStsChgd.v1"
+                        },
+                        "datacontenttype": {
+                            "const": "application/json"
+                        }
+                    }
+                },
+                "payload": {
+                    "$ref": "#/components/schemas/sap_s4_beh_salesorder_v1_SalesOrder_TotCrdtChkStsChgd_v1"
+                },
+                "traits": [
+                    {
+                        "$ref": "#/components/messageTraits/CloudEventContext"
+                    }
+                ]
+            }
+        },
+        "schemas": {
+            "sap_s4_beh_salesorder_v1_SalesOrder_ApprovalStsChanged_v1": {
+                "type": "object",
+                "properties": {
+                    "DistributionChannel": {
+                        "description": "# Definition\r\n\r\nThe way in which products or services reach the customer. Typical examples of distribution channels are wholesale, retail, or direct sales.\r\n\r\n# Use\r\n\r\nYou can maintain information about customers and materials by **sales organization** and distribution channel. Within a sales organization you can deliver goods to a given customer through more than one distribution channel.\r\n\r\nYou can assign a distribution channel to one or more sales organizations. If, for example, you have numerous sales organizations, each sales organization may use the \"Wholesale\" distribution channel.\r\n\r\n# Note\r\n\r\nFor each combination of sales organization and distribution channel, you can further assign one or more of the **divisions** that are defined for the sales organization. You can, for example, assign \"Food\" and \"Non-food\" divisions to the \"Wholesale\" distribution channel. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "EventRaisedDateTime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "OrganizationDivision": {
+                        "description": "# Definition\r\n\r\nA way of grouping materials, products, or services. The system uses divisions to determine the **sales areas** and the **business areas** for a material, product, or service.\r\n\r\n# Use\r\n\r\nA product or service is always assigned to just one division. From the point of view of sales and distribution, the use of divisions lets you organize your sales structure around groups of similar products or product lines. This allows the people in a division who process orders and service customers to specialize within a manageable area of expertise.\r\n\r\n# Example\r\n\r\nIf a **sales organization** sells food and non-food products through both retail and wholesale**distribution channels** each distribution channel could then be further split into food and non-food divisions.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "PreviousSalesDocApprovalStatus": {
+                        "description": "# Definition\r\n\r\nStates whether a sales document is relevant for approvals and, if so, which approval stage it is in.\r\n\r\n# Example\r\n",
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "SalesDocApprovalStatus": {
+                        "description": "# Definition\r\n\r\nStates whether a sales document is relevant for approvals and, if so, which approval stage it is in.\r\n\r\n# Example\r\n",
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "SalesOrder": {
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "SalesOrderType": {
+                        "description": "# Use\r\n\r\nYou can convert the keys that identify the **sales document types** in the original German system to language-specific keys. The converted keys then appear according to the language in which the user logs on.\r\n\r\n# Procedure\r\n\r\nEnter the original German key of the sales document type for which you want to provide a language-specific key.\r\n\r\n# Example\r\n\r\nA standard order in the German system is called a \"Terminauftrag\". The key is \"TA\". You could, for example, convert this to an English key: \"SO\".",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrganization": {
+                        "description": "# Definition\r\n\r\nAn organizational unit responsible for the sale of certain products or services. The responsibility of a sales organization may include legal liability for products and customer claims.\r\n\r\n# Use\r\n\r\nYou can assign any number of **distribution channels** and **divisions **to a sales organization. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SoldToParty": {
+                        "description": "# Definition\r\n\r\nGives an alphanumeric key, which clearly identifies the customer or vendor in the SAP system.",
+                        "type": "string",
+                        "maxLength": 10
+                    }
+                }
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_Changed_v1": {
+                "type": "object",
+                "properties": {
+                    "DistributionChannel": {
+                        "description": "# Definition\r\n\r\nThe way in which products or services reach the customer. Typical examples of distribution channels are wholesale, retail, or direct sales.\r\n\r\n# Use\r\n\r\nYou can maintain information about customers and materials by **sales organization** and distribution channel. Within a sales organization you can deliver goods to a given customer through more than one distribution channel.\r\n\r\nYou can assign a distribution channel to one or more sales organizations. If, for example, you have numerous sales organizations, each sales organization may use the \"Wholesale\" distribution channel.\r\n\r\n# Note\r\n\r\nFor each combination of sales organization and distribution channel, you can further assign one or more of the **divisions** that are defined for the sales organization. You can, for example, assign \"Food\" and \"Non-food\" divisions to the \"Wholesale\" distribution channel. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "EventRaisedDateTime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "OrganizationDivision": {
+                        "description": "# Definition\r\n\r\nA way of grouping materials, products, or services. The system uses divisions to determine the **sales areas** and the **business areas** for a material, product, or service.\r\n\r\n# Use\r\n\r\nA product or service is always assigned to just one division. From the point of view of sales and distribution, the use of divisions lets you organize your sales structure around groups of similar products or product lines. This allows the people in a division who process orders and service customers to specialize within a manageable area of expertise.\r\n\r\n# Example\r\n\r\nIf a **sales organization** sells food and non-food products through both retail and wholesale**distribution channels** each distribution channel could then be further split into food and non-food divisions.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "SalesOrder": {
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "SalesOrderType": {
+                        "description": "# Use\r\n\r\nYou can convert the keys that identify the **sales document types** in the original German system to language-specific keys. The converted keys then appear according to the language in which the user logs on.\r\n\r\n# Procedure\r\n\r\nEnter the original German key of the sales document type for which you want to provide a language-specific key.\r\n\r\n# Example\r\n\r\nA standard order in the German system is called a \"Terminauftrag\". The key is \"TA\". You could, for example, convert this to an English key: \"SO\".",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrganization": {
+                        "description": "# Definition\r\n\r\nAn organizational unit responsible for the sale of certain products or services. The responsibility of a sales organization may include legal liability for products and customer claims.\r\n\r\n# Use\r\n\r\nYou can assign any number of **distribution channels** and **divisions **to a sales organization. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SoldToParty": {
+                        "description": "# Definition\r\n\r\nGives an alphanumeric key, which clearly identifies the customer or vendor in the SAP system.",
+                        "type": "string",
+                        "maxLength": 10
+                    }
+                }
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_Created_v1": {
+                "type": "object",
+                "properties": {
+                    "DistributionChannel": {
+                        "description": "# Definition\r\n\r\nThe way in which products or services reach the customer. Typical examples of distribution channels are wholesale, retail, or direct sales.\r\n\r\n# Use\r\n\r\nYou can maintain information about customers and materials by **sales organization** and distribution channel. Within a sales organization you can deliver goods to a given customer through more than one distribution channel.\r\n\r\nYou can assign a distribution channel to one or more sales organizations. If, for example, you have numerous sales organizations, each sales organization may use the \"Wholesale\" distribution channel.\r\n\r\n# Note\r\n\r\nFor each combination of sales organization and distribution channel, you can further assign one or more of the **divisions** that are defined for the sales organization. You can, for example, assign \"Food\" and \"Non-food\" divisions to the \"Wholesale\" distribution channel. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "EventRaisedDateTime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "OrganizationDivision": {
+                        "description": "# Definition\r\n\r\nA way of grouping materials, products, or services. The system uses divisions to determine the **sales areas** and the **business areas** for a material, product, or service.\r\n\r\n# Use\r\n\r\nA product or service is always assigned to just one division. From the point of view of sales and distribution, the use of divisions lets you organize your sales structure around groups of similar products or product lines. This allows the people in a division who process orders and service customers to specialize within a manageable area of expertise.\r\n\r\n# Example\r\n\r\nIf a **sales organization** sells food and non-food products through both retail and wholesale**distribution channels** each distribution channel could then be further split into food and non-food divisions.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "SalesOrder": {
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "SalesOrderType": {
+                        "description": "# Use\r\n\r\nYou can convert the keys that identify the **sales document types** in the original German system to language-specific keys. The converted keys then appear according to the language in which the user logs on.\r\n\r\n# Procedure\r\n\r\nEnter the original German key of the sales document type for which you want to provide a language-specific key.\r\n\r\n# Example\r\n\r\nA standard order in the German system is called a \"Terminauftrag\". The key is \"TA\". You could, for example, convert this to an English key: \"SO\".",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrganization": {
+                        "description": "# Definition\r\n\r\nAn organizational unit responsible for the sale of certain products or services. The responsibility of a sales organization may include legal liability for products and customer claims.\r\n\r\n# Use\r\n\r\nYou can assign any number of **distribution channels** and **divisions **to a sales organization. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SoldToParty": {
+                        "description": "# Definition\r\n\r\nGives an alphanumeric key, which clearly identifies the customer or vendor in the SAP system.",
+                        "type": "string",
+                        "maxLength": 10
+                    }
+                }
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_Deleted_v1": {
+                "type": "object",
+                "properties": {
+                    "DistributionChannel": {
+                        "description": "# Definition\r\n\r\nThe way in which products or services reach the customer. Typical examples of distribution channels are wholesale, retail, or direct sales.\r\n\r\n# Use\r\n\r\nYou can maintain information about customers and materials by **sales organization** and distribution channel. Within a sales organization you can deliver goods to a given customer through more than one distribution channel.\r\n\r\nYou can assign a distribution channel to one or more sales organizations. If, for example, you have numerous sales organizations, each sales organization may use the \"Wholesale\" distribution channel.\r\n\r\n# Note\r\n\r\nFor each combination of sales organization and distribution channel, you can further assign one or more of the **divisions** that are defined for the sales organization. You can, for example, assign \"Food\" and \"Non-food\" divisions to the \"Wholesale\" distribution channel. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "EventRaisedDateTime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "OrganizationDivision": {
+                        "description": "# Definition\r\n\r\nA way of grouping materials, products, or services. The system uses divisions to determine the **sales areas** and the **business areas** for a material, product, or service.\r\n\r\n# Use\r\n\r\nA product or service is always assigned to just one division. From the point of view of sales and distribution, the use of divisions lets you organize your sales structure around groups of similar products or product lines. This allows the people in a division who process orders and service customers to specialize within a manageable area of expertise.\r\n\r\n# Example\r\n\r\nIf a **sales organization** sells food and non-food products through both retail and wholesale**distribution channels** each distribution channel could then be further split into food and non-food divisions.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "SalesOrder": {
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "SalesOrderType": {
+                        "description": "# Use\r\n\r\nYou can convert the keys that identify the **sales document types** in the original German system to language-specific keys. The converted keys then appear according to the language in which the user logs on.\r\n\r\n# Procedure\r\n\r\nEnter the original German key of the sales document type for which you want to provide a language-specific key.\r\n\r\n# Example\r\n\r\nA standard order in the German system is called a \"Terminauftrag\". The key is \"TA\". You could, for example, convert this to an English key: \"SO\".",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrganization": {
+                        "description": "# Definition\r\n\r\nAn organizational unit responsible for the sale of certain products or services. The responsibility of a sales organization may include legal liability for products and customer claims.\r\n\r\n# Use\r\n\r\nYou can assign any number of **distribution channels** and **divisions **to a sales organization. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SoldToParty": {
+                        "description": "# Definition\r\n\r\nGives an alphanumeric key, which clearly identifies the customer or vendor in the SAP system.",
+                        "type": "string",
+                        "maxLength": 10
+                    }
+                }
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_ItemChanged_v1": {
+                "type": "object",
+                "properties": {
+                    "DistributionChannel": {
+                        "description": "# Definition\r\n\r\nThe way in which products or services reach the customer. Typical examples of distribution channels are wholesale, retail, or direct sales.\r\n\r\n# Use\r\n\r\nYou can maintain information about customers and materials by **sales organization** and distribution channel. Within a sales organization you can deliver goods to a given customer through more than one distribution channel.\r\n\r\nYou can assign a distribution channel to one or more sales organizations. If, for example, you have numerous sales organizations, each sales organization may use the \"Wholesale\" distribution channel.\r\n\r\n# Note\r\n\r\nFor each combination of sales organization and distribution channel, you can further assign one or more of the **divisions** that are defined for the sales organization. You can, for example, assign \"Food\" and \"Non-food\" divisions to the \"Wholesale\" distribution channel. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "EventRaisedDateTime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "OrganizationDivision": {
+                        "description": "# Definition\r\n\r\nA way of grouping materials, products, or services. The system uses divisions to determine the **sales areas** and the **business areas** for a material, product, or service.\r\n\r\n# Use\r\n\r\nA product or service is always assigned to just one division. From the point of view of sales and distribution, the use of divisions lets you organize your sales structure around groups of similar products or product lines. This allows the people in a division who process orders and service customers to specialize within a manageable area of expertise.\r\n\r\n# Example\r\n\r\nIf a **sales organization** sells food and non-food products through both retail and wholesale**distribution channels** each distribution channel could then be further split into food and non-food divisions.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "Product": {
+                        "description": "# Definition\r\n\r\nAlphanumeric key uniquely identifying the **material**.",
+                        "type": "string",
+                        "maxLength": 40
+                    },
+                    "SalesOrder": {
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "SalesOrderItem": {
+                        "type": "string",
+                        "maxLength": 6
+                    },
+                    "SalesOrderItemCategory": {
+                        "description": "# Definition\r\n\r\nA classification that distinguishes between different types of item (for example, free of charge items and text items) and determines how the system processes the item.\r\n\r\n# Procedure\r\n\r\nThe system proposes an item category. If alternatives are defined for your system, you can change the item category manually in the **sales document**.\r\n\r\n# Example\r\n\r\nIf, for example, you identify an item as a free or charge item, you tell the system, in this case, to ignore normal pricing procedures.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrderType": {
+                        "description": "# Use\r\n\r\nYou can convert the keys that identify the **sales document types** in the original German system to language-specific keys. The converted keys then appear according to the language in which the user logs on.\r\n\r\n# Procedure\r\n\r\nEnter the original German key of the sales document type for which you want to provide a language-specific key.\r\n\r\n# Example\r\n\r\nA standard order in the German system is called a \"Terminauftrag\". The key is \"TA\". You could, for example, convert this to an English key: \"SO\".",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrganization": {
+                        "description": "# Definition\r\n\r\nAn organizational unit responsible for the sale of certain products or services. The responsibility of a sales organization may include legal liability for products and customer claims.\r\n\r\n# Use\r\n\r\nYou can assign any number of **distribution channels** and **divisions **to a sales organization. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SoldToParty": {
+                        "description": "# Definition\r\n\r\nGives an alphanumeric key, which clearly identifies the customer or vendor in the SAP system.",
+                        "type": "string",
+                        "maxLength": 10
+                    }
+                }
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_ItemCreated_v1": {
+                "type": "object",
+                "properties": {
+                    "DistributionChannel": {
+                        "description": "# Definition\r\n\r\nThe way in which products or services reach the customer. Typical examples of distribution channels are wholesale, retail, or direct sales.\r\n\r\n# Use\r\n\r\nYou can maintain information about customers and materials by **sales organization** and distribution channel. Within a sales organization you can deliver goods to a given customer through more than one distribution channel.\r\n\r\nYou can assign a distribution channel to one or more sales organizations. If, for example, you have numerous sales organizations, each sales organization may use the \"Wholesale\" distribution channel.\r\n\r\n# Note\r\n\r\nFor each combination of sales organization and distribution channel, you can further assign one or more of the **divisions** that are defined for the sales organization. You can, for example, assign \"Food\" and \"Non-food\" divisions to the \"Wholesale\" distribution channel. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "EventRaisedDateTime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "OrganizationDivision": {
+                        "description": "# Definition\r\n\r\nA way of grouping materials, products, or services. The system uses divisions to determine the **sales areas** and the **business areas** for a material, product, or service.\r\n\r\n# Use\r\n\r\nA product or service is always assigned to just one division. From the point of view of sales and distribution, the use of divisions lets you organize your sales structure around groups of similar products or product lines. This allows the people in a division who process orders and service customers to specialize within a manageable area of expertise.\r\n\r\n# Example\r\n\r\nIf a **sales organization** sells food and non-food products through both retail and wholesale**distribution channels** each distribution channel could then be further split into food and non-food divisions.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "Product": {
+                        "description": "# Definition\r\n\r\nAlphanumeric key uniquely identifying the **material**.",
+                        "type": "string",
+                        "maxLength": 40
+                    },
+                    "SalesOrder": {
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "SalesOrderItem": {
+                        "type": "string",
+                        "maxLength": 6
+                    },
+                    "SalesOrderItemCategory": {
+                        "description": "# Definition\r\n\r\nA classification that distinguishes between different types of item (for example, free of charge items and text items) and determines how the system processes the item.\r\n\r\n# Procedure\r\n\r\nThe system proposes an item category. If alternatives are defined for your system, you can change the item category manually in the **sales document**.\r\n\r\n# Example\r\n\r\nIf, for example, you identify an item as a free or charge item, you tell the system, in this case, to ignore normal pricing procedures.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrderType": {
+                        "description": "# Use\r\n\r\nYou can convert the keys that identify the **sales document types** in the original German system to language-specific keys. The converted keys then appear according to the language in which the user logs on.\r\n\r\n# Procedure\r\n\r\nEnter the original German key of the sales document type for which you want to provide a language-specific key.\r\n\r\n# Example\r\n\r\nA standard order in the German system is called a \"Terminauftrag\". The key is \"TA\". You could, for example, convert this to an English key: \"SO\".",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrganization": {
+                        "description": "# Definition\r\n\r\nAn organizational unit responsible for the sale of certain products or services. The responsibility of a sales organization may include legal liability for products and customer claims.\r\n\r\n# Use\r\n\r\nYou can assign any number of **distribution channels** and **divisions **to a sales organization. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SoldToParty": {
+                        "description": "# Definition\r\n\r\nGives an alphanumeric key, which clearly identifies the customer or vendor in the SAP system.",
+                        "type": "string",
+                        "maxLength": 10
+                    }
+                }
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_ItmBillgBlkStsChgd_v1": {
+                "type": "object",
+                "properties": {
+                    "BillingBlockStatus": {
+                        "description": "# Definition\r\n\r\nThe value of the field in the billing block status for the item is calculated from:\r\n\r\nSales document: Billing block item + User status item.",
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "DistributionChannel": {
+                        "description": "# Definition\r\n\r\nThe way in which products or services reach the customer. Typical examples of distribution channels are wholesale, retail, or direct sales.\r\n\r\n# Use\r\n\r\nYou can maintain information about customers and materials by **sales organization** and distribution channel. Within a sales organization you can deliver goods to a given customer through more than one distribution channel.\r\n\r\nYou can assign a distribution channel to one or more sales organizations. If, for example, you have numerous sales organizations, each sales organization may use the \"Wholesale\" distribution channel.\r\n\r\n# Note\r\n\r\nFor each combination of sales organization and distribution channel, you can further assign one or more of the **divisions** that are defined for the sales organization. You can, for example, assign \"Food\" and \"Non-food\" divisions to the \"Wholesale\" distribution channel. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "EventRaisedDateTime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "OrganizationDivision": {
+                        "description": "# Definition\r\n\r\nA way of grouping materials, products, or services. The system uses divisions to determine the **sales areas** and the **business areas** for a material, product, or service.\r\n\r\n# Use\r\n\r\nA product or service is always assigned to just one division. From the point of view of sales and distribution, the use of divisions lets you organize your sales structure around groups of similar products or product lines. This allows the people in a division who process orders and service customers to specialize within a manageable area of expertise.\r\n\r\n# Example\r\n\r\nIf a **sales organization** sells food and non-food products through both retail and wholesale**distribution channels** each distribution channel could then be further split into food and non-food divisions.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "PreviousBillingBlockStatus": {
+                        "description": "# Definition\r\n\r\nThe value of the field in the billing block status for the item is calculated from:\r\n\r\nSales document: Billing block item + User status item.",
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "Product": {
+                        "description": "# Definition\r\n\r\nAlphanumeric key uniquely identifying the **material**.",
+                        "type": "string",
+                        "maxLength": 40
+                    },
+                    "SalesOrder": {
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "SalesOrderItem": {
+                        "type": "string",
+                        "maxLength": 6
+                    },
+                    "SalesOrderItemCategory": {
+                        "description": "# Definition\r\n\r\nA classification that distinguishes between different types of item (for example, free of charge items and text items) and determines how the system processes the item.\r\n\r\n# Procedure\r\n\r\nThe system proposes an item category. If alternatives are defined for your system, you can change the item category manually in the **sales document**.\r\n\r\n# Example\r\n\r\nIf, for example, you identify an item as a free or charge item, you tell the system, in this case, to ignore normal pricing procedures.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrderType": {
+                        "description": "# Use\r\n\r\nYou can convert the keys that identify the **sales document types** in the original German system to language-specific keys. The converted keys then appear according to the language in which the user logs on.\r\n\r\n# Procedure\r\n\r\nEnter the original German key of the sales document type for which you want to provide a language-specific key.\r\n\r\n# Example\r\n\r\nA standard order in the German system is called a \"Terminauftrag\". The key is \"TA\". You could, for example, convert this to an English key: \"SO\".",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrganization": {
+                        "description": "# Definition\r\n\r\nAn organizational unit responsible for the sale of certain products or services. The responsibility of a sales organization may include legal liability for products and customer claims.\r\n\r\n# Use\r\n\r\nYou can assign any number of **distribution channels** and **divisions **to a sales organization. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SoldToParty": {
+                        "description": "# Definition\r\n\r\nGives an alphanumeric key, which clearly identifies the customer or vendor in the SAP system.",
+                        "type": "string",
+                        "maxLength": 10
+                    }
+                }
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_ItmDelivBlkStsChgd_v1": {
+                "type": "object",
+                "properties": {
+                    "DeliveryBlockStatus": {
+                        "description": "# Definition\r\n\r\nDelivery block status for item\r\n\r\nThe value of this field is calculated using the:\r\n\r\nSchedule line delivery block + item user status",
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "DistributionChannel": {
+                        "description": "# Definition\r\n\r\nThe way in which products or services reach the customer. Typical examples of distribution channels are wholesale, retail, or direct sales.\r\n\r\n# Use\r\n\r\nYou can maintain information about customers and materials by **sales organization** and distribution channel. Within a sales organization you can deliver goods to a given customer through more than one distribution channel.\r\n\r\nYou can assign a distribution channel to one or more sales organizations. If, for example, you have numerous sales organizations, each sales organization may use the \"Wholesale\" distribution channel.\r\n\r\n# Note\r\n\r\nFor each combination of sales organization and distribution channel, you can further assign one or more of the **divisions** that are defined for the sales organization. You can, for example, assign \"Food\" and \"Non-food\" divisions to the \"Wholesale\" distribution channel. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "EventRaisedDateTime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "OrganizationDivision": {
+                        "description": "# Definition\r\n\r\nA way of grouping materials, products, or services. The system uses divisions to determine the **sales areas** and the **business areas** for a material, product, or service.\r\n\r\n# Use\r\n\r\nA product or service is always assigned to just one division. From the point of view of sales and distribution, the use of divisions lets you organize your sales structure around groups of similar products or product lines. This allows the people in a division who process orders and service customers to specialize within a manageable area of expertise.\r\n\r\n# Example\r\n\r\nIf a **sales organization** sells food and non-food products through both retail and wholesale**distribution channels** each distribution channel could then be further split into food and non-food divisions.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "PreviousDeliveryBlockStatus": {
+                        "description": "# Definition\r\n\r\nDelivery block status for item\r\n\r\nThe value of this field is calculated using the:\r\n\r\nSchedule line delivery block + item user status",
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "Product": {
+                        "description": "# Definition\r\n\r\nAlphanumeric key uniquely identifying the **material**.",
+                        "type": "string",
+                        "maxLength": 40
+                    },
+                    "SalesOrder": {
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "SalesOrderItem": {
+                        "type": "string",
+                        "maxLength": 6
+                    },
+                    "SalesOrderItemCategory": {
+                        "description": "# Definition\r\n\r\nA classification that distinguishes between different types of item (for example, free of charge items and text items) and determines how the system processes the item.\r\n\r\n# Procedure\r\n\r\nThe system proposes an item category. If alternatives are defined for your system, you can change the item category manually in the **sales document**.\r\n\r\n# Example\r\n\r\nIf, for example, you identify an item as a free or charge item, you tell the system, in this case, to ignore normal pricing procedures.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrderType": {
+                        "description": "# Use\r\n\r\nYou can convert the keys that identify the **sales document types** in the original German system to language-specific keys. The converted keys then appear according to the language in which the user logs on.\r\n\r\n# Procedure\r\n\r\nEnter the original German key of the sales document type for which you want to provide a language-specific key.\r\n\r\n# Example\r\n\r\nA standard order in the German system is called a \"Terminauftrag\". The key is \"TA\". You could, for example, convert this to an English key: \"SO\".",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrganization": {
+                        "description": "# Definition\r\n\r\nAn organizational unit responsible for the sale of certain products or services. The responsibility of a sales organization may include legal liability for products and customer claims.\r\n\r\n# Use\r\n\r\nYou can assign any number of **distribution channels** and **divisions **to a sales organization. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SoldToParty": {
+                        "description": "# Definition\r\n\r\nGives an alphanumeric key, which clearly identifies the customer or vendor in the SAP system.",
+                        "type": "string",
+                        "maxLength": 10
+                    }
+                }
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_ItmDelivStsChgd_v1": {
+                "type": "object",
+                "properties": {
+                    "DeliveryStatus": {
+                        "description": "# Definition\r\n\r\nDisplays the delivery status of the item.\r\n\r\n# Use\r\n\r\nThe status line tells you if the item is not yet delivered, is partly delivered, is completely delivered, or is not relevant for delivery.",
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "DistributionChannel": {
+                        "description": "# Definition\r\n\r\nThe way in which products or services reach the customer. Typical examples of distribution channels are wholesale, retail, or direct sales.\r\n\r\n# Use\r\n\r\nYou can maintain information about customers and materials by **sales organization** and distribution channel. Within a sales organization you can deliver goods to a given customer through more than one distribution channel.\r\n\r\nYou can assign a distribution channel to one or more sales organizations. If, for example, you have numerous sales organizations, each sales organization may use the \"Wholesale\" distribution channel.\r\n\r\n# Note\r\n\r\nFor each combination of sales organization and distribution channel, you can further assign one or more of the **divisions** that are defined for the sales organization. You can, for example, assign \"Food\" and \"Non-food\" divisions to the \"Wholesale\" distribution channel. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "EventRaisedDateTime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "OrganizationDivision": {
+                        "description": "# Definition\r\n\r\nA way of grouping materials, products, or services. The system uses divisions to determine the **sales areas** and the **business areas** for a material, product, or service.\r\n\r\n# Use\r\n\r\nA product or service is always assigned to just one division. From the point of view of sales and distribution, the use of divisions lets you organize your sales structure around groups of similar products or product lines. This allows the people in a division who process orders and service customers to specialize within a manageable area of expertise.\r\n\r\n# Example\r\n\r\nIf a **sales organization** sells food and non-food products through both retail and wholesale**distribution channels** each distribution channel could then be further split into food and non-food divisions.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "PreviousDeliveryStatus": {
+                        "description": "# Definition\r\n\r\nDisplays the delivery status of the item.\r\n\r\n# Use\r\n\r\nThe status line tells you if the item is not yet delivered, is partly delivered, is completely delivered, or is not relevant for delivery.",
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "Product": {
+                        "description": "# Definition\r\n\r\nAlphanumeric key uniquely identifying the **material**.",
+                        "type": "string",
+                        "maxLength": 40
+                    },
+                    "SalesOrder": {
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "SalesOrderItem": {
+                        "type": "string",
+                        "maxLength": 6
+                    },
+                    "SalesOrderItemCategory": {
+                        "description": "# Definition\r\n\r\nA classification that distinguishes between different types of item (for example, free of charge items and text items) and determines how the system processes the item.\r\n\r\n# Procedure\r\n\r\nThe system proposes an item category. If alternatives are defined for your system, you can change the item category manually in the **sales document**.\r\n\r\n# Example\r\n\r\nIf, for example, you identify an item as a free or charge item, you tell the system, in this case, to ignore normal pricing procedures.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrderType": {
+                        "description": "# Use\r\n\r\nYou can convert the keys that identify the **sales document types** in the original German system to language-specific keys. The converted keys then appear according to the language in which the user logs on.\r\n\r\n# Procedure\r\n\r\nEnter the original German key of the sales document type for which you want to provide a language-specific key.\r\n\r\n# Example\r\n\r\nA standard order in the German system is called a \"Terminauftrag\". The key is \"TA\". You could, for example, convert this to an English key: \"SO\".",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrganization": {
+                        "description": "# Definition\r\n\r\nAn organizational unit responsible for the sale of certain products or services. The responsibility of a sales organization may include legal liability for products and customer claims.\r\n\r\n# Use\r\n\r\nYou can assign any number of **distribution channels** and **divisions **to a sales organization. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SoldToParty": {
+                        "description": "# Definition\r\n\r\nGives an alphanumeric key, which clearly identifies the customer or vendor in the SAP system.",
+                        "type": "string",
+                        "maxLength": 10
+                    }
+                }
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_ItmGenIncplStsChgd_v1": {
+                "type": "object",
+                "properties": {
+                    "DistributionChannel": {
+                        "description": "# Definition\r\n\r\nThe way in which products or services reach the customer. Typical examples of distribution channels are wholesale, retail, or direct sales.\r\n\r\n# Use\r\n\r\nYou can maintain information about customers and materials by **sales organization** and distribution channel. Within a sales organization you can deliver goods to a given customer through more than one distribution channel.\r\n\r\nYou can assign a distribution channel to one or more sales organizations. If, for example, you have numerous sales organizations, each sales organization may use the \"Wholesale\" distribution channel.\r\n\r\n# Note\r\n\r\nFor each combination of sales organization and distribution channel, you can further assign one or more of the **divisions** that are defined for the sales organization. You can, for example, assign \"Food\" and \"Non-food\" divisions to the \"Wholesale\" distribution channel. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "EventRaisedDateTime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "ItemGeneralIncompletionStatus": {
+                        "description": "# Definition\r\n\r\nDisplays the status of all information that applies to this item.\r\n\r\n# Use\r\n\r\nThe status line tells you if all item information, necessary for further processing this item, is complete.",
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "OrganizationDivision": {
+                        "description": "# Definition\r\n\r\nA way of grouping materials, products, or services. The system uses divisions to determine the **sales areas** and the **business areas** for a material, product, or service.\r\n\r\n# Use\r\n\r\nA product or service is always assigned to just one division. From the point of view of sales and distribution, the use of divisions lets you organize your sales structure around groups of similar products or product lines. This allows the people in a division who process orders and service customers to specialize within a manageable area of expertise.\r\n\r\n# Example\r\n\r\nIf a **sales organization** sells food and non-food products through both retail and wholesale**distribution channels** each distribution channel could then be further split into food and non-food divisions.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "PreviousItmGenIncompltnSts": {
+                        "description": "# Definition\r\n\r\nDisplays the status of all information that applies to this item.\r\n\r\n# Use\r\n\r\nThe status line tells you if all item information, necessary for further processing this item, is complete.",
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "Product": {
+                        "description": "# Definition\r\n\r\nAlphanumeric key uniquely identifying the **material**.",
+                        "type": "string",
+                        "maxLength": 40
+                    },
+                    "SalesOrder": {
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "SalesOrderItem": {
+                        "type": "string",
+                        "maxLength": 6
+                    },
+                    "SalesOrderItemCategory": {
+                        "description": "# Definition\r\n\r\nA classification that distinguishes between different types of item (for example, free of charge items and text items) and determines how the system processes the item.\r\n\r\n# Procedure\r\n\r\nThe system proposes an item category. If alternatives are defined for your system, you can change the item category manually in the **sales document**.\r\n\r\n# Example\r\n\r\nIf, for example, you identify an item as a free or charge item, you tell the system, in this case, to ignore normal pricing procedures.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrderType": {
+                        "description": "# Use\r\n\r\nYou can convert the keys that identify the **sales document types** in the original German system to language-specific keys. The converted keys then appear according to the language in which the user logs on.\r\n\r\n# Procedure\r\n\r\nEnter the original German key of the sales document type for which you want to provide a language-specific key.\r\n\r\n# Example\r\n\r\nA standard order in the German system is called a \"Terminauftrag\". The key is \"TA\". You could, for example, convert this to an English key: \"SO\".",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrganization": {
+                        "description": "# Definition\r\n\r\nAn organizational unit responsible for the sale of certain products or services. The responsibility of a sales organization may include legal liability for products and customer claims.\r\n\r\n# Use\r\n\r\nYou can assign any number of **distribution channels** and **divisions **to a sales organization. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SoldToParty": {
+                        "description": "# Definition\r\n\r\nGives an alphanumeric key, which clearly identifies the customer or vendor in the SAP system.",
+                        "type": "string",
+                        "maxLength": 10
+                    }
+                }
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_ItmPrftCtrChanged_v1": {
+                "type": "object",
+                "properties": {
+                    "DistributionChannel": {
+                        "description": "# Definition\r\n\r\nThe way in which products or services reach the customer. Typical examples of distribution channels are wholesale, retail, or direct sales.\r\n\r\n# Use\r\n\r\nYou can maintain information about customers and materials by **sales organization** and distribution channel. Within a sales organization you can deliver goods to a given customer through more than one distribution channel.\r\n\r\nYou can assign a distribution channel to one or more sales organizations. If, for example, you have numerous sales organizations, each sales organization may use the \"Wholesale\" distribution channel.\r\n\r\n# Note\r\n\r\nFor each combination of sales organization and distribution channel, you can further assign one or more of the **divisions** that are defined for the sales organization. You can, for example, assign \"Food\" and \"Non-food\" divisions to the \"Wholesale\" distribution channel. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "EventRaisedDateTime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "OrganizationDivision": {
+                        "description": "# Definition\r\n\r\nA way of grouping materials, products, or services. The system uses divisions to determine the **sales areas** and the **business areas** for a material, product, or service.\r\n\r\n# Use\r\n\r\nA product or service is always assigned to just one division. From the point of view of sales and distribution, the use of divisions lets you organize your sales structure around groups of similar products or product lines. This allows the people in a division who process orders and service customers to specialize within a manageable area of expertise.\r\n\r\n# Example\r\n\r\nIf a **sales organization** sells food and non-food products through both retail and wholesale**distribution channels** each distribution channel could then be further split into food and non-food divisions.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "PreviousProfitCenter": {
+                        "description": "# Definition\r\n\r\nKey which together with the controlling area uniquely identifies a **profit center**.",
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "Product": {
+                        "description": "# Definition\r\n\r\nAlphanumeric key uniquely identifying the **material**.",
+                        "type": "string",
+                        "maxLength": 40
+                    },
+                    "ProfitCenter": {
+                        "description": "# Definition\r\n\r\nKey which together with the controlling area uniquely identifies a **profit center**.",
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "SalesOrder": {
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "SalesOrderItem": {
+                        "type": "string",
+                        "maxLength": 6
+                    },
+                    "SalesOrderItemCategory": {
+                        "description": "# Definition\r\n\r\nA classification that distinguishes between different types of item (for example, free of charge items and text items) and determines how the system processes the item.\r\n\r\n# Procedure\r\n\r\nThe system proposes an item category. If alternatives are defined for your system, you can change the item category manually in the **sales document**.\r\n\r\n# Example\r\n\r\nIf, for example, you identify an item as a free or charge item, you tell the system, in this case, to ignore normal pricing procedures.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrderType": {
+                        "description": "# Use\r\n\r\nYou can convert the keys that identify the **sales document types** in the original German system to language-specific keys. The converted keys then appear according to the language in which the user logs on.\r\n\r\n# Procedure\r\n\r\nEnter the original German key of the sales document type for which you want to provide a language-specific key.\r\n\r\n# Example\r\n\r\nA standard order in the German system is called a \"Terminauftrag\". The key is \"TA\". You could, for example, convert this to an English key: \"SO\".",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrganization": {
+                        "description": "# Definition\r\n\r\nAn organizational unit responsible for the sale of certain products or services. The responsibility of a sales organization may include legal liability for products and customer claims.\r\n\r\n# Use\r\n\r\nYou can assign any number of **distribution channels** and **divisions **to a sales organization. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SoldToParty": {
+                        "description": "# Definition\r\n\r\nGives an alphanumeric key, which clearly identifies the customer or vendor in the SAP system.",
+                        "type": "string",
+                        "maxLength": 10
+                    }
+                }
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_ItmRjcnStsChgd_v1": {
+                "type": "object",
+                "properties": {
+                    "DistributionChannel": {
+                        "description": "# Definition\r\n\r\nThe way in which products or services reach the customer. Typical examples of distribution channels are wholesale, retail, or direct sales.\r\n\r\n# Use\r\n\r\nYou can maintain information about customers and materials by **sales organization** and distribution channel. Within a sales organization you can deliver goods to a given customer through more than one distribution channel.\r\n\r\nYou can assign a distribution channel to one or more sales organizations. If, for example, you have numerous sales organizations, each sales organization may use the \"Wholesale\" distribution channel.\r\n\r\n# Note\r\n\r\nFor each combination of sales organization and distribution channel, you can further assign one or more of the **divisions** that are defined for the sales organization. You can, for example, assign \"Food\" and \"Non-food\" divisions to the \"Wholesale\" distribution channel. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "EventRaisedDateTime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "OrganizationDivision": {
+                        "description": "# Definition\r\n\r\nA way of grouping materials, products, or services. The system uses divisions to determine the **sales areas** and the **business areas** for a material, product, or service.\r\n\r\n# Use\r\n\r\nA product or service is always assigned to just one division. From the point of view of sales and distribution, the use of divisions lets you organize your sales structure around groups of similar products or product lines. This allows the people in a division who process orders and service customers to specialize within a manageable area of expertise.\r\n\r\n# Example\r\n\r\nIf a **sales organization** sells food and non-food products through both retail and wholesale**distribution channels** each distribution channel could then be further split into food and non-food divisions.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "PreviousSDDocRejectionStatus": {
+                        "description": "# Definition\r\n\r\nIndicates whether the sales document item (for example, an item in a quotation) is rejected.\r\n\r\n# Use\r\n\r\nThe system uses the rejection status of items to determine the rejection status at the header level. For example, if a customer rejects only one of several items in a quotation, the status of the header shows that the quotation is partly rejected.",
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "Product": {
+                        "description": "# Definition\r\n\r\nAlphanumeric key uniquely identifying the **material**.",
+                        "type": "string",
+                        "maxLength": 40
+                    },
+                    "SalesDocumentRjcnReason": {
+                        "description": "# Definition\r\n\r\nThe reason for rejecting a sales document (for example, a sales quotation or a sales order).\r\n\r\n# Use\r\n\r\nThe rejection can come from your organization (for example, you can reject a customer request for a credit memo because it is unreasonable) or from the customer (for example, the customer rejects a quotation because the price is too high). The following list shows the effects on different document types after you enter a reason for rejection:\r\n - Inquiries and quotations: no further references by other documents\r\n - Sales orders: no further delivery of items\r\n - Contracts: no further creation of release orders\r\n - Credit and debit memo requests: no further processing of credit or debit memos\r\n\r\n# Procedure\r\n\r\nEnter one of the values predefined for your system.\r\n\r\n# Dependencies\r\n\r\nIf you enter a reason for rejection, the system automatically cancels any **MRP** requirements previously generated for the items.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "SalesOrder": {
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "SalesOrderItem": {
+                        "type": "string",
+                        "maxLength": 6
+                    },
+                    "SalesOrderItemCategory": {
+                        "description": "# Definition\r\n\r\nA classification that distinguishes between different types of item (for example, free of charge items and text items) and determines how the system processes the item.\r\n\r\n# Procedure\r\n\r\nThe system proposes an item category. If alternatives are defined for your system, you can change the item category manually in the **sales document**.\r\n\r\n# Example\r\n\r\nIf, for example, you identify an item as a free or charge item, you tell the system, in this case, to ignore normal pricing procedures.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrderType": {
+                        "description": "# Use\r\n\r\nYou can convert the keys that identify the **sales document types** in the original German system to language-specific keys. The converted keys then appear according to the language in which the user logs on.\r\n\r\n# Procedure\r\n\r\nEnter the original German key of the sales document type for which you want to provide a language-specific key.\r\n\r\n# Example\r\n\r\nA standard order in the German system is called a \"Terminauftrag\". The key is \"TA\". You could, for example, convert this to an English key: \"SO\".",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrganization": {
+                        "description": "# Definition\r\n\r\nAn organizational unit responsible for the sale of certain products or services. The responsibility of a sales organization may include legal liability for products and customer claims.\r\n\r\n# Use\r\n\r\nYou can assign any number of **distribution channels** and **divisions **to a sales organization. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SDDocumentRejectionStatus": {
+                        "description": "# Definition\r\n\r\nIndicates whether the sales document item (for example, an item in a quotation) is rejected.\r\n\r\n# Use\r\n\r\nThe system uses the rejection status of items to determine the rejection status at the header level. For example, if a customer rejects only one of several items in a quotation, the status of the header shows that the quotation is partly rejected.",
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "SoldToParty": {
+                        "description": "# Definition\r\n\r\nGives an alphanumeric key, which clearly identifies the customer or vendor in the SAP system.",
+                        "type": "string",
+                        "maxLength": 10
+                    }
+                }
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_ItmWBSElmntChanged_v1": {
+                "type": "object",
+                "properties": {
+                    "DistributionChannel": {
+                        "description": "# Definition\r\n\r\nThe way in which products or services reach the customer. Typical examples of distribution channels are wholesale, retail, or direct sales.\r\n\r\n# Use\r\n\r\nYou can maintain information about customers and materials by **sales organization** and distribution channel. Within a sales organization you can deliver goods to a given customer through more than one distribution channel.\r\n\r\nYou can assign a distribution channel to one or more sales organizations. If, for example, you have numerous sales organizations, each sales organization may use the \"Wholesale\" distribution channel.\r\n\r\n# Note\r\n\r\nFor each combination of sales organization and distribution channel, you can further assign one or more of the **divisions** that are defined for the sales organization. You can, for example, assign \"Food\" and \"Non-food\" divisions to the \"Wholesale\" distribution channel. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "EventRaisedDateTime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "OrganizationDivision": {
+                        "description": "# Definition\r\n\r\nA way of grouping materials, products, or services. The system uses divisions to determine the **sales areas** and the **business areas** for a material, product, or service.\r\n\r\n# Use\r\n\r\nA product or service is always assigned to just one division. From the point of view of sales and distribution, the use of divisions lets you organize your sales structure around groups of similar products or product lines. This allows the people in a division who process orders and service customers to specialize within a manageable area of expertise.\r\n\r\n# Example\r\n\r\nIf a **sales organization** sells food and non-food products through both retail and wholesale**distribution channels** each distribution channel could then be further split into food and non-food divisions.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "PreviousWBSElementInternalID": {
+                        "description": "# Definition\r\n\r\nKey identifying a **WBS element**.",
+                        "type": "string",
+                        "maxLength": 8
+                    },
+                    "Product": {
+                        "description": "# Definition\r\n\r\nAlphanumeric key uniquely identifying the **material**.",
+                        "type": "string",
+                        "maxLength": 40
+                    },
+                    "SalesOrder": {
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "SalesOrderItem": {
+                        "type": "string",
+                        "maxLength": 6
+                    },
+                    "SalesOrderItemCategory": {
+                        "description": "# Definition\r\n\r\nA classification that distinguishes between different types of item (for example, free of charge items and text items) and determines how the system processes the item.\r\n\r\n# Procedure\r\n\r\nThe system proposes an item category. If alternatives are defined for your system, you can change the item category manually in the **sales document**.\r\n\r\n# Example\r\n\r\nIf, for example, you identify an item as a free or charge item, you tell the system, in this case, to ignore normal pricing procedures.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrderType": {
+                        "description": "# Use\r\n\r\nYou can convert the keys that identify the **sales document types** in the original German system to language-specific keys. The converted keys then appear according to the language in which the user logs on.\r\n\r\n# Procedure\r\n\r\nEnter the original German key of the sales document type for which you want to provide a language-specific key.\r\n\r\n# Example\r\n\r\nA standard order in the German system is called a \"Terminauftrag\". The key is \"TA\". You could, for example, convert this to an English key: \"SO\".",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrganization": {
+                        "description": "# Definition\r\n\r\nAn organizational unit responsible for the sale of certain products or services. The responsibility of a sales organization may include legal liability for products and customer claims.\r\n\r\n# Use\r\n\r\nYou can assign any number of **distribution channels** and **divisions **to a sales organization. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SoldToParty": {
+                        "description": "# Definition\r\n\r\nGives an alphanumeric key, which clearly identifies the customer or vendor in the SAP system.",
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "WBSElementInternalID": {
+                        "description": "# Definition\r\n\r\nKey identifying a **WBS element**.",
+                        "type": "string",
+                        "maxLength": 8
+                    }
+                }
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_ItmDlvConfStsChgd_v1": {
+                "type": "object",
+                "properties": {
+                    "DeliveryConfirmationStatus": {
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "DistributionChannel": {
+                        "description": "# Definition\r\n\r\nThe way in which products or services reach the customer. Typical examples of distribution channels are wholesale, retail, or direct sales.\r\n\r\n# Use\r\n\r\nYou can maintain information about customers and materials by **sales organization** and distribution channel. Within a sales organization you can deliver goods to a given customer through more than one distribution channel.\r\n\r\nYou can assign a distribution channel to one or more sales organizations. If, for example, you have numerous sales organizations, each sales organization may use the \"Wholesale\" distribution channel.\r\n\r\n# Note\r\n\r\nFor each combination of sales organization and distribution channel, you can further assign one or more of the **divisions** that are defined for the sales organization. You can, for example, assign \"Food\" and \"Non-food\" divisions to the \"Wholesale\" distribution channel. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "EventRaisedDateTime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "OrganizationDivision": {
+                        "description": "# Definition\r\n\r\nA way of grouping materials, products, or services. The system uses divisions to determine the **sales areas** and the **business areas** for a material, product, or service.\r\n\r\n# Use\r\n\r\nA product or service is always assigned to just one division. From the point of view of sales and distribution, the use of divisions lets you organize your sales structure around groups of similar products or product lines. This allows the people in a division who process orders and service customers to specialize within a manageable area of expertise.\r\n\r\n# Example\r\n\r\nIf a **sales organization** sells food and non-food products through both retail and wholesale**distribution channels** each distribution channel could then be further split into food and non-food divisions.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "PreviousDeliveryConfStatus": {
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "Product": {
+                        "description": "# Definition\r\n\r\nAlphanumeric key uniquely identifying the **material**.",
+                        "type": "string",
+                        "maxLength": 40
+                    },
+                    "SalesOrder": {
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "SalesOrderItem": {
+                        "type": "string",
+                        "maxLength": 6
+                    },
+                    "SalesOrderItemCategory": {
+                        "description": "# Definition\r\n\r\nA classification that distinguishes between different types of item (for example, free of charge items and text items) and determines how the system processes the item.\r\n\r\n# Procedure\r\n\r\nThe system proposes an item category. If alternatives are defined for your system, you can change the item category manually in the **sales document**.\r\n\r\n# Example\r\n\r\nIf, for example, you identify an item as a free or charge item, you tell the system, in this case, to ignore normal pricing procedures.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrderType": {
+                        "description": "# Use\r\n\r\nYou can convert the keys that identify the **sales document types** in the original German system to language-specific keys. The converted keys then appear according to the language in which the user logs on.\r\n\r\n# Procedure\r\n\r\nEnter the original German key of the sales document type for which you want to provide a language-specific key.\r\n\r\n# Example\r\n\r\nA standard order in the German system is called a \"Terminauftrag\". The key is \"TA\". You could, for example, convert this to an English key: \"SO\".",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrganization": {
+                        "description": "# Definition\r\n\r\nAn organizational unit responsible for the sale of certain products or services. The responsibility of a sales organization may include legal liability for products and customer claims.\r\n\r\n# Use\r\n\r\nYou can assign any number of **distribution channels** and **divisions **to a sales organization. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SoldToParty": {
+                        "description": "# Definition\r\n\r\nGives an alphanumeric key, which clearly identifies the customer or vendor in the SAP system.",
+                        "type": "string",
+                        "maxLength": 10
+                    }
+                }
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_OvrlDlvBlkStsChgd_v1": {
+                "type": "object",
+                "properties": {
+                    "DistributionChannel": {
+                        "description": "# Definition\r\n\r\nThe way in which products or services reach the customer. Typical examples of distribution channels are wholesale, retail, or direct sales.\r\n\r\n# Use\r\n\r\nYou can maintain information about customers and materials by **sales organization** and distribution channel. Within a sales organization you can deliver goods to a given customer through more than one distribution channel.\r\n\r\nYou can assign a distribution channel to one or more sales organizations. If, for example, you have numerous sales organizations, each sales organization may use the \"Wholesale\" distribution channel.\r\n\r\n# Note\r\n\r\nFor each combination of sales organization and distribution channel, you can further assign one or more of the **divisions** that are defined for the sales organization. You can, for example, assign \"Food\" and \"Non-food\" divisions to the \"Wholesale\" distribution channel. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "EventRaisedDateTime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "OrganizationDivision": {
+                        "description": "# Definition\r\n\r\nA way of grouping materials, products, or services. The system uses divisions to determine the **sales areas** and the **business areas** for a material, product, or service.\r\n\r\n# Use\r\n\r\nA product or service is always assigned to just one division. From the point of view of sales and distribution, the use of divisions lets you organize your sales structure around groups of similar products or product lines. This allows the people in a division who process orders and service customers to specialize within a manageable area of expertise.\r\n\r\n# Example\r\n\r\nIf a **sales organization** sells food and non-food products through both retail and wholesale**distribution channels** each distribution channel could then be further split into food and non-food divisions.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "OverallDeliveryBlockStatus": {
+                        "description": "# Definition\r\n\r\nThe value of this field is calculated using the following values:\r\n\r\nItem delivery block status + Document header delivery block + user status for header",
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "PreviousOvrlDelivBlkSts": {
+                        "description": "# Definition\r\n\r\nThe value of this field is calculated using the following values:\r\n\r\nItem delivery block status + Document header delivery block + user status for header",
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "SalesOrder": {
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "SalesOrderType": {
+                        "description": "# Use\r\n\r\nYou can convert the keys that identify the **sales document types** in the original German system to language-specific keys. The converted keys then appear according to the language in which the user logs on.\r\n\r\n# Procedure\r\n\r\nEnter the original German key of the sales document type for which you want to provide a language-specific key.\r\n\r\n# Example\r\n\r\nA standard order in the German system is called a \"Terminauftrag\". The key is \"TA\". You could, for example, convert this to an English key: \"SO\".",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrganization": {
+                        "description": "# Definition\r\n\r\nAn organizational unit responsible for the sale of certain products or services. The responsibility of a sales organization may include legal liability for products and customer claims.\r\n\r\n# Use\r\n\r\nYou can assign any number of **distribution channels** and **divisions **to a sales organization. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SoldToParty": {
+                        "description": "# Definition\r\n\r\nGives an alphanumeric key, which clearly identifies the customer or vendor in the SAP system.",
+                        "type": "string",
+                        "maxLength": 10
+                    }
+                }
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_ItemDeleted_v1": {
+                "type": "object",
+                "properties": {
+                    "DistributionChannel": {
+                        "description": "# Definition\r\n\r\nThe way in which products or services reach the customer. Typical examples of distribution channels are wholesale, retail, or direct sales.\r\n\r\n# Use\r\n\r\nYou can maintain information about customers and materials by **sales organization** and distribution channel. Within a sales organization you can deliver goods to a given customer through more than one distribution channel.\r\n\r\nYou can assign a distribution channel to one or more sales organizations. If, for example, you have numerous sales organizations, each sales organization may use the \"Wholesale\" distribution channel.\r\n\r\n# Note\r\n\r\nFor each combination of sales organization and distribution channel, you can further assign one or more of the **divisions** that are defined for the sales organization. You can, for example, assign \"Food\" and \"Non-food\" divisions to the \"Wholesale\" distribution channel. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "EventRaisedDateTime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "OrganizationDivision": {
+                        "description": "# Definition\r\n\r\nA way of grouping materials, products, or services. The system uses divisions to determine the **sales areas** and the **business areas** for a material, product, or service.\r\n\r\n# Use\r\n\r\nA product or service is always assigned to just one division. From the point of view of sales and distribution, the use of divisions lets you organize your sales structure around groups of similar products or product lines. This allows the people in a division who process orders and service customers to specialize within a manageable area of expertise.\r\n\r\n# Example\r\n\r\nIf a **sales organization** sells food and non-food products through both retail and wholesale**distribution channels** each distribution channel could then be further split into food and non-food divisions.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "Product": {
+                        "description": "# Definition\r\n\r\nAlphanumeric key uniquely identifying the **material**.",
+                        "type": "string",
+                        "maxLength": 40
+                    },
+                    "SalesOrder": {
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "SalesOrderItem": {
+                        "type": "string",
+                        "maxLength": 6
+                    },
+                    "SalesOrderItemCategory": {
+                        "description": "# Definition\r\n\r\nA classification that distinguishes between different types of item (for example, free of charge items and text items) and determines how the system processes the item.\r\n\r\n# Procedure\r\n\r\nThe system proposes an item category. If alternatives are defined for your system, you can change the item category manually in the **sales document**.\r\n\r\n# Example\r\n\r\nIf, for example, you identify an item as a free or charge item, you tell the system, in this case, to ignore normal pricing procedures.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrderType": {
+                        "description": "# Use\r\n\r\nYou can convert the keys that identify the **sales document types** in the original German system to language-specific keys. The converted keys then appear according to the language in which the user logs on.\r\n\r\n# Procedure\r\n\r\nEnter the original German key of the sales document type for which you want to provide a language-specific key.\r\n\r\n# Example\r\n\r\nA standard order in the German system is called a \"Terminauftrag\". The key is \"TA\". You could, for example, convert this to an English key: \"SO\".",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrganization": {
+                        "description": "# Definition\r\n\r\nAn organizational unit responsible for the sale of certain products or services. The responsibility of a sales organization may include legal liability for products and customer claims.\r\n\r\n# Use\r\n\r\nYou can assign any number of **distribution channels** and **divisions **to a sales organization. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SoldToParty": {
+                        "description": "# Definition\r\n\r\nGives an alphanumeric key, which clearly identifies the customer or vendor in the SAP system.",
+                        "type": "string",
+                        "maxLength": 10
+                    }
+                }
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_ItmSDProcStsChgd_v1": {
+                "type": "object",
+                "properties": {
+                    "DistributionChannel": {
+                        "description": "# Definition\r\n\r\nThe way in which products or services reach the customer. Typical examples of distribution channels are wholesale, retail, or direct sales.\r\n\r\n# Use\r\n\r\nYou can maintain information about customers and materials by **sales organization** and distribution channel. Within a sales organization you can deliver goods to a given customer through more than one distribution channel.\r\n\r\nYou can assign a distribution channel to one or more sales organizations. If, for example, you have numerous sales organizations, each sales organization may use the \"Wholesale\" distribution channel.\r\n\r\n# Note\r\n\r\nFor each combination of sales organization and distribution channel, you can further assign one or more of the **divisions** that are defined for the sales organization. You can, for example, assign \"Food\" and \"Non-food\" divisions to the \"Wholesale\" distribution channel. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "EventRaisedDateTime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "OrganizationDivision": {
+                        "description": "# Definition\r\n\r\nA way of grouping materials, products, or services. The system uses divisions to determine the **sales areas** and the **business areas** for a material, product, or service.\r\n\r\n# Use\r\n\r\nA product or service is always assigned to just one division. From the point of view of sales and distribution, the use of divisions lets you organize your sales structure around groups of similar products or product lines. This allows the people in a division who process orders and service customers to specialize within a manageable area of expertise.\r\n\r\n# Example\r\n\r\nIf a **sales organization** sells food and non-food products through both retail and wholesale**distribution channels** each distribution channel could then be further split into food and non-food divisions.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "PreviousSDProcessStatus": {
+                        "description": "# Definition\r\n\r\nDisplays the overall processing status of the item.\r\n\r\n# Use\r\n\r\nThe system determines the overall status from all statuses (for example, delivery and billing) for this item. The status message tells you whether processing of the item is open, in progress, or complete.",
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "Product": {
+                        "description": "# Definition\r\n\r\nAlphanumeric key uniquely identifying the **material**.",
+                        "type": "string",
+                        "maxLength": 40
+                    },
+                    "SalesOrder": {
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "SalesOrderItem": {
+                        "type": "string",
+                        "maxLength": 6
+                    },
+                    "SalesOrderItemCategory": {
+                        "description": "# Definition\r\n\r\nA classification that distinguishes between different types of item (for example, free of charge items and text items) and determines how the system processes the item.\r\n\r\n# Procedure\r\n\r\nThe system proposes an item category. If alternatives are defined for your system, you can change the item category manually in the **sales document**.\r\n\r\n# Example\r\n\r\nIf, for example, you identify an item as a free or charge item, you tell the system, in this case, to ignore normal pricing procedures.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrderType": {
+                        "description": "# Use\r\n\r\nYou can convert the keys that identify the **sales document types** in the original German system to language-specific keys. The converted keys then appear according to the language in which the user logs on.\r\n\r\n# Procedure\r\n\r\nEnter the original German key of the sales document type for which you want to provide a language-specific key.\r\n\r\n# Example\r\n\r\nA standard order in the German system is called a \"Terminauftrag\". The key is \"TA\". You could, for example, convert this to an English key: \"SO\".",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrganization": {
+                        "description": "# Definition\r\n\r\nAn organizational unit responsible for the sale of certain products or services. The responsibility of a sales organization may include legal liability for products and customer claims.\r\n\r\n# Use\r\n\r\nYou can assign any number of **distribution channels** and **divisions **to a sales organization. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SDProcessStatus": {
+                        "description": "# Definition\r\n\r\nDisplays the overall processing status of the item.\r\n\r\n# Use\r\n\r\nThe system determines the overall status from all statuses (for example, delivery and billing) for this item. The status message tells you whether processing of the item is open, in progress, or complete.",
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "SoldToParty": {
+                        "description": "# Definition\r\n\r\nGives an alphanumeric key, which clearly identifies the customer or vendor in the SAP system.",
+                        "type": "string",
+                        "maxLength": 10
+                    }
+                }
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_OvrlBlgBlkStsChgd_v1": {
+                "type": "object",
+                "properties": {
+                    "DistributionChannel": {
+                        "description": "# Definition\r\n\r\nThe way in which products or services reach the customer. Typical examples of distribution channels are wholesale, retail, or direct sales.\r\n\r\n# Use\r\n\r\nYou can maintain information about customers and materials by **sales organization** and distribution channel. Within a sales organization you can deliver goods to a given customer through more than one distribution channel.\r\n\r\nYou can assign a distribution channel to one or more sales organizations. If, for example, you have numerous sales organizations, each sales organization may use the \"Wholesale\" distribution channel.\r\n\r\n# Note\r\n\r\nFor each combination of sales organization and distribution channel, you can further assign one or more of the **divisions** that are defined for the sales organization. You can, for example, assign \"Food\" and \"Non-food\" divisions to the \"Wholesale\" distribution channel. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "EventRaisedDateTime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "OrganizationDivision": {
+                        "description": "# Definition\r\n\r\nA way of grouping materials, products, or services. The system uses divisions to determine the **sales areas** and the **business areas** for a material, product, or service.\r\n\r\n# Use\r\n\r\nA product or service is always assigned to just one division. From the point of view of sales and distribution, the use of divisions lets you organize your sales structure around groups of similar products or product lines. This allows the people in a division who process orders and service customers to specialize within a manageable area of expertise.\r\n\r\n# Example\r\n\r\nIf a **sales organization** sells food and non-food products through both retail and wholesale**distribution channels** each distribution channel could then be further split into food and non-food divisions.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "OverallBillingBlockStatus": {
+                        "description": "# Definition\r\n\r\nThe value of the overall billing block field is calculated using the:\r\n\r\nBilling block status of item + sales document billing block + user status header",
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "PreviousOvrlBillgBlkSts": {
+                        "description": "# Definition\r\n\r\nThe value of the overall billing block field is calculated using the:\r\n\r\nBilling block status of item + sales document billing block + user status header",
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "SalesOrder": {
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "SalesOrderType": {
+                        "description": "# Use\r\n\r\nYou can convert the keys that identify the **sales document types** in the original German system to language-specific keys. The converted keys then appear according to the language in which the user logs on.\r\n\r\n# Procedure\r\n\r\nEnter the original German key of the sales document type for which you want to provide a language-specific key.\r\n\r\n# Example\r\n\r\nA standard order in the German system is called a \"Terminauftrag\". The key is \"TA\". You could, for example, convert this to an English key: \"SO\".",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrganization": {
+                        "description": "# Definition\r\n\r\nAn organizational unit responsible for the sale of certain products or services. The responsibility of a sales organization may include legal liability for products and customer claims.\r\n\r\n# Use\r\n\r\nYou can assign any number of **distribution channels** and **divisions **to a sales organization. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SoldToParty": {
+                        "description": "# Definition\r\n\r\nGives an alphanumeric key, which clearly identifies the customer or vendor in the SAP system.",
+                        "type": "string",
+                        "maxLength": 10
+                    }
+                }
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_OvrlDelivStsChgd_v1": {
+                "type": "object",
+                "properties": {
+                    "DistributionChannel": {
+                        "description": "# Definition\r\n\r\nThe way in which products or services reach the customer. Typical examples of distribution channels are wholesale, retail, or direct sales.\r\n\r\n# Use\r\n\r\nYou can maintain information about customers and materials by **sales organization** and distribution channel. Within a sales organization you can deliver goods to a given customer through more than one distribution channel.\r\n\r\nYou can assign a distribution channel to one or more sales organizations. If, for example, you have numerous sales organizations, each sales organization may use the \"Wholesale\" distribution channel.\r\n\r\n# Note\r\n\r\nFor each combination of sales organization and distribution channel, you can further assign one or more of the **divisions** that are defined for the sales organization. You can, for example, assign \"Food\" and \"Non-food\" divisions to the \"Wholesale\" distribution channel. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "EventRaisedDateTime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "OrganizationDivision": {
+                        "description": "# Definition\r\n\r\nA way of grouping materials, products, or services. The system uses divisions to determine the **sales areas** and the **business areas** for a material, product, or service.\r\n\r\n# Use\r\n\r\nA product or service is always assigned to just one division. From the point of view of sales and distribution, the use of divisions lets you organize your sales structure around groups of similar products or product lines. This allows the people in a division who process orders and service customers to specialize within a manageable area of expertise.\r\n\r\n# Example\r\n\r\nIf a **sales organization** sells food and non-food products through both retail and wholesale**distribution channels** each distribution channel could then be further split into food and non-food divisions.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "OverallDeliveryStatus": {
+                        "description": "# Definition\r\n\r\nThe delivery status of the **sales document**.",
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "PreviousOverallDeliveryStatus": {
+                        "description": "# Definition\r\n\r\nThe delivery status of the **sales document**.",
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "SalesOrder": {
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "SalesOrderType": {
+                        "description": "# Use\r\n\r\nYou can convert the keys that identify the **sales document types** in the original German system to language-specific keys. The converted keys then appear according to the language in which the user logs on.\r\n\r\n# Procedure\r\n\r\nEnter the original German key of the sales document type for which you want to provide a language-specific key.\r\n\r\n# Example\r\n\r\nA standard order in the German system is called a \"Terminauftrag\". The key is \"TA\". You could, for example, convert this to an English key: \"SO\".",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrganization": {
+                        "description": "# Definition\r\n\r\nAn organizational unit responsible for the sale of certain products or services. The responsibility of a sales organization may include legal liability for products and customer claims.\r\n\r\n# Use\r\n\r\nYou can assign any number of **distribution channels** and **divisions **to a sales organization. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SoldToParty": {
+                        "description": "# Definition\r\n\r\nGives an alphanumeric key, which clearly identifies the customer or vendor in the SAP system.",
+                        "type": "string",
+                        "maxLength": 10
+                    }
+                }
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_OvrlRjcnStsChgd_v1": {
+                "type": "object",
+                "properties": {
+                    "DistributionChannel": {
+                        "description": "# Definition\r\n\r\nThe way in which products or services reach the customer. Typical examples of distribution channels are wholesale, retail, or direct sales.\r\n\r\n# Use\r\n\r\nYou can maintain information about customers and materials by **sales organization** and distribution channel. Within a sales organization you can deliver goods to a given customer through more than one distribution channel.\r\n\r\nYou can assign a distribution channel to one or more sales organizations. If, for example, you have numerous sales organizations, each sales organization may use the \"Wholesale\" distribution channel.\r\n\r\n# Note\r\n\r\nFor each combination of sales organization and distribution channel, you can further assign one or more of the **divisions** that are defined for the sales organization. You can, for example, assign \"Food\" and \"Non-food\" divisions to the \"Wholesale\" distribution channel. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "EventRaisedDateTime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "OrganizationDivision": {
+                        "description": "# Definition\r\n\r\nA way of grouping materials, products, or services. The system uses divisions to determine the **sales areas** and the **business areas** for a material, product, or service.\r\n\r\n# Use\r\n\r\nA product or service is always assigned to just one division. From the point of view of sales and distribution, the use of divisions lets you organize your sales structure around groups of similar products or product lines. This allows the people in a division who process orders and service customers to specialize within a manageable area of expertise.\r\n\r\n# Example\r\n\r\nIf a **sales organization** sells food and non-food products through both retail and wholesale**distribution channels** each distribution channel could then be further split into food and non-food divisions.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "OverallSDDocumentRejectionSts": {
+                        "description": "# Definition\r\n\r\nDisplays the rejection status of the entire sales document.\r\n\r\n# Use\r\n\r\nThe system determines the total status from the status of all individual items in the sales document. The status message tells you whether the sales document has been partially or completely rejected or whether nothing has been rejected.",
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "PreviousOvrlSDDocRejectionSts": {
+                        "description": "# Definition\r\n\r\nDisplays the rejection status of the entire sales document.\r\n\r\n# Use\r\n\r\nThe system determines the total status from the status of all individual items in the sales document. The status message tells you whether the sales document has been partially or completely rejected or whether nothing has been rejected.",
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "SalesOrder": {
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "SalesOrderType": {
+                        "description": "# Use\r\n\r\nYou can convert the keys that identify the **sales document types** in the original German system to language-specific keys. The converted keys then appear according to the language in which the user logs on.\r\n\r\n# Procedure\r\n\r\nEnter the original German key of the sales document type for which you want to provide a language-specific key.\r\n\r\n# Example\r\n\r\nA standard order in the German system is called a \"Terminauftrag\". The key is \"TA\". You could, for example, convert this to an English key: \"SO\".",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrganization": {
+                        "description": "# Definition\r\n\r\nAn organizational unit responsible for the sale of certain products or services. The responsibility of a sales organization may include legal liability for products and customer claims.\r\n\r\n# Use\r\n\r\nYou can assign any number of **distribution channels** and **divisions **to a sales organization. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SoldToParty": {
+                        "description": "# Definition\r\n\r\nGives an alphanumeric key, which clearly identifies the customer or vendor in the SAP system.",
+                        "type": "string",
+                        "maxLength": 10
+                    }
+                }
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_OvrlSDProcStsChgd_v1": {
+                "type": "object",
+                "properties": {
+                    "DistributionChannel": {
+                        "description": "# Definition\r\n\r\nThe way in which products or services reach the customer. Typical examples of distribution channels are wholesale, retail, or direct sales.\r\n\r\n# Use\r\n\r\nYou can maintain information about customers and materials by **sales organization** and distribution channel. Within a sales organization you can deliver goods to a given customer through more than one distribution channel.\r\n\r\nYou can assign a distribution channel to one or more sales organizations. If, for example, you have numerous sales organizations, each sales organization may use the \"Wholesale\" distribution channel.\r\n\r\n# Note\r\n\r\nFor each combination of sales organization and distribution channel, you can further assign one or more of the **divisions** that are defined for the sales organization. You can, for example, assign \"Food\" and \"Non-food\" divisions to the \"Wholesale\" distribution channel. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "EventRaisedDateTime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "OrganizationDivision": {
+                        "description": "# Definition\r\n\r\nA way of grouping materials, products, or services. The system uses divisions to determine the **sales areas** and the **business areas** for a material, product, or service.\r\n\r\n# Use\r\n\r\nA product or service is always assigned to just one division. From the point of view of sales and distribution, the use of divisions lets you organize your sales structure around groups of similar products or product lines. This allows the people in a division who process orders and service customers to specialize within a manageable area of expertise.\r\n\r\n# Example\r\n\r\nIf a **sales organization** sells food and non-food products through both retail and wholesale**distribution channels** each distribution channel could then be further split into food and non-food divisions.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "OverallSDProcessStatus": {
+                        "description": "# Definition\r\n\r\nThe processing status of the entire sales document.\r\n\r\n# Use\r\n\r\nThe system determines the status of the entire sales document by taking into account the status of all header-related information and the status of all individual items. The status message tells you whether processing of the sales document is open, in progress, or complete.",
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "PreviousOverallSDProcessStatus": {
+                        "description": "# Definition\r\n\r\nThe processing status of the entire sales document.\r\n\r\n# Use\r\n\r\nThe system determines the status of the entire sales document by taking into account the status of all header-related information and the status of all individual items. The status message tells you whether processing of the sales document is open, in progress, or complete.",
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "SalesOrder": {
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "SalesOrderType": {
+                        "description": "# Use\r\n\r\nYou can convert the keys that identify the **sales document types** in the original German system to language-specific keys. The converted keys then appear according to the language in which the user logs on.\r\n\r\n# Procedure\r\n\r\nEnter the original German key of the sales document type for which you want to provide a language-specific key.\r\n\r\n# Example\r\n\r\nA standard order in the German system is called a \"Terminauftrag\". The key is \"TA\". You could, for example, convert this to an English key: \"SO\".",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrganization": {
+                        "description": "# Definition\r\n\r\nAn organizational unit responsible for the sale of certain products or services. The responsibility of a sales organization may include legal liability for products and customer claims.\r\n\r\n# Use\r\n\r\nYou can assign any number of **distribution channels** and **divisions **to a sales organization. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SoldToParty": {
+                        "description": "# Definition\r\n\r\nGives an alphanumeric key, which clearly identifies the customer or vendor in the SAP system.",
+                        "type": "string",
+                        "maxLength": 10
+                    }
+                }
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_OvrlDlvConfStsChgd_v1": {
+                "type": "object",
+                "properties": {
+                    "DistributionChannel": {
+                        "description": "# Definition\r\n\r\nThe way in which products or services reach the customer. Typical examples of distribution channels are wholesale, retail, or direct sales.\r\n\r\n# Use\r\n\r\nYou can maintain information about customers and materials by **sales organization** and distribution channel. Within a sales organization you can deliver goods to a given customer through more than one distribution channel.\r\n\r\nYou can assign a distribution channel to one or more sales organizations. If, for example, you have numerous sales organizations, each sales organization may use the \"Wholesale\" distribution channel.\r\n\r\n# Note\r\n\r\nFor each combination of sales organization and distribution channel, you can further assign one or more of the **divisions** that are defined for the sales organization. You can, for example, assign \"Food\" and \"Non-food\" divisions to the \"Wholesale\" distribution channel. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "EventRaisedDateTime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "OrganizationDivision": {
+                        "description": "# Definition\r\n\r\nA way of grouping materials, products, or services. The system uses divisions to determine the **sales areas** and the **business areas** for a material, product, or service.\r\n\r\n# Use\r\n\r\nA product or service is always assigned to just one division. From the point of view of sales and distribution, the use of divisions lets you organize your sales structure around groups of similar products or product lines. This allows the people in a division who process orders and service customers to specialize within a manageable area of expertise.\r\n\r\n# Example\r\n\r\nIf a **sales organization** sells food and non-food products through both retail and wholesale**distribution channels** each distribution channel could then be further split into food and non-food divisions.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "OverallDelivConfStatus": {
+                        "description": "# Definition\r\n\r\nRepresents the combined delivery confirmation status of all items in the sales document.\r\n\r\n# Use\r\n\r\nThe system confirms delivery for each **schedule line** after checking availability. The confirmation means that the system is able to confirm that a quantity is available for delivery on a certain day. The confirmation does not reflect when the goods are shipped to or received by the customer.",
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "PreviousOverallDelivConfStatus": {
+                        "description": "# Definition\r\n\r\nRepresents the combined delivery confirmation status of all items in the sales document.\r\n\r\n# Use\r\n\r\nThe system confirms delivery for each **schedule line** after checking availability. The confirmation means that the system is able to confirm that a quantity is available for delivery on a certain day. The confirmation does not reflect when the goods are shipped to or received by the customer.",
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "SalesOrder": {
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "SalesOrderType": {
+                        "description": "# Use\r\n\r\nYou can convert the keys that identify the **sales document types** in the original German system to language-specific keys. The converted keys then appear according to the language in which the user logs on.\r\n\r\n# Procedure\r\n\r\nEnter the original German key of the sales document type for which you want to provide a language-specific key.\r\n\r\n# Example\r\n\r\nA standard order in the German system is called a \"Terminauftrag\". The key is \"TA\". You could, for example, convert this to an English key: \"SO\".",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrganization": {
+                        "description": "# Definition\r\n\r\nAn organizational unit responsible for the sale of certain products or services. The responsibility of a sales organization may include legal liability for products and customer claims.\r\n\r\n# Use\r\n\r\nYou can assign any number of **distribution channels** and **divisions **to a sales organization. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SoldToParty": {
+                        "description": "# Definition\r\n\r\nGives an alphanumeric key, which clearly identifies the customer or vendor in the SAP system.",
+                        "type": "string",
+                        "maxLength": 10
+                    }
+                }
+            },
+            "sap_s4_beh_salesorder_v1_SalesOrder_TotCrdtChkStsChgd_v1": {
+                "type": "object",
+                "properties": {
+                    "DistributionChannel": {
+                        "description": "# Definition\r\n\r\nThe way in which products or services reach the customer. Typical examples of distribution channels are wholesale, retail, or direct sales.\r\n\r\n# Use\r\n\r\nYou can maintain information about customers and materials by **sales organization** and distribution channel. Within a sales organization you can deliver goods to a given customer through more than one distribution channel.\r\n\r\nYou can assign a distribution channel to one or more sales organizations. If, for example, you have numerous sales organizations, each sales organization may use the \"Wholesale\" distribution channel.\r\n\r\n# Note\r\n\r\nFor each combination of sales organization and distribution channel, you can further assign one or more of the **divisions** that are defined for the sales organization. You can, for example, assign \"Food\" and \"Non-food\" divisions to the \"Wholesale\" distribution channel. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "EventRaisedDateTime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "OrganizationDivision": {
+                        "description": "# Definition\r\n\r\nA way of grouping materials, products, or services. The system uses divisions to determine the **sales areas** and the **business areas** for a material, product, or service.\r\n\r\n# Use\r\n\r\nA product or service is always assigned to just one division. From the point of view of sales and distribution, the use of divisions lets you organize your sales structure around groups of similar products or product lines. This allows the people in a division who process orders and service customers to specialize within a manageable area of expertise.\r\n\r\n# Example\r\n\r\nIf a **sales organization** sells food and non-food products through both retail and wholesale**distribution channels** each distribution channel could then be further split into food and non-food divisions.",
+                        "type": "string",
+                        "maxLength": 2
+                    },
+                    "PreviousTotalCreditCheckStatus": {
+                        "type": "string",
+                        "maxLength": 1
+                    },
+                    "SalesOrder": {
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "SalesOrderType": {
+                        "description": "# Use\r\n\r\nYou can convert the keys that identify the **sales document types** in the original German system to language-specific keys. The converted keys then appear according to the language in which the user logs on.\r\n\r\n# Procedure\r\n\r\nEnter the original German key of the sales document type for which you want to provide a language-specific key.\r\n\r\n# Example\r\n\r\nA standard order in the German system is called a \"Terminauftrag\". The key is \"TA\". You could, for example, convert this to an English key: \"SO\".",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SalesOrganization": {
+                        "description": "# Definition\r\n\r\nAn organizational unit responsible for the sale of certain products or services. The responsibility of a sales organization may include legal liability for products and customer claims.\r\n\r\n# Use\r\n\r\nYou can assign any number of **distribution channels** and **divisions **to a sales organization. A particular combination of sales organization, distribution channel, and division is known as a **sales area**.",
+                        "type": "string",
+                        "maxLength": 4
+                    },
+                    "SoldToParty": {
+                        "description": "# Definition\r\n\r\nGives an alphanumeric key, which clearly identifies the customer or vendor in the SAP system.",
+                        "type": "string",
+                        "maxLength": 10
+                    },
+                    "TotalCreditCheckStatus": {
+                        "type": "string",
+                        "maxLength": 1
+                    }
+                }
+            }
+        },
+        "messageTraits": {
+            "CloudEventContext": {
+                "headers": {
+                    "type": "object",
+                    "properties": {
+                        "specversion": {
+                            "description": "The version of the CloudEvents specification which the event uses. This enables the interpretation of the context.",
+                            "type": "string",
+                            "const": "1.0"
+                        },
+                        "type": {
+                            "description": "Type of occurrence which has happened. Often this property is used for routing, observability, policy enforcement, etc.",
+                            "type": "string",
+                            "minLength": 1
+                        },
+                        "source": {
+                            "description": "This describes the event producer.",
+                            "type": "string",
+                            "format": "uri-reference"
+                        },
+                        "subject": {
+                            "description": "The subject of the event in the context of the event producer (identified by source).",
+                            "type": "string",
+                            "minLength": 1
+                        },
+                        "id": {
+                            "description": "ID of the event.",
+                            "type": "string",
+                            "minLength": 1,
+                            "examples": [
+                                "6925d08e-bc19-4ad7-902e-bd29721cc69b"
+                            ]
+                        },
+                        "time": {
+                            "description": "Timestamp of when the occurrence happened. Must adhere to RFC 3339.",
+                            "type": "string",
+                            "format": "date-time",
+                            "examples": [
+                                "2018-04-05T17:31:00Z"
+                            ]
+                        },
+                        "datacontenttype": {
+                            "description": "Describe the data encoding format",
+                            "type": "string",
+                            "const": "application/json"
+                        }
+                    },
+                    "required": [
+                        "id",
+                        "specversion",
+                        "source",
+                        "type"
+                    ]
+                }
+            }
+        }
+    },
+    "externalDocs": {
+        "description": "Business Documentation",
+        "url": "https://help.sap.com/http.svc/ahp2/SAP_S4HANA_CLOUD_PE/2025.001/EN/78/168e21723f4d58a631e3790a7f96b4/frameset.htm"
+    }
+}

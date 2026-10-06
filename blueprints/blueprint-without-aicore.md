@@ -20,7 +20,7 @@ This is the variant of `blueprint-with-aicore.md` for a **SAP BTP trial account*
 | Topic | Decision |
 |---|---|
 | ERP | **SAP S/4HANA Private Cloud** |
-| APIs and events for the demo | Available on the **SAP Business Accelerator Hub sandbox** (api.sap.com) |
+| APIs and events for the demo | API metadata (EDMX) and event specifications from **SAP Business Accelerator Hub** (api.sap.com); the Hub sandbox is not used. Scripted scenarios run on local mock data. Live reads come from an **SAP S/4HANA system in SAP Cloud Appliance Library (CAL)**, expected from 2026-10-08/09 (§4.3) |
 | Advanced ATP (Backorder Processing, Product Allocation) | **Not active.** Basic ATP only. |
 | Embedded PP/DS | **Not active.** Classic PP capacity planning only. |
 | Priority source | Sales order **delivery priority** (see §7 A2 for the mapping) |
@@ -167,13 +167,13 @@ Later options, not in scope now: Advanced ATP (Backorder Processing with *Win / 
 │  A2 Order Intake · A3 Supply & Inventory · A4 Capacity & Load Balancing · A5 Communication                               │
 │  Order Assistant service (chat, read-only tools, uses A1 authorization)                                                   │
 │  LLM client (anthropic | mock) · masking · output validation · prompt templates                                           │
-│  Tool layer: deterministic functions (ATP, BOM, stock, capacity, simulate) ── Adapters (mock | sandbox | s4)              │
+│  Tool layer: deterministic functions (ATP, BOM, stock, capacity, simulate) ── Adapters (mock | s4)                        │
 └──────┬─────────────────────────┬─────────────────────────────────┬───────────────────────────────┬──────────────────────────┘
        │ persistence             │ HTTPS (LLM calls)               │ simulated events              │ S/4 APIs
        ▼                         ▼                                 ▼                               ▼
  SQLite (demo, seeded      Anthropic Claude API            "Simulate S/4 event" button     Destination service →
- at start) or HANA Cloud   api.anthropic.com               posts the S/4 event payload     sandbox.api.sap.com
- trial                     (API key from a bound           to the CAP event handler        (APIKey header)
+ at start) or HANA Cloud   api.anthropic.com               posts the S/4 event payload     S/4HANA CAL system
+ trial                     (API key from a bound           to the CAP event handler        (read-only technical user)
                            user-provided service)
 ```
 
@@ -189,8 +189,8 @@ Later options, not in scope now: Advanced ATP (Backorder Processing with *Win / 
 | **SAP Build Work Zone, standard edition** | Launchpad, role-based spaces, notifications | ✔ | ✔ | ✔ |
 | **SAP Fiori elements / SAPUI5** | The three case apps and the Order Assistant (§6) | ✔ | ✔ | ✔ |
 | **HTML5 Application Repository** + managed approuter | Hosting the Fiori apps for Work Zone | ✔ | ✔ | ✔ |
-| **Destination service** | Sandbox URL + API key (additional header). Later: S/4HANA | ✔ | ✔ | ✔ |
-| **Connectivity service + Cloud Connector** | Access to S/4HANA Private Cloud | ✔ technically, but not for productive data | ✘ | ✔ |
+| **Destination service** | S/4HANA CAL system: URL + read-only technical user. Later: S/4HANA Private Cloud | ✔ | ✔ | ✔ |
+| **Connectivity service + Cloud Connector** | Access to S/4HANA Private Cloud, or to the CAL system if it is not reachable over the internet (§10) | ✔ technically, but not for productive data | Only if needed for CAL | ✔ |
 | **Authorization & Trust Management (XSUAA)** | Role collections per team | ✔ | ✔ | ✔ |
 | **SAP Event Mesh / Advanced Event Mesh** | S/4 sales order events → case creation | ✘ | Simulated | ✔ |
 | **SAP AI Core + Generative AI Hub** | Not used in this variant | ✘ | ✘ | Optional (§5.2) |
@@ -220,16 +220,21 @@ Every tool reads through an adapter with three modes. The mode is set per data s
 
 | Mode | Source | When |
 |---|---|---|
-| `mock` | Local CSV/JSON with the demo data in §8 | Scripted demo scenarios. Offline demo. |
-| `sandbox` | `sandbox.api.sap.com`, using the base URL from each API's *Try out* page; API key sent in the `APIKey` header | Showing that real S/4HANA APIs and payloads work end to end |
-| `s4` | Your S/4HANA Private Cloud through a BTP destination + Cloud Connector (principal propagation or technical user) | Pilot and rollout (not on trial) |
+| `mock` | Local CSV/JSON with the demo data in §8, on the CDS model imported from the Hub EDMX | Scripted demo scenarios. Offline demo. The only mode until the CAL system is connected. |
+| `s4` | An S/4HANA system through a BTP destination. **Demo:** the S/4HANA CAL system (fully-activated appliance, read through a technical user). **Pilot:** your S/4HANA Private Cloud through destination + Cloud Connector (principal propagation or technical user) | Demo: the "live data" view in each app. Pilot and rollout. |
 
-What the sandbox can and cannot do for this demo:
-- ✔ Real **read** calls with real S/4HANA payload shapes, so the adapters and field mappings are proven before the pilot.
-- ✘ **Shared, read-only, fixed data.** The sandbox will not contain our demo story (FG-100, SO-5005, overloaded work center, excess stock in plant 1100), and we can't create it there. So the **scripted scenarios run in `mock` mode**, and a "live data" view in each app shows the same tools working against the sandbox.
-- ✘ **No live event stream.** Business Accelerator Hub documents the event specifications (topics and payloads), but it doesn't push events anywhere, and Event Mesh is not on trial. In the demo, a "Simulate S/4 event" button posts a payload in exactly that format to the CAP event handler. In the pilot, events come from S/4HANA via **Enterprise Event Enablement** (channel to SAP Event Mesh, configured in `/IWXBE/CONFIG`).
-- ✘ Capacity load per day is probably not in the sandbox (see the table above), so A4 load data stays `mock` until the custom CDS service exists.
-- Keep the API key in a BTP destination (additional header) or a local `.env` that is never committed, not in code.
+**SAP Business Accelerator Hub** is the source of the API metadata only: the EDMX files for `cds import` (the mock model is built on them) and the API and event documentation. Its sandbox (*Try out*) is not used, because it is not offered for several APIs the agents need (`API_SALES_ORDER_SRV`, `API_WORK_CENTERS`), and sales orders are where every case starts.
+
+What the CAL system can and cannot do for this demo:
+- ✔ Real **read** calls against the same private cloud / on-premise API package the pilot uses, for every API in §4.2, including sales orders and work centers. The OData services must be activated in the CAL system first (`/IWFND/MAINT_SERVICE`).
+- ✔ The adapters and field mappings are proven on a real S/4HANA system before the pilot.
+- ✘ **Not our demo story.** The appliance ships with SAP's standard demo data (its own plants, materials and customers), not FG-100, SO-5005, the overloaded work center or the excess stock in plant 1100. So the **scripted scenarios run in `mock` mode**, and a "live data" view in each app shows the same tools working against the CAL system. Creating the §8 story in the CAL system is possible, but it is a separate decision (§10).
+- ✘ **No live event stream.** Business Accelerator Hub documents the event specifications (topics and payloads), and Event Mesh is not on trial. In the demo, a "Simulate S/4 event" button posts a payload in exactly that format to the CAP event handler. In the pilot, events come from S/4HANA via **Enterprise Event Enablement** (channel to SAP Event Mesh, configured in `/IWXBE/CONFIG`).
+- ✘ Capacity load per day has no standard released API (see the table above), so A4 load data stays `mock` until the custom CDS service exists.
+- **Read-only, although the system is writable.** The technical user gets display authorizations only, and agents never write to S/4HANA (write-back rule below).
+- **Release check.** The CAL release can differ from the API version downloaded from the Hub. Compare the CAL `$metadata` with the Hub EDMX, and re-import from the CAL system if they differ.
+- **Credentials.** The technical user's password goes into the BTP destination or a local `.env` / `default-env.json` that is never committed, not into code.
+- **Cost.** The CAL instance runs in your own hyperscaler account and is billed while it runs. Suspend it when nobody is demoing.
 
 **Write-back rule:** the agents never write confirmed quantities or dates directly into sales order schedule lines. After a person approves a supply or production change, the change is executed in S/4HANA (planned order or stock transfer), and the **standard ATP check re-confirms the order**. S/4HANA stays the system of record.
 
@@ -461,7 +466,7 @@ Delivery priority is an **item-level** field on the sales order (defaulted from 
 | `03` and above, or blank | NORMAL |
 
 - One case per **sales order item** that needs attention. Different items of one order can be in different lanes. The Sales app groups them by order.
-- In `API_SALES_ORDER_SRV` read the item entity's delivery priority field. Check the exact property name in the sandbox `$metadata` while building the adapter.
+- In `API_SALES_ORDER_SRV` read the item entity's delivery priority field. Check the exact property name in the Hub EDMX while building the adapter, and confirm it in the CAL system's `$metadata`.
 - If delivery priority changes on an open order (sales order *Changed* event), A2 re-evaluates the lane and A1 records the change in the audit log. An upgrade to HIGH moves the case into the fast lane and to the top of the worklists.
 
 **Logic**
@@ -645,8 +650,8 @@ All dates are relative to the demo day (D). Plant 1000 is the main plant; plant 
 
 | Phase | Scope | Data | Outcome |
 |---|---|---|---|
-| **0 · Prerequisites** (1 wk) | BTP trial account (Cloud Foundry), Work Zone standard edition subscription, role collections. Anthropic Console account, API key in a dedicated workspace with a spend limit. Business Accelerator Hub API key + sandbox destination. Delivery priority customizing values | – | Ready environment |
-| **1 · Demo** (4–6 wks) | A1–A5 in CAP, LLM client (`anthropic` + `mock`), 3 case apps + Order Assistant, Work Zone site, scenarios 1–6, "live data" view against the sandbox, simulated S/4 events | `mock` for scenarios, `sandbox` for live reads (§4.3) | Clickable end-to-end demo for the business |
+| **0 · Prerequisites** (1 wk) | BTP trial account (Cloud Foundry), Work Zone standard edition subscription, role collections. Anthropic Console account, API key in a dedicated workspace with a spend limit. Business Accelerator Hub login (EDMX download). S/4HANA CAL instance with the §4.2 OData services activated, a read-only technical user and a BTP destination. Delivery priority customizing values | – | Ready environment |
+| **1 · Demo** (4–6 wks) | A1–A5 in CAP, LLM client (`anthropic` + `mock`), 3 case apps + Order Assistant, Work Zone site, scenarios 1–6, "live data" view against the S/4HANA CAL system, simulated S/4 events | `mock` for scenarios, `s4` against the CAL system for live reads (§4.3) | Clickable end-to-end demo for the business |
 | **2 · Pilot** (6–8 wks) | Move to a **paid BTP subaccount** (trial is not for productive data). S/4HANA Private Cloud via destination + Cloud Connector. Activate the OData services. Enterprise Event Enablement → Event Mesh. Custom CDS service for capacity load. HANA Cloud. LLM: Claude API (after privacy approval) or AI Core `aicore` mode. One plant, HIGH lane only | `s4` read-only | Measured lead time vs baseline |
 | **3 · Rollout** | All lanes and plants. Controlled write-back (stock transfer proposals, planned order changes via approved APIs, ATP re-check). Teams / email channels. Optional Joule front end on the same tools | S/4 read + controlled write | Production use |
 
@@ -656,7 +661,7 @@ All dates are relative to the demo day (D). Plant 1000 is the main plant; plant 
 
 ## 10. Open decisions
 
-Decided: S/4HANA Private Cloud · sandbox APIs for the demo · no Advanced ATP · no PP/DS · priority from delivery priority · BTP trial for the demo · Claude API instead of AI Core · Order Assistant instead of Joule (§0).
+Decided: S/4HANA Private Cloud · Hub EDMX + local mocks for the demo scenarios, S/4HANA CAL system for live reads (no Hub sandbox) · no Advanced ATP · no PP/DS · priority from delivery priority · BTP trial for the demo · Claude API instead of AI Core · Order Assistant instead of Joule (§0).
 
 1. **S/4HANA release** (e.g. 2022 / 2023) of the Private Cloud system. This fixes the API versions and Fiori app availability.
 2. **Delivery priority values** used in your customizing, and which ones mean HIGH, MEDIUM and NORMAL (§7 A2).
@@ -666,3 +671,5 @@ Decided: S/4HANA Private Cloud · sandbox APIs for the demo · no Advanced ATP �
 6. **Data privacy for the Claude API:** may S/4 data (masked) be sent to Anthropic in the pilot, or must the pilot use SAP AI Core? Which data residency and retention terms are required?
 7. **Models and budget:** which Claude models per agent after measuring the demo scenarios, and the monthly spend limit. Who owns the Anthropic account and key?
 8. **Pilot account:** which paid BTP subaccount and entitlements (HANA Cloud, Event Mesh, optionally AI Core and Joule) replace the trial.
+9. **CAL connection:** can the BTP trial destination reach the CAL system's OData port directly over HTTPS (internet destination, basic auth), or is a Cloud Connector needed? Decide once the instance is up.
+10. **Demo story in CAL:** keep the CAL system for live reads of its standard data only, or also create the §8 story there (materials, BOMs, stock, orders, work centers) so a scenario can run on real S/4 data.

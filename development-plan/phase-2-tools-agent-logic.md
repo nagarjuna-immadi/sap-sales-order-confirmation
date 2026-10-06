@@ -6,14 +6,16 @@
 
 ## 2.1 S/4 access layer: `srv/lib/s4/`
 
-The blueprint's adapters (§4.3) map onto CAP profiles, as in the TM project: the imported services are mocked from CSV in development (`mock`), point at the sandbox in `[hybrid]` (`sandbox`), and at a destination in `[production]`. The `s4` mode (Cloud Connector) is a phase 10 extra.
+The blueprint's adapters (§4.3) map onto CAP profiles, as in the TM project: the imported services are mocked from CSV in development (`mock`), and point at the S/4HANA CAL system in `[hybrid]` (technical user from `.env`) and `[production]` (destination `S4_CAL`), both `s4` (phase 6). The pilot later swaps only the `s4` credentials to the Private Cloud system (phase 10).
 
 - [ ] One module per data source (`sales-order.js`, `availability.js`, `stock.js`, `bom.js`, `product.js`, `orders.js`, `work-center.js`), each connecting once (`cds.connect.to`) and returning **plain domain objects** (`{ material, plant, unrestrictedQty }`), never raw OData payloads. Field mapping lives only here, with the real names from the phase 0 table.
 - [ ] Always use an explicit `$select`.
-- [ ] `availability.js`: in the mock profile, compute basic ATP from the stock CSV (the generic mock cannot run the function). In `[hybrid]`, call the real function.
+- [ ] `availability.js`: in the mock profile, compute basic ATP from the stock CSV (the generic mock cannot run the function) and return the `AvailabilityRecord` shape. In `[hybrid]`, call the real V2 function import (`DetermineAvailabilityOf` for quantity → date).
+- [ ] `bom.js`: explode level by level over `MaterialBOMItem` in every profile; do not call the `ExplodeBOM` function import (no mock for it).
+- [ ] Call only entity reads and the GET function imports. The imported models also contain write function imports (release, convert, schedule, approve); no module calls them.
 - [ ] `capacity-load.js` and `movement-stats.js`: read the local mock entities from phase 1 (no API, §4.2).
 - [ ] `srv/lib/cache.js`: a small TTL cache for master data (products, BOM, work centers).
-- [ ] Every result carries a `source` field (`mock` / `sandbox`), so the UI can show where the data came from.
+- [ ] Every result carries a `source` field (`mock` / `s4`), so the UI can show where the data came from.
 
 ## 2.2 Tools: `srv/lib/tools/` (pure or read-only, no LLM)
 

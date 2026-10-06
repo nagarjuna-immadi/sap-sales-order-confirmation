@@ -12,7 +12,7 @@
   - `SupplyResult` (A3 snapshot), `Recommendation` (agent, kind, options, recommended option, rationale, confidence, input snapshot, `modelId`, `promptVersion`, `llmUsed`, `accepted`), `Decision`.
   - `AuditLog`: case, CR, action, actor, role, timestamp, from → to status, comment, reason, payload, recommendation shown and whether it was accepted, `outcome` (DONE / REFUSED).
   - `Notification` (A5, phase 2), `ChatConversation` and `ChatMessage` (phase 8), `LlmCallLog` (phase 7), `IdempotencyKey`.
-- [ ] Local mock entities for data the sandbox does not have (phase 0.4): `CapacityLoad` (work center, day offset, load in units), `MaterialMovementStats` (last movement, monthly demand), `Customers` with `CustomerContract` (clause text, language, tone). C-1001 ABC Automotive has the clause "2% of order value per day late".
+- [ ] Local mock entities for data with no standard S/4 API (phase 0.4): `CapacityLoad` (work center, day offset, available capacity, requirement, remaining capacity and utilization in pieces per day; the names mirror `A_WorkCenterCapPerBucket`, see [phase 0 consequences](phase-0-setup.md#real-s4-names) and open decision 7), `MaterialMovementStats` (last movement, monthly demand), `Customers` with `CustomerContract` (clause text, language, tone). C-1001 ABC Automotive has the clause "2% of order value per day late".
 - [ ] Code lists with criticality (1 = red, 2 = yellow, 3 = green) and a `name` column for value helps:
   - `Lanes`: HIGH 1, MEDIUM 2, NORMAL 3 (also used as `laneRank` for sorting, §2.2)
   - `CaseStatus`: NEW 0, AUTO_CONFIRMED 3, WITH_SUPPLY_PLANNING 2, WITH_PRODUCTION 2, PRODUCTION_CONFIRMED 3, PRODUCTION_REJECTED 1, SUPPLY_CONFIRMED 3, REJECTED 1, CONFIRMED_TO_CUSTOMER 3, CLOSED 0
