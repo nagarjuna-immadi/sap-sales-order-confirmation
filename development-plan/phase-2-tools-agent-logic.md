@@ -21,19 +21,31 @@ The rules below fill gaps that §7 and §8 leave open. Each one is needed to rep
 
 The blueprint's adapters (§4.3) map onto CAP profiles, as in the TM project: the imported services are mocked from CSV in development (`mock`), and point at the S/4HANA CAL system in `[hybrid]` (technical user from `.env`) and `[production]` (destination `S4_CAL`), both `s4` (phase 6). The pilot later swaps only the `s4` credentials to the Private Cloud system (phase 10).
 
-- [ ] One module per data source (`sales-order.js`, `availability.js`, `stock.js`, `bom.js`, `product.js`, `orders.js`, `work-center.js`), each connecting once (`cds.connect.to`) and returning **plain domain objects** (`{ material, plant, unrestrictedQty }`), never raw OData payloads. Field mapping lives only here, with the real names from the phase 0 table.
-- [ ] **Mode per data source, not per profile** (§4.3): a shared `isMocked(serviceName)` (no `credentials` in `cds.requires.<service>`) decides `mock` or `s4`. Phase 6 keeps APIs that are not active in CAL mocked in `[production]` (open decision 3), so a profile check would be wrong there.
-- [ ] Always use an explicit `$select`.
-- [ ] `sales-order.js`: header, item and first schedule line (flat reads, phase 0), including `DeliveryPriority` and `NetAmount`. Replaces the direct read in `DemoService.openCase`.
-- [ ] `availability.js`: when mocked, compute basic ATP from the stock CSV (unrestricted stock of the material in the plant; the generic mock cannot run the function) and return the `AvailabilityRecord` shape. When `s4`, call the real V2 function import (`DetermineAvailabilityOf` for quantity → date).
-- [ ] `stock.js`: unrestricted stock (`InventoryStockType` `01`) per plant, summed over storage locations. Filter by material only, so every plant that has the material is returned (plant 1100 is not configured anywhere else).
-- [ ] `bom.js`: explode level by level over `MaterialBOMItem` in every profile; do not call the `ExplodeBOM` function import (no mock for it).
-- [ ] `orders.js`: planned and production orders with their capacity or operation rows. A receipt with `SalesOrder` set is **pegged** to that order.
-- [ ] `work-center.js`: work centers and capacity, plus the `ProductionRouting` mock (2.0).
-- [ ] Call only entity reads and the GET function imports. The imported models also contain write function imports (release, convert, schedule, approve); no module calls them.
-- [ ] `capacity-load.js` and `movement-stats.js`: read the local mock entities from phase 1 (no API, §4.2).
-- [ ] `srv/lib/cache.js`: a small TTL cache for master data (products, BOM, work centers, routing).
-- [ ] Every result carries a `source` field (`mock` / `s4`), so the UI can show where the data came from.
+- [x] One module per data source (`sales-order.js`, `availability.js`, `stock.js`, `bom.js`, `product.js`, `orders.js`, `work-center.js`), each connecting once (`cds.connect.to`) and returning **plain domain objects** (`{ material, plant, unrestrictedQty }`), never raw OData payloads. Field mapping lives only here, with the real names from the phase 0 table.
+- [x] **Mode per data source, not per profile** (§4.3): a shared `isMocked(serviceName)` (no `credentials` in `cds.requires.<service>`) decides `mock` or `s4`. Phase 6 keeps APIs that are not active in CAL mocked in `[production]` (open decision 3), so a profile check would be wrong there.
+- [x] Always use an explicit `$select`.
+- [x] `sales-order.js`: header, item and first schedule line (flat reads, phase 0), including `DeliveryPriority` and `NetAmount`. Replaces the direct read in `DemoService.openCase`.
+- [x] `availability.js`: when mocked, compute basic ATP from the stock CSV (unrestricted stock of the material in the plant; the generic mock cannot run the function) and return the `AvailabilityRecord` shape. When `s4`, call the real V2 function import (`DetermineAvailabilityOf` for quantity → date).
+- [x] `stock.js`: unrestricted stock (`InventoryStockType` `01`) per plant, summed over storage locations. Filter by material only, so every plant that has the material is returned (plant 1100 is not configured anywhere else).
+- [x] `bom.js`: explode level by level over `MaterialBOMItem` in every profile; do not call the `ExplodeBOM` function import (no mock for it).
+- [x] `orders.js`: planned and production orders with their capacity or operation rows. A receipt with `SalesOrder` set is **pegged** to that order.
+- [x] `work-center.js`: work centers and capacity, plus the `ProductionRouting` mock (2.0).
+- [x] Call only entity reads and the GET function imports. The imported models also contain write function imports (release, convert, schedule, approve); no module calls them.
+- [x] `capacity-load.js` and `movement-stats.js`: read the local mock entities from phase 1 (no API, §4.2).
+- [x] `srv/lib/cache.js`: a small TTL cache for master data (products, BOM, work centers, routing).
+- [x] Every result carries a `source` field (`mock` / `s4`), so the UI can show where the data came from.
+
+### S/4 access layer result (done 2026-10-06)
+
+Checked against the CSV mocks with `DEMO_TODAY=2026-10-06`: every module returns the §8 values (SO-5005 priority `01`, requested D+5; FG-300 stock 20 in 1000 and 200 in 1100; BOM FG-100 × 100 → SFG-200 100, RAW-1 105, RAW-2 5; FG-100 lot size `EX` → `EXACT`; FG-100's two production orders pegged to SO-5001 / SO-5004; routing versions `0001` / `0002`; WC-ASSY-02 load 40 / 30 / 25%; FG-300 in 1100 120 days without movement). `DemoService.openCase` opens FC-0001 through `sales-order.js`. Choices the list above leaves open:
+
+- **Functions** (domain objects, all with `source`): `getSalesOrderItems(salesOrder)`, `getSalesOrderItem(salesOrder, item)`, `getItemsForMaterial(material, plant)` (for reallocation candidates); `checkAvailability({ material, plant, quantity })` → `{ availableQty, availableDate }` (null date = never); `getStock(material, plants?)`; `getBomItems(material, plant)`, `explodeBom(material, plant, quantity)`; `getProduct(material)`, `getSupplyPlanning(material, plant)` with `lotSize.policy` `EXACT` / `FIXED` / `OTHER`; `getReceipts(material, plant)`, `getScheduledOrders(workCenter, plant, from, to)`; `getWorkCenters(plant)`, `getRouting(material, plant)`; `getLoad({ plant, workCenters?, from, to })`; `getMovementStats(material, plants?)`. Dates in and out are `YYYY-MM-DD`.
+- **Shared code:** `srv/lib/s4/connection.js` has `isMocked`, `sourceOf`, `connect` and the value helpers (`isoDate` also reads the V2 `/Date(ms)/` format, `num` reads SQLite's decimal strings, `flag` reads `X`, `qty` rounds to 3 decimals so 100 × 1.05 is 105).
+- **Mock ATP:** available on D+0 when unrestricted stock covers the quantity, otherwise never (no receipts). **s4 ATP:** checking rule `A` (SD), a constant in `availability.js`; S/4's `9999-12-31` means never. The V2 function call is untested until the CAL system is connected (phase 6).
+- **Stock:** special stock (`InventorySpecialStockType` set) is not free and is skipped.
+- **BOM:** production BOMs only (category `M`, usage `1`), the first variant, items valid today; scrap is added to the component quantity.
+- **Orders:** deleted, closed and technically completed production orders are skipped (the flags are filtered in JS, because the mock has them as null). A production order's quantity is its total quantity; goods receipts are not subtracted until the pilot.
+- **Cache:** 5 minutes, keyed with the source, failures not cached; `clearCache()` is for `resetDemo` (2.4). Transactional data (orders, stock, ATP, load) is never cached.
 
 ## 2.2 Tools: `srv/lib/tools/` (pure or read-only, no LLM)
 
