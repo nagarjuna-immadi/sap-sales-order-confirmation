@@ -7,7 +7,7 @@
 ## 6.0 Decisions, prerequisites and spike
 
 - [x] **Open decision 1** (decided 2026-10-06): all LLM work runs on `@cap-js/agents` with `kind: anthropic`: A2–A5 here, the Order Assistant in phase 7.
-- [ ] **LLM account:** API key from the project's Anthropic Console workspace, with a monthly spend limit (phase 0.7).
+- [x] **LLM account:** API key from the project's Anthropic Console workspace, with a monthly spend limit (phase 0.7).
 - [ ] **Models:** `claude-opus-5-5` by default (§4.4). For cheap local development, `claude-haiku-4-5-20251001` is a configuration change. The final choice per agent is measured in phase 9.
 - [ ] **Spike** (`@cap-js/agents` 0.9.7 was read but not run for this design). Check each point under `cds watch --profile hybrid` with a throwaway agent and note the result here. If one fails, stop and decide with the user.
   - `srv.chat(query)` called from an event handler (outside a request) runs the agent as a privileged user and returns `{ text, status, toolCalls }`, with each tool call's arguments and result. It is documented as an evaluation helper, so also check it is not limited to tests.

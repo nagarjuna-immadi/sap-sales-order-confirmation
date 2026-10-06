@@ -1,25 +1,18 @@
 using {order.conf as db} from '../db/schema';
-using {SupplyPlanningService} from './supply-service';
 using {ProductionService} from './production-service';
 using {SalesService} from './sales-service';
 
 /*
  * Just enough UI for the Fiori preview on the CAP index page (development plan
- * 1.4): lists, object pages, the Case Timeline and the action buttons, so
- * scenario 1 can be walked by hand. The case apps of phases 3–5 bring their
- * own annotations (srv/common-annotations.cds, app/<app>/annotations.cds); this
- * file goes away then.
+ * 1.4): lists, object pages and the action buttons, so scenario 1 can be walked
+ * by hand. The case apps of phases 3–5 bring their own annotations
+ * (srv/common-annotations.cds, app/<app>/annotations.cds): the Supply Planning
+ * Workbench has its own since phase 3, and this file goes away after phase 5.
  */
 
 // --- Shared, on the domain model (all services inherit them) -----------------
 
 annotate db.OrderFeasibilityCase with @(
-  UI.HeaderInfo         : {
-    TypeName      : 'Case',
-    TypeNamePlural: 'Cases',
-    Title         : {Value: caseId},
-    Description   : {Value: salesOrder},
-  },
   UI.LineItem           : [
     {Value: caseId, Label: 'Case'},
     {Value: salesOrder, Label: 'Sales Order'},
@@ -79,31 +72,7 @@ annotate db.Recommendation with @(UI.LineItem: [
   {Value: createdAt, Label: 'Created'},
 ]);
 
-annotate db.CaseTimeline with @(UI.LineItem: [
-  {Value: at, Label: 'At'},
-  {Value: step, Label: 'Step'},
-  {Value: action, Label: 'Action'},
-  {Value: actor, Label: 'Actor'},
-  {Value: role, Label: 'Role'},
-  {Value: fromStatus, Label: 'From'},
-  {Value: toStatus, Label: 'To'},
-  {Value: outcome, Label: 'Outcome'},
-  {Value: refusalCode, Label: 'Refusal'},
-  {Value: comment, Label: 'Comment'},
-  {Value: reason, Label: 'Reason'},
-  {Value: durationText, Label: 'Since Previous Step'},
-]);
-
 // --- Actions per service ------------------------------------------------------
-
-annotate SupplyPlanningService.Cases with @(UI.Identification: [
-  {$Type: 'UI.DataFieldForAction', Action: 'SupplyPlanningService.confirmFromStock', Label: 'Confirm from Stock'},
-  {$Type: 'UI.DataFieldForAction', Action: 'SupplyPlanningService.approveStockTransfer', Label: 'Approve Stock Transfer'},
-  {$Type: 'UI.DataFieldForAction', Action: 'SupplyPlanningService.approveReallocation', Label: 'Approve Reallocation'},
-  {$Type: 'UI.DataFieldForAction', Action: 'SupplyPlanningService.requestProductionCheck', Label: 'Request Production Check'},
-  {$Type: 'UI.DataFieldForAction', Action: 'SupplyPlanningService.reject', Label: 'Reject'},
-  {$Type: 'UI.DataFieldForAction', Action: 'SupplyPlanningService.confirmDateToSales', Label: 'Confirm Date to Sales'},
-]);
 
 annotate SalesService.Cases with @(UI.Identification: [
   {$Type: 'UI.DataFieldForAction', Action: 'SalesService.confirmToCustomer', Label: 'Confirm to Customer'},

@@ -8,6 +8,8 @@ const anthropicSdk = {
 }
 
 export default [
+  // UI5 build output
+  { ignores: ['app/*/dist/**'] },
   ...cds.recommended,
   {
     rules: {

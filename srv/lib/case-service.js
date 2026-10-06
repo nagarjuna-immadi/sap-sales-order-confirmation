@@ -5,7 +5,8 @@
 // - the Case Timeline gets its durations (case-timeline.js);
 // - every bound action goes to the orchestrator, which checks the ETag and the
 //   rules and writes status and audit row. The action returns the entity
-//   again, so Fiori elements gets the new status and version.
+//   again, read through the service, so Fiori elements gets the new status,
+//   version and computed fields.
 
 import cds from '@sap/cds'
 import { executeAction } from '../agents/feasibility-case-orchestrator/orchestrator.js'
@@ -105,7 +106,8 @@ export function registerCaseHandlers(srv, { role, actions, order = {} }) {
       const target = await caseOf(req)
       if (!target || !canRead(req.user, target, [role])) return req.reject(404, `${target?.value ?? 'Case'} not found`)
       await executeAction(req, action, req.data)
-      return SELECT.one.from(entity).where({ [target.key]: target.value })
+      // through the service, so the result has its computed fields (case-view.js)
+      return srv.run(SELECT.one.from(entity).where({ [target.key]: target.value }))
     })
   }
 }
