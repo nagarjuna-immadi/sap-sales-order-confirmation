@@ -49,22 +49,22 @@ The only function imports the app may call are the GET ones (ATP, `ExplodeBOM`).
 
 ## 0.2 Scaffold the project
 
-- [ ] Add `.gitignore` first: `.env`, `default-env.json`, `.cdsrc-private.json`, `node_modules/`, `gen/`, `mta_archives/`, `*.mtar`, `*.sqlite`.
-- [ ] Run `cds init` in place, as an ES module (`"type": "module"`), then add `@sap/cds`, `@cap-js/sqlite`, `@sap/xssec`, and (dev) `@sap/cds-dk`.
-- [ ] `package.json` scripts: `start`, `watch` (`cds watch`), `watch-hybrid` (`cds watch --profile hybrid`).
-- [ ] Add an ESLint rule (`no-restricted-imports`) so `@anthropic-ai/sdk` can only be imported in `srv/lib/llm/` (phase 7).
-- [ ] Add a CI grep check that fails on the word "copilot" in `app/`, `srv/` and `db/`.
-- [ ] Put the run commands into `CLAUDE.md`.
+- [x] Add `.gitignore` first: `.env`, `default-env.json`, `.cdsrc-private.json`, `node_modules/`, `gen/`, `mta_archives/`, `*.mtar`, `*.sqlite`.
+- [x] Run `cds init` in place, as an ES module (`"type": "module"`), then add `@sap/cds`, `@cap-js/sqlite`, `@sap/xssec`, and (dev) `@sap/cds-dk`.
+- [x] `package.json` scripts: `start`, `watch` (`cds watch`), `watch-hybrid` (`cds watch --profile hybrid`).
+- [x] Add an ESLint rule (`no-restricted-imports`) so `@anthropic-ai/sdk` can only be imported in `srv/lib/llm/` (phase 7).
+- [x] Add a grep check that fails on the word "copilot" in `app/`, `srv/` and `db/` (`npm run check:wording`; run by hand, no CI).
+- [x] Put the run commands into `CLAUDE.md`.
 
 ## 0.3 Import the S/4 services
 
-- [ ] Run `cds import srv/external/<API>.edmx --as cds` for each API from 0.1 (after the renaming).
-- [ ] In `package.json` → `cds.requires`, add each API (`kind: odata-v2`, `model: srv/external/<API>`). No credentials yet; the `[hybrid]` and `[production]` entries come in phase 6.
-- [ ] Check how the importer maps the V2 dates: `Edm.DateTime` with `sap:display-format="Date"` (requested and confirmed delivery dates, order dates) should become `Date`, the rest `DateTime`. Phase 6 compares this against real payloads from the CAL system.
-- [ ] Check what the importer makes of the parameterized `A_WorkCenterCapPerBucket` / `A_WorkCenterCapOrderPerBucket` (a `…Parameters` entity with a `Set` navigation). The generic CSV mock cannot serve it; see 0.4.
-- [ ] Set `max_get_url_length: 8192` on each service (lesson from the TM project: CAP's default turns long GETs into `POST $batch`, which the S/4 gateway rejects with `403 x-csrf-token: Required` unless a CSRF token is fetched first).
-- [ ] Fix any import errors the compiler reports (as with `not null default null` in the TM project). Note the fix here, so it can be redone after every re-import.
-- [ ] Write down the real entity set, key and field names in the table [below](#real-s4-names). Most important: the **delivery priority** property on the sales order item (§7 A2).
+- [x] Run `cds import srv/external/<API>.edmx --as cds` for each API from 0.1 (after the renaming). Done 2026-10-06 with `@sap/cds-dk` 10.1: `srv/external/<namespace>.cds` next to each EDMX. `API_PRODUCT_AVAILY_INFO_BASIC` reports "There are no entities in the OData model", which is expected (functions only).
+- [x] In `package.json` → `cds.requires`, add each API (`kind: odata-v2`, `model: srv/external/<API>`). No credentials yet; the `[hybrid]` and `[production]` entries come in phase 6. `cds import` wrote all eight entries itself.
+- [x] Check how the importer maps the V2 dates: `Edm.DateTime` with `sap:display-format="Date"` (requested and confirmed delivery dates, order dates) should become `Date`, the rest `DateTime`. Phase 6 compares this against real payloads from the CAL system. Result: as expected. All `display-format="Date"` properties became `Date` (e.g. `RequestedDeliveryDate`, `ConfirmedDeliveryDate`, `SalesOrderDate`, `PlndOrderPlannedStartDate`); the ATP result's `PeriodStartUTCDateTime` / `PeriodEndUTCDateTime` (no display format) became `DateTime`; `Edm.Time` became `Time`; `Edm.DateTimeOffset` became `Timestamp` (or `DateTime` at precision 0, as in planned orders). The production order's `LastChangeDateTime` is `String(14)` already in SAP's EDMX. We read none of the change stamps.
+- [x] Check what the importer makes of the parameterized `A_WorkCenterCapPerBucket` / `A_WorkCenterCapOrderPerBucket` (a `…Parameters` entity with a `Set` navigation). The generic CSV mock cannot serve it; see 0.4. Result: two plain entities, no CDS parameters. `A_WorkCenterCapPerBucket` has the three parameters (`P_CapEvalStartDate`, `P_CapEvalEndDate`, `P_CapEvalBucketType`) as keys and a `Set` association; `A_WorkCenterCapPerBucketSet` repeats them as keys (9 keys in all) with a `Parameters` association back. Both associations have no ON condition, so the mock cannot navigate `…(…)/Set`; it could only list the `…Set` entity flat. Same for `A_WorkCenterCapOrderPerBucket`. Capacity load stays in the local mock (phase 1).
+- [x] Set `max_get_url_length: 8192` on each service (lesson from the TM project: CAP's default turns long GETs into `POST $batch`, which the S/4 gateway rejects with `403 x-csrf-token: Required` unless a CSRF token is fetched first). Set in each `cds.requires` entry (CAP's default is 1028); `cds env requires` shows it on all eight.
+- [x] Fix any import errors the compiler reports (as with `not null default null` in the TM project). Note the fix here, so it can be redone after every re-import. Result: none. All eight compile, deploy to SQLite and are mocked by `cds serve all --with-mocks --in-memory` without errors, so nothing needs redoing after a re-import.
+- [x] Write down the real entity set, key and field names in the table [below](#real-s4-names). Most important: the **delivery priority** property on the sales order item (§7 A2). Re-checked against the imported model on 2026-10-06: every entity, key and field in the table exists as written; `A_SalesOrderItem.DeliveryPriority` is `String(2)`.
 
 ## 0.4 Mock data (`srv/external/data/`)
 
@@ -114,7 +114,7 @@ Not part of the phase 0 exit criteria: phases 1–5 run on mocks. Finish it befo
 
 ## Real S/4 names
 
-Read from the downloaded EDMX files on 2026-10-06. Re-check after `cds import` in 0.3.
+Read from the downloaded EDMX files on 2026-10-06 and re-checked against the `cds import` result (0.3) the same day: all names match.
 
 | Real S/4 names | Entity set | Key | Notes |
 | --- | --- | --- | --- |

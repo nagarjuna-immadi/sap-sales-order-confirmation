@@ -33,7 +33,7 @@
 
 - [ ] No keys in the git history (secret scan).
 - [ ] No unmasked customer names or prices in outgoing LLM requests (check a sample in hybrid mode).
-- [ ] No "copilot" in `app/`, `srv/`, `db/` (CI grep from phase 0).
+- [ ] No "copilot" in `app/`, `srv/`, `db/` (`npm run check:wording` from phase 0).
 - [ ] Each action refused with the wrong role on the deployed app.
 - [ ] `AuditLog` has no UPDATE or DELETE path.
 

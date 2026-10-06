@@ -4,7 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository state
 
-There is no code yet, so no build, lint or run commands exist. The source of truth is `blueprints/blueprint-without-aicore.md` (the BTP trial variant the demo is built on). `blueprints/blueprint-with-aicore.md` is the AI Core variant: it is the reference for a later move to AI Core and Joule, and it shares the process, agents, case apps, business rules and demo data. `blueprints/High_Priority_Sales_Order_Communication_Agent_Design.pdf` is an outdated draft: don't use it, and don't refer to it. When code is added, put its build and run commands here.
+The project is being scaffolded (phase 0 of `development-plan/`). The source of truth is `blueprints/blueprint-without-aicore.md` (the BTP trial variant the demo is built on). `blueprints/blueprint-with-aicore.md` is the AI Core variant: it is the reference for a later move to AI Core and Joule, and it shares the process, agents, case apps, business rules and demo data. `blueprints/High_Priority_Sales_Order_Communication_Agent_Design.pdf` is an outdated draft: don't use it, and don't refer to it. Keep the commands below up to date as code is added.
+
+## Commands
+
+- `npm install`: install dependencies.
+- `npm run watch`: local dev server (`cds watch`) on mock data and SQLite, at `http://localhost:4004`.
+- `npm run watch-hybrid`: local server against bound BTP services (`cds watch --profile hybrid`; the binding is set up by the user in phase 6).
+- `npm start`: production start (`cds-serve`), used by Cloud Foundry.
+- `npm run lint`: ESLint, including the rule that allows `@anthropic-ai/sdk` imports only in `srv/lib/llm/`.
+- `npm run check:wording`: fails if "copilot" appears in `app/`, `srv/` or `db/`.
+
+There is no CI: run `npm run check:wording` and `npm run lint` by hand before committing.
 
 ## What is being built
 
