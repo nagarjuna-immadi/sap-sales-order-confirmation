@@ -2,7 +2,7 @@
 //
 // The mode is decided per data source, not per profile: a service without
 // credentials in cds.requires is served from the CSV mocks (`mock`), one with
-// credentials goes to the S/4HANA system (`s4`). Phase 8 keeps APIs that are
+// credentials goes to the S/4HANA system (`s4`). Phase 9 keeps APIs that are
 // not active in the CAL system mocked in production, so a profile check would
 // be wrong there.
 //

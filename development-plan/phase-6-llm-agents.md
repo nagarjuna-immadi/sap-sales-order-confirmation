@@ -2,13 +2,13 @@
 
 [← Development plan](README.md) · Previous: [Phase 5](phase-5-sales-feasibility.md) · Next: [Phase 7](phase-7-order-assistant.md)
 
-**Goal:** A2–A5 become CAP agents on `@cap-js/agents`, as the agents in the TM project, and get their Claude steps (summaries, penalty extraction, explanations, drafts). The phase 2 template texts stay as the fallback. Built and checked locally; the cloud deployment follows in phase 8. Runs on BTP trial **without AI Core** (§4.4, §5.1, §5.2). There is no `@anthropic-ai/sdk` and no LLM client module of our own.
+**Goal:** A2–A5 become CAP agents on `@cap-js/agents`, as the agents in the TM project, and get their Claude steps (summaries, penalty extraction, explanations, drafts). The phase 2 template texts stay as the fallback. Built and checked locally; the cloud deployment follows in phase 9. Runs on BTP trial **without AI Core** (§4.4, §5.1, §5.2). There is no `@anthropic-ai/sdk` and no LLM client module of our own.
 
 ## 6.0 Decisions, prerequisites and spike
 
 - [x] **Open decision 1** (decided 2026-10-06): all LLM work runs on `@cap-js/agents` with `kind: anthropic`: A2–A5 here, the Order Assistant in phase 7.
 - [x] **LLM account:** API key from the project's Anthropic Console workspace, with a monthly spend limit (phase 0.7).
-- [x] **Models:** `claude-opus-5-5` by default (§4.4): `[production]`. `[hybrid]` uses `claude-haiku-4-5-20251001` for cheap local development. The final choice per agent is measured in phase 9.
+- [x] **Models:** `claude-opus-5-5` by default (§4.4): `[production]`. `[hybrid]` uses `claude-haiku-4-5-20251001` for cheap local development. The final choice per agent is measured in phase 10.
 - [x] **Spike** (`@cap-js/agents` 0.9.7, run 2026-10-06 under `cds watch --profile hybrid` with a throwaway agent, then with the four agents). All points hold, two only with a workaround in our code; nothing changes the design:
   - ✔ `srv.chat(query)` from a background job runs with the job's context (a privileged user there) and returns `{ text, status, taskId, contextId }`. The tool calls (`toolCalls`, each with `tool`, `args`, `result`) come only with `srv.chat(query, { _details: true })`, an "internal/test escape hatch" that works in every profile. A failed run throws.
   - ✔ `emit_data_part` exists only with `cds.agents.emitDataParts: true`. It then shows up in `toolCalls`; with masking, its `args.data` has the pseudonyms and its `result.data` has them resolved.
@@ -20,9 +20,9 @@
 ## 6.1 Plugin setup and shared code
 
 - [x] `npm add @cap-js/agents ajv`. Configuration in `package.json`, as in the TM project:
-  - `cds.requires.llm`: `{ "kind": "llm-mock" }` in `[development]` (it must be set: the plugin's own default there is `auto`, which would pick up a key from the environment or `~/.claude/settings.json`), `{ "kind": "anthropic", "model": "claude-haiku-4-5-20251001", "maxTokens": 2048, "temperature": 0 }` in `[hybrid]` (key from `ANTHROPIC_API_KEY` in the git-ignored `.env`; `--profile hybrid` wins over `development`), and in `[production]` `claude-opus-5-5` (until phase 9) with `"vcap": { "name": "sap-sales-order-confirmation-llm" }`. The key comes from a user-provided service (phase 8.3), never from the repo or the MTA. The S/4 APIs have no `[hybrid]` credentials until phase 8, so they stay mocked in hybrid mode for now.
+  - `cds.requires.llm`: `{ "kind": "llm-mock" }` in `[development]` (it must be set: the plugin's own default there is `auto`, which would pick up a key from the environment or `~/.claude/settings.json`), `{ "kind": "anthropic", "model": "claude-haiku-4-5-20251001", "maxTokens": 2048, "temperature": 0 }` in `[hybrid]` (key from `ANTHROPIC_API_KEY` in the git-ignored `.env`; `--profile hybrid` wins over `development`), and in `[production]` `claude-opus-5-5` (until phase 10) with `"vcap": { "name": "sap-sales-order-confirmation-llm" }`. The key comes from a user-provided service (phase 9.3), never from the repo or the MTA. The S/4 APIs have no `[hybrid]` credentials until phase 9, so they stay mocked in hybrid mode for now.
   - `cds.agents`: `streaming: false` (no consumer of A2–A5 tokens, and the Order Assistant shows progress only, phase 7), `masking: true`, `connect: "none"`, `emitDataParts: true`, `quotas` (tool calls, LLM calls and tokens per task, tokens per day, `maxExecutionTimePerTask: 2min`). `max_tokens` and `temperature` are on `cds.requires.llm` (spike).
-  - A different model for one agent: its own `cds.requires.llm-<agent>` entry and `@agent.llm` on that service, only if phase 9 shows the need.
+  - A different model for one agent: its own `cds.requires.llm-<agent>` entry and `@agent.llm` on that service, only if phase 10 shows the need.
 - [x] `srv/lib/agent-call.js`: `runAgent({ agent, query, schema, template, render, mustMention })`, used by every A2–A5 trigger through `refineRecommendation()`:
   1. `cds.requires.llm.kind` is `llm-mock` → return the template text, `llmUsed = false`, no call. So `cds watch` keeps the phase 2 behaviour without a key.
   2. Otherwise `srv.chat(query, { _details: true })` on the agent's service, in a privileged context **without a transaction**: the in-memory SQLite has one connection, and a run takes 5–15 s (checked: other requests answer in ~5 ms while a run is going on). At most two runs at a time; the rest wait.
@@ -61,6 +61,6 @@ Checked 2026-10-06 with `claude-haiku-4-5-20251001`:
 - [x] Force failures and check that the case flow still completes with template texts: a wrong key (`ANTHROPIC_API_KEY=… npm run watch-hybrid`) → `LLM_UNAVAILABLE`, task rows `failed`, the key not in the log; `cds_requires_llm_maxTokens=40` → cut off, `LLM_UNAVAILABLE`.
 - [x] Check the guards by hand in hybrid mode: no customer name or price reaches Claude (the `inputSnapshot` has `customerId-…` / `customerName-…` and no amount, the stored texts have the real name); a persona tweaked to invent a date falls back with `NUMBER_CHECK` (unknown `2026-12-24`); every business user gets 403 on `/a2a/<agent>`; requests answer at once while a run is going on.
 
-Seen in the texts (for phase 9): Haiku sometimes gets qualitative details wrong that no check can see (once "SFG-200 available" while the tree said 0/100). The number check covers numbers, dates and IDs only; the model choice in phase 9 has to look at the wording too.
+Seen in the texts (for phase 10): Haiku sometimes gets qualitative details wrong that no check can see (once "SFG-200 available" while the tree said 0/100). The number check covers numbers, dates and IDs only; the model choice in phase 10 has to look at the wording too.
 
 **Exit criteria:** under `cds watch --profile hybrid`, scenario 1 runs in the three case apps with Claude texts on all four agents, the number check and masking work (checked on the recommendations, `fallbackReason`, and the tool results in `inputSnapshot`), and under `cds watch` (no key) every scenario still completes with template texts.

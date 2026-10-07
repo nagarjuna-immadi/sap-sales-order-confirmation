@@ -272,7 +272,7 @@ entity ScoringWeights {
 
 // Which work centers make a material, per production version (§7 A4: primary
 // and alternative). §4.2 has no routing API; the pilot reads routings from S/4
-// (phase 10). Operations run in sequence; qtyPerPiece is pieces of capacity
+// (phase 11). Operations run in sequence; qtyPerPiece is pieces of capacity
 // per piece produced.
 entity ProductionRouting {
   key material          : String(40);
